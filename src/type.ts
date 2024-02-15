@@ -71,15 +71,15 @@ export interface IWallet {
 }
 
 export interface ConfigLotusNode {
-  name: string
+  name?: string
   code: number
   url: string | undefined
   token: string | undefined
-  notaryRepo: string
-  notaryOwner: string
-  rkhMultisig: string
-  rkhtreshold: number
-  largeClientRequestAssign: string[]
+  notaryRepo?: string
+  notaryOwner?: string
+  rkhMultisig?: string
+  rkhtreshold?: number
+  largeClientRequestAssign?: string[]
 }
 
 export interface API {
@@ -98,6 +98,21 @@ export interface LDNActorsResponse {
 }
 
 export enum LDNActorType {
-  GovernanceTeam = 'GovernanceTeam',
-  Notary = 'Notary',
+  Verifier = 'verifier',
+}
+
+export interface Allocator {
+  id: number
+  owner: string
+  repo: string
+  installation_id: string
+  multisig_address: string
+  verifiers_gh_handles: string
+  node_address?: string
+  node_token?: string
+}
+
+export interface NodeConfig {
+  nodeAddress: string
+  nodeToken: string
 }

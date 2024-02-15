@@ -21,11 +21,19 @@ export abstract class BaseWallet implements IWallet {
   constructor(
     networkIndex: number = 0,
     readonly setMessage: (message: string | null) => void,
+    nodeAddress?: string,
+    nodeToken?: string,
   ) {
     if (networkIndex === undefined) {
       networkIndex = 0
     }
-    this.lotusNode = config.lotusNodes[networkIndex]
+    if (nodeAddress && nodeToken) {
+      this.lotusNode = {
+        code: 461,
+        token: nodeToken,
+        url: nodeAddress,
+      }
+    } else this.lotusNode = config.lotusNodes[networkIndex]
   }
 
   /**

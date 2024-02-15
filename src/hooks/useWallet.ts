@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react'
 import { LedgerWallet } from '@/lib/wallet/LedgerWallet'
 import { BurnerWallet } from '@/lib/wallet/BurnerWallet'
 import { config } from '../config'
-import { type IWallet } from '@/type'
+import { type NodeConfig, type IWallet } from '@/type'
 import { anyToBytes } from '@/lib/utils'
 
 /**
@@ -12,7 +12,9 @@ const walletClassRegistry: Record<string, any> = {
   LedgerWallet: (
     networkIndex: number,
     setMessage: (message: string | null) => void,
-  ) => new LedgerWallet(networkIndex, setMessage),
+    nodeAddress?: string,
+    nodeConfig?: string,
+  ) => new LedgerWallet(networkIndex, setMessage, nodeAddress, nodeConfig),
   BurnerWallet: (
     networkIndex: number,
     setMessage: (message: string | null) => void,
@@ -35,7 +37,7 @@ interface WalletState {
   sendProposal: (clientAddress: string, datacap: string) => Promise<string>
   sendApproval: (txHash: string) => Promise<string>
   sign: (message: string) => Promise<string>
-  initializeWallet: () => Promise<boolean>
+  initializeWallet: (nodeConfig?: NodeConfig) => Promise<boolean>
   message: string | null
   setMessage: (message: string | null) => void
 }
@@ -89,40 +91,51 @@ const useWallet = (): WalletState => {
    * Initializes the wallet using the given class name.
    *
    * @param {string} WalletClass - The name of the wallet class to initialize.
+   * @param {}
    * @returns {Promise<boolean>} - A promise that resolves when the wallet is initialized.
    */
-  const initializeWallet = useCallback(async () => {
-    setWalletError(null)
-    setMessage('Initializing wallet...')
+  const initializeWallet = useCallback(
+    async (nodeConfig?: NodeConfig) => {
+      setWalletError(null)
+      setMessage('Initializing wallet...')
 
-    try {
-      const walletClass: string = config.walletClass
-      const networkIndex = initNetworkIndex()
-      const newWallet = walletClassRegistry[walletClass](
-        networkIndex,
-        setMessage,
-      )
-      await newWallet.loadWallet()
-      const allAccounts = await newWallet.getAccounts()
+      try {
+        const walletClass: string = config.walletClass
+        let newWallet: Record<string, any>
+        if (!nodeConfig?.nodeAddress || !nodeConfig.nodeToken) {
+          const networkIndex = initNetworkIndex()
+          newWallet = walletClassRegistry[walletClass](networkIndex, setMessage)
+        } else {
+          newWallet = walletClassRegistry[walletClass](
+            0,
+            setMessage,
+            nodeConfig.nodeAddress,
+            nodeConfig.nodeToken,
+          )
+        }
+        await newWallet.loadWallet()
+        const allAccounts = await newWallet.getAccounts()
 
-      if (allAccounts.length > 0) {
-        setActiveAccountIndexState(0)
-        setAccounts(allAccounts)
+        if (allAccounts.length > 0) {
+          setActiveAccountIndexState(0)
+          setAccounts(allAccounts)
+        }
+        setMessage(null)
+        setWallet(newWallet as IWallet)
+        setMultisigAddress(newWallet.lotusNode.rkhMultisig)
+        return true
+      } catch (err) {
+        console.error('Error initializing wallet:', err)
+        if (err instanceof Error) {
+          setWalletError(err)
+        } else {
+          setWalletError(new Error('Unknown error'))
+        }
+        return false
       }
-      setMessage(null)
-      setWallet(newWallet)
-      setMultisigAddress(newWallet.lotusNode.rkhMultisig)
-      return true
-    } catch (err) {
-      console.error('Error initializing wallet:', err)
-      if (err instanceof Error) {
-        setWalletError(err)
-      } else {
-        setWalletError(new Error('Unknown error'))
-      }
-      return false
-    }
-  }, [initNetworkIndex])
+    },
+    [initNetworkIndex],
+  )
 
   /**
    * Sign a message using the currently initialized wallet.
