@@ -10,7 +10,7 @@ import {
   postApplicationApproval,
 } from '@/lib/apiClient'
 import useWallet from '@/hooks/useWallet'
-import { type NodeConfig, type Application } from '@/type'
+import { type Application } from '@/type'
 
 interface ApplicationActions {
   application: Application
@@ -35,7 +35,7 @@ interface ApplicationActions {
     unknown
   >
   walletError: Error | null
-  initializeWallet: (nodeConfig?: NodeConfig) => Promise<boolean>
+  initializeWallet: () => Promise<boolean>
   message: string | null
 }
 
@@ -46,14 +46,10 @@ interface ApplicationActions {
  *
  * @function
  * @param {Application} initialApplication - The initial application data.
- * @param {string} repo - The repository containing the application.
- * @param {string} owner - The owner of the repository containing the application.
  * @returns {ApplicationActions} - An object containing the current application, its API call state, and mutation functions.
  */
 const useApplicationActions = (
   initialApplication: Application,
-  repo: string,
-  owner: string,
 ): ApplicationActions => {
   const queryClient = useQueryClient()
   const [isApiCalling, setApiCalling] = useState(false)
@@ -114,12 +110,7 @@ const useApplicationActions = (
     unknown
   >(
     async (userName: string) =>
-      await postApplicationTrigger(
-        initialApplication.ID,
-        userName,
-        repo,
-        owner,
-      ),
+      await postApplicationTrigger(initialApplication.ID, userName),
     {
       onSuccess: (data) => {
         setApiCalling(false)
@@ -172,8 +163,6 @@ const useApplicationActions = (
         initialApplication.ID,
         requestId,
         userName,
-        owner,
-        repo,
         activeAddress,
         messageCID,
       )
@@ -233,8 +222,6 @@ const useApplicationActions = (
         initialApplication.ID,
         requestId,
         userName,
-        owner,
-        repo,
         activeAddress,
         messageCID,
       )

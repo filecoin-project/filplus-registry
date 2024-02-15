@@ -3,7 +3,6 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import AuthProvider from '@/components/AuthProvider'
 import ReactQueryProvider from '@/context/ReactQueryProvider'
-import { AllocatorProvider } from '@/lib/AllocatorProvider'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -22,10 +21,8 @@ export default function RootLayout({
       <body className={inter.className}>
         <ReactQueryProvider>
           <AuthProvider>
-            <AllocatorProvider>
-              <Navbar />
-              {children}
-            </AllocatorProvider>
+            <Navbar />
+            {children}
           </AuthProvider>
         </ReactQueryProvider>
       </body>

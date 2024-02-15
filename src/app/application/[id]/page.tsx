@@ -2,24 +2,24 @@
 import AppHistory from '@/components/AppHistory'
 import AppInfoCard from '@/components/cards/AppInfoCard'
 import ProjectInfoCard from '@/components/cards/ProjectInfoCard'
-import { Spinner } from '@/components/ui/spinner'
-import { getApplicationByParams } from '@/lib/apiClient'
+import { getApplicationById } from '@/lib/apiClient'
 import { useQuery } from 'react-query'
+import { Spinner } from '@/components/ui/spinner'
 
 interface ComponentProps {
   params: {
     id: string
-    repo: string
-    owner: string
   }
 }
 
 const ApplicationDetailPage: React.FC<ComponentProps> = ({
-  params: { id, repo, owner },
+  params: { id },
+}: {
+  params: { id: string }
 }) => {
   const { data, isLoading } = useQuery({
     queryKey: ['posts', id],
-    queryFn: async () => await getApplicationByParams(id, repo, owner),
+    queryFn: async () => await getApplicationById(id),
     refetchInterval: 10000,
   })
 
@@ -34,7 +34,7 @@ const ApplicationDetailPage: React.FC<ComponentProps> = ({
     return (
       <div className="p-10">
         <div className="mb-10">
-          <AppInfoCard application={data} repo={repo} owner={owner} />
+          <AppInfoCard application={data} />
         </div>
         <div className="mb-10">
           <ProjectInfoCard application={data} />

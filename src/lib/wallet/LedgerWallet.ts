@@ -44,7 +44,7 @@ export class LedgerWallet extends BaseWallet {
         sign: this.sign,
         getAccounts: this.getAccounts,
       },
-      process.env.NEXT_PUBLIC_MODE !== 'production',
+      this.lotusNode.name !== 'Mainnet',
     )
   }
 
