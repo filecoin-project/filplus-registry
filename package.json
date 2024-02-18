@@ -26,7 +26,7 @@
     "@zondax/filecoin-signing-tools": "^0.7.1",
     "@zondax/ledger-filecoin": "^0.13.0",
     "autoprefixer": "10.4.14",
-    "axios": "^1.4.0",
+    "axios": "^1.6.0",
     "class-variance-authority": "^0.6.1",
     "clsx": "^2.0.0",
     "eslint-config-next": "^12.3.4",
