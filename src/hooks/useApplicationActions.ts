@@ -11,14 +11,22 @@ import {
   postApproveChanges,
   postApplicationDecline,
   postAdditionalInfoRequest,
+  triggerSSA,
 } from '@/lib/apiClient'
 import useWallet from '@/hooks/useWallet'
-import { type Application } from '@/type'
+import { type RefillUnit, type Application } from '@/type'
 
 interface ApplicationActions {
   application: Application
+  isRefillError: boolean
   isApiCalling: boolean
   setApiCalling: React.Dispatch<React.SetStateAction<boolean>>
+  mutationTriggerSSA: UseMutationResult<
+    Application | undefined,
+    unknown,
+    { amount: string; unit: RefillUnit },
+    unknown
+  >
   mutationRequestInfo: UseMutationResult<
     Application | undefined,
     unknown,
@@ -83,6 +91,7 @@ const useApplicationActions = (
   const [isApiCalling, setApiCalling] = useState(false)
   const [application, setApplication] =
     useState<Application>(initialApplication)
+  const [isRefillError, setIsRefillError] = useState(false)
   const {
     walletError,
     initializeWallet,
@@ -230,6 +239,35 @@ const useApplicationActions = (
   )
 
   /**
+   * Mutation function to handle the triggering of an SSA.
+   * It makes an API call to trigger the SSA and updates the cache on success.
+   *
+   * @function {amount} amount - The amount of datacap to be allocated in the SSA process.
+   * @function {unit} unit - The unit of the datacap to be allocated in the SSA process.
+   * @returns {Promise<void>} - A promise that resolves when the mutation is completed.
+   */
+  const mutationTriggerSSA = useMutation<
+    Application | undefined,
+    Error,
+    { amount: string; unit: RefillUnit }
+  >(
+    async ({ amount, unit }) => {
+      return await triggerSSA(amount, unit, initialApplication.ID, repo, owner)
+    },
+    {
+      onSuccess: (data) => {
+        setApiCalling(false)
+        if (data != null) updateCache(data)
+      },
+      onError: (e) => {
+        setIsRefillError(true)
+        setApiCalling(false)
+        throw e
+      },
+    },
+  )
+
+  /**
    * Mutation function to handle the approval of changes of an application's issue.
    * It makes an API call to mark the approval of the changes and updates the cache on success.
    *
@@ -346,7 +384,7 @@ const useApplicationActions = (
    */
   const mutationApproval = useMutation<
     Application | undefined,
-    Error,
+    unknown,
     { requestId: string; userName: string },
     unknown
   >(
@@ -399,6 +437,7 @@ const useApplicationActions = (
 
   return {
     application,
+    isRefillError,
     isApiCalling,
     setApiCalling,
     mutationRequestInfo,
@@ -413,6 +452,7 @@ const useApplicationActions = (
     setActiveAccountIndex,
     accounts,
     loadMoreAccounts,
+    mutationTriggerSSA,
   }
 }
 
