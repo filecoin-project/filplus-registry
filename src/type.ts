@@ -1,3 +1,14 @@
+export enum RefillUnit {
+  PIB = 'PiB',
+  TIB = 'TiB',
+  GIB = 'GiB',
+}
+
+export interface RequestAmount {
+  amount: string
+  amountType: RefillUnit
+}
+
 export interface Application {
   Version: number
   ID: string

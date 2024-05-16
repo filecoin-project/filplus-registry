@@ -3,6 +3,7 @@ import {
   type Application,
   type Allocator,
   type Allocation,
+  type RefillUnit,
 } from '@/type'
 import axios from 'axios'
 import { getCurrentDate } from './utils'
@@ -211,6 +212,23 @@ export const postAdditionalInfoRequest = async (
   } catch (error) {
     console.error(error)
   }
+}
+
+export const triggerSSA = async (
+  amount: string,
+  unit: RefillUnit,
+  id: string,
+  repo: string,
+  owner: string,
+): Promise<Application | undefined> => {
+  const { data } = await apiClient.post(`application/trigger_ssa`, {
+    amount,
+    amount_type: unit,
+    repo,
+    owner,
+    id,
+  })
+  return data
 }
 
 /**
