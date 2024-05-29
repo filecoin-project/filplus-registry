@@ -88,7 +88,6 @@ const AppInfoCard: React.FC<ComponentProps> = ({
     accounts,
     message,
     loadMoreAccounts,
-    isRefillError,
   } = useApplicationActions(initialApplication, repo, owner)
   const [buttonText, setButtonText] = useState('')
   const [modalMessage, setModalMessage] = useState<string | null>(null)
@@ -161,7 +160,6 @@ const AppInfoCard: React.FC<ComponentProps> = ({
       })
       const address = application.Lifecycle['On Chain Address']
       const response = await getAllowanceForAddress(address)
-
       if (response.success) {
         const allowance = parseFloat(response.data)
         const lastAllocation = getLastDatacapAllocation(application)
@@ -184,9 +182,13 @@ const AppInfoCard: React.FC<ComponentProps> = ({
         setProgress(progressPercentage)
         setIsProgressBarLoading(false)
       } else {
+        setIsProgressBarLoading(false)
+
         if (response.error === 'Address not found') {
-          setIsProgressBarLoading(false)
-          setIsProgressBarVisible(false)
+          setIsProgressBarVisible(application.Lifecycle.State === 'Granted')
+          if (application.Lifecycle.State === 'Granted') {
+            setProgress(100)
+          }
         } else {
           console.error(response.error)
         }
@@ -619,8 +621,6 @@ const AppInfoCard: React.FC<ComponentProps> = ({
     stateColor[application.Lifecycle.State as keyof typeof stateColor] ??
     application.Lifecycle.State
 
-  const lastAllocation = getLastDatacapAllocation(application)
-
   const getRowStyles = (index: number): string => {
     return index % 2 === 0
       ? 'bg-white' // Fondo blanco para filas pares
@@ -788,7 +788,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
         </div>
 
         <CardContent>
-          {lastAllocation !== undefined && isProgressBarVisible && (
+          {isProgressBarVisible && (
             <ProgressBar
               progress={progress}
               label="Datacap used"
@@ -803,7 +803,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
                 progress > 75 &&
                 remaining > 0 && (
                   <Button
-                    disabled={isApiCalling || isRefillError}
+                    disabled={isApiCalling}
                     onClick={() => {
                       setRefillInfoParams((prev) => ({
                         amount: prev.amount || '1',
@@ -992,6 +992,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
             }}
           >
             <Button
+              type="button"
               disabled={isApiCalling}
               onClick={() => {
                 setRefillInfoParams((prev) => ({
