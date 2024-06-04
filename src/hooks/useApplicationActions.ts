@@ -24,7 +24,7 @@ interface ApplicationActions {
   mutationTriggerSSA: UseMutationResult<
     Application | undefined,
     unknown,
-    { amount: string; unit: RefillUnit },
+    { userName: string; amount: string; unit: RefillUnit },
     unknown
   >
   mutationRequestInfo: UseMutationResult<
@@ -242,17 +242,25 @@ const useApplicationActions = (
    * Mutation function to handle the triggering of an SSA.
    * It makes an API call to trigger the SSA and updates the cache on success.
    *
-   * @function {amount} amount - The amount of datacap to be allocated in the SSA process.
-   * @function {unit} unit - The unit of the datacap to be allocated in the SSA process.
+   * @param {amount} amount - The amount of datacap to be allocated in the SSA process.
+   * @param {unit} unit - The unit of the datacap to be allocated in the SSA process.
+   * @param {string} userName - The user's name.
    * @returns {Promise<void>} - A promise that resolves when the mutation is completed.
    */
   const mutationTriggerSSA = useMutation<
     Application | undefined,
     Error,
-    { amount: string; unit: RefillUnit }
+    { userName: string; amount: string; unit: RefillUnit }
   >(
-    async ({ amount, unit }) => {
-      return await triggerSSA(amount, unit, initialApplication.ID, repo, owner)
+    async ({ userName, amount, unit }) => {
+      return await triggerSSA(
+        amount,
+        unit,
+        initialApplication.ID,
+        repo,
+        owner,
+        userName,
+      )
     },
     {
       onSuccess: (data) => {

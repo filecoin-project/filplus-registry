@@ -583,6 +583,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
 
     try {
       await mutationTriggerSSA.mutateAsync({
+        userName,
         amount: refillInfoParams.amount,
         unit: refillInfoParams.unit,
       })
@@ -799,25 +800,9 @@ const AppInfoCard: React.FC<ComponentProps> = ({
         <div>
           <CardFooter className="flex flex-col items-end border-t pt-4 pb-2 mt-4 justify-center gap-3">
             <div className="flex justify-end gap-2 pb-4">
-              {application?.Lifecycle?.State === 'Granted' &&
-                progress > 75 &&
-                remaining > 0 && (
-                  <Button
-                    disabled={isApiCalling}
-                    onClick={() => {
-                      setRefillInfoParams((prev) => ({
-                        amount: prev.amount || '1',
-                        unit: prev.unit || RefillUnit.GIB,
-                        isDialogOpen: true,
-                      }))
-                    }}
-                  >
-                    Trigger Refill
-                  </Button>
-                )}
               {LDNActorType.Verifier === currentActorType ? (
-                application?.Lifecycle?.State !== 'Granted' &&
-                session?.data?.user?.name !== undefined && (
+                session?.data?.user?.name !== undefined &&
+                application?.Lifecycle?.State !== 'Granted' ? (
                   <>
                     {buttonText &&
                       (walletConnected ||
@@ -899,6 +884,22 @@ const AppInfoCard: React.FC<ComponentProps> = ({
                         </Button>
                       )}
                   </>
+                ) : (
+                  progress > 75 &&
+                  remaining > 0 && (
+                    <Button
+                      disabled={isApiCalling}
+                      onClick={() => {
+                        setRefillInfoParams((prev) => ({
+                          amount: prev.amount || '1',
+                          unit: prev.unit || RefillUnit.GIB,
+                          isDialogOpen: true,
+                        }))
+                      }}
+                    >
+                      Trigger Refill
+                    </Button>
+                  )
                 )
               ) : (
                 <CardFooter className="px-6 flex justify-end items-center w-full font-semibold text-xl italic">

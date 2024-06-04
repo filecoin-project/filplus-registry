@@ -220,14 +220,16 @@ export const triggerSSA = async (
   id: string,
   repo: string,
   owner: string,
+  actor: string,
 ): Promise<Application | undefined> => {
-  const { data } = await apiClient.post(`application/trigger_ssa`, {
-    amount,
-    amount_type: unit,
-    repo,
-    owner,
-    id,
-  })
+  const { data } = await apiClient.post(
+    `verifier/application/trigger_ssa`,
+    {
+      amount,
+      amount_type: unit,
+    },
+    { params: { repo, owner, id, github_username: actor } },
+  )
   return data
 }
 
