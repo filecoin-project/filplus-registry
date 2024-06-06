@@ -49,6 +49,7 @@ export interface Datacap {
 
 export interface Lifecycle {
   State:
+    | 'KYCRequested'
     | 'AdditionalInfoRequired'
     | 'AdditionalInfoSubmitted'
     | 'Submitted'

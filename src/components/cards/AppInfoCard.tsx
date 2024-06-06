@@ -88,6 +88,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
     accounts,
     message,
     loadMoreAccounts,
+    mutationRequestKyc,
   } = useApplicationActions(initialApplication, repo, owner)
   const [buttonText, setButtonText] = useState('')
   const [modalMessage, setModalMessage] = useState<string | null>(null)
@@ -303,6 +304,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
     }
 
     switch (application.Lifecycle.State) {
+      case 'KYCRequested':
       case 'Submitted':
       case 'AdditionalInfoRequired':
       case 'AdditionalInfoSubmitted':
@@ -662,6 +664,20 @@ const AppInfoCard: React.FC<ComponentProps> = ({
     return againToText
   }
 
+  const handleRequestKyc = async (): Promise<void> => {
+    setApiCalling(true)
+    const userName = session.data?.user?.githubUsername
+    if (!userName) return
+    try {
+      await mutationRequestKyc.mutateAsync({
+        userName,
+      })
+    } catch (error) {
+      handleMutationError(error as Error)
+    }
+    setApiCalling(false)
+  }
+
   return (
     <>
       <AccountSelectionDialog
@@ -804,9 +820,26 @@ const AppInfoCard: React.FC<ComponentProps> = ({
                 session?.data?.user?.name !== undefined &&
                 application?.Lifecycle?.State !== 'Granted' ? (
                   <>
+                    {application?.Lifecycle?.State === 'Submitted' && (
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => {
+                            void handleRequestKyc()
+                          }}
+                          disabled={isApiCalling}
+                          style={{
+                            width: '200px',
+                          }}
+                          className="bg-green-400 text-black rounded-lg px-4 py-2 hover:bg-green-500"
+                        >
+                          Request KYC
+                        </Button>
+                      </div>
+                    )}
                     {buttonText &&
                       (walletConnected ||
                         [
+                          'KYCRequested',
                           'Submitted',
                           'AdditionalInfoRequired',
                           'AdditionalInfoSubmitted',
@@ -814,6 +847,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
                         ].includes(application?.Lifecycle?.State)) && (
                         <>
                           {[
+                            'KYCRequested',
                             'Submitted',
                             'AdditionalInfoRequired',
                             'AdditionalInfoSubmitted',
@@ -864,6 +898,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
                     {!walletConnected &&
                       currentActorType === LDNActorType.Verifier &&
                       ![
+                        'KYCRequested',
                         'Submitted',
                         'ChangesRequested',
                         'AdditionalInfoRequired',
