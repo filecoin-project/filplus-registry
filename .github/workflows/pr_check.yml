@@ -28,6 +28,9 @@ jobs:
         run: npm run lint
 
   formatting:
+    strategy:
+      fail-fast: true
+
     name: Run Prettier
     runs-on: ubuntu-latest
     steps:
