@@ -232,6 +232,38 @@ export const triggerSSA = async (
   )
   return data
 }
+/**
+ * Triggers a KYC request for an application.
+ * @param id the application id
+ * @param actor the actor that triggers the application
+ * @param repo the repo of the application
+ * @param owner the owner of the application
+ * @returns
+ */
+export const postRequestKyc = async (
+  id: string,
+  actor: string,
+  repo: string,
+  owner: string,
+): Promise<Application | undefined> => {
+  try {
+    const { data } = await apiClient.post(
+      `verifier/application/request_kyc`,
+      { github_username: actor, repo, owner, id },
+      {
+        params: {
+          github_username: actor,
+          repo,
+          owner,
+          id,
+        },
+      },
+    )
+    return data
+  } catch (error) {
+    console.error(error)
+  }
+}
 
 /**
  * Triggers a LDN application based on its ID.

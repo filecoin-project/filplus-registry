@@ -1,5 +1,5 @@
 'use client'
-import { Github } from 'lucide-react'
+import { Database, Github } from 'lucide-react'
 import { signIn, useSession } from 'next-auth/react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -21,7 +21,17 @@ const Navbar: React.FC = () => {
         />
       </Link>
 
-      <div>
+      <div className="flex space-x-4">
+        <Button
+          onClick={() =>
+            window.open(
+              'https://form-interface-d85407.zapier.app/form',
+              '_blank',
+            )
+          }
+        >
+          <Database className="mr-2 h-4 w-4" /> Find a Storage Provider
+        </Button>
         {session.status !== 'authenticated' ? (
           <Button onClick={() => void signIn('github')}>
             <Github className="mr-2 h-4 w-4" /> Login with Github

@@ -11,6 +11,7 @@ import {
   postApproveChanges,
   postApplicationDecline,
   postAdditionalInfoRequest,
+  postRequestKyc,
   triggerSSA,
 } from '@/lib/apiClient'
 import useWallet from '@/hooks/useWallet'
@@ -31,6 +32,12 @@ interface ApplicationActions {
     Application | undefined,
     unknown,
     { userName: string; additionalInfoMessage: string },
+    unknown
+  >
+  mutationRequestKyc: UseMutationResult<
+    Application | undefined,
+    unknown,
+    { userName: string },
     unknown
   >
   mutationDecline: UseMutationResult<
@@ -191,6 +198,26 @@ const useApplicationActions = (
         owner,
         additionalInfoMessage,
       )
+    },
+    {
+      onSuccess: (data) => {
+        setApiCalling(false)
+        if (data != null) updateCache(data)
+      },
+      onError: () => {
+        setApiCalling(false)
+      },
+    },
+  )
+
+  const mutationRequestKyc = useMutation<
+    Application | undefined,
+    unknown,
+    { userName: string },
+    unknown
+  >(
+    async ({ userName }) => {
+      return await postRequestKyc(initialApplication.ID, userName, repo, owner)
     },
     {
       onSuccess: (data) => {
@@ -445,6 +472,7 @@ const useApplicationActions = (
 
   return {
     application,
+    mutationRequestKyc,
     isRefillError,
     isApiCalling,
     setApiCalling,

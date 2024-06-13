@@ -3,7 +3,6 @@ import { AvatarFallback, AvatarImage, Avatar } from './ui/avatar'
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -35,11 +34,6 @@ const UserNav: React.FC = () => {
             </p>
           </div>
         </DropdownMenuLabel>
-        <DropdownMenuGroup>
-          <DropdownMenuItem>Profile</DropdownMenuItem>
-
-          <DropdownMenuItem>Get Verified</DropdownMenuItem>
-        </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => void signOut()}>
           Log out

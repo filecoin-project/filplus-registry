@@ -12,6 +12,7 @@ export const stateColor = {
   StartSignDatacap: 'bg-purple-400 text-white',
   ReadyToSign: 'bg-orange-500 text-white',
   Granted: 'bg-green-400 text-white',
+  KYCRequested: 'bg-lime-400 text-white',
 }
 
 export const allocationActiveColor = {
@@ -25,4 +26,5 @@ export const stateMapping = {
   ReadyToSign: 'Ready to sign',
   StartSignDatacap: 'Start sign datacap',
   Granted: 'Granted',
+  KYCRequested: 'KYC requested',
 }
