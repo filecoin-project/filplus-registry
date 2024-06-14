@@ -18,8 +18,6 @@ const localConfig = {
   numberOfWalletAccounts: 5,
   mnemonic: process.env.NEXT_PUBLIC_MNEMONIC,
   walletClass: 'LedgerWallet',
-  githubRepoUrl:
-    'https://github.com/filecoin-project/filplus-tooling-backend-test',
   dmobApiUrl: 'https://api.filplus.d.interplanetary.one/public/api',
   dmobApiKey: process.env.NEXT_PUBLIC_DMOB_API_KEY ?? '',
 }
@@ -44,8 +42,6 @@ const prodConfig = {
   numberOfWalletAccounts: 5,
   mnemonic: process.env.MNEMONIC,
   walletClass: 'LedgerWallet',
-  githubRepoUrl:
-    'https://github.com/filecoin-project/filecoin-plus-large-datasets',
   dmobApiUrl: 'https://api.filplus.d.interplanetary.one/public/api',
   dmobApiKey: process.env.NEXT_PUBLIC_DMOB_API_KEY ?? '',
 }
