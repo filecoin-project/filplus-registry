@@ -6,8 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "format": "npx prettier --write ."
+    "lint": "next lint --max-warnings 0",
+    "format": "npx prettier --write .",
+    "prettier": "npx prettier --check ."
   },
   "dependencies": {
     "@emotion/react": "^11.11.4",

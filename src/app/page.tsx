@@ -78,7 +78,7 @@ export default function Home(): JSX.Element {
     } else if (!selectedAllocator) {
       setSelectedAllocator(allocators[0])
     }
-  }, [allocators, selectedAllocator])
+  }, [allocators, selectedAllocator, setSelectedAllocator])
 
   const [filter, setFilter] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')

@@ -28,7 +28,7 @@ const AppSetupSuccess: React.FC = () => {
         setIsLoading(false)
       })()
     }
-  }, [])
+  }, [params])
 
   if (isLoading)
     return (
