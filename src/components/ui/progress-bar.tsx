@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 
 interface ProgressBarProps {
   progress: number
   label: string
-  isLoading: boolean
 }
 
 /**
@@ -12,21 +11,8 @@ interface ProgressBarProps {
  * @component
  * @prop {number} progress - The progress of the progress bar.
  * @prop {string} label - The label of the progress bar.
- * @prop {boolean} isLoading - Whether the progress bar is loading.
  */
-const ProgressBar: React.FC<ProgressBarProps> = ({
-  progress,
-  label,
-  isLoading,
-}) => {
-  const [displayProgress, setDisplayProgress] = useState(0)
-
-  useEffect(() => {
-    if (!isLoading) {
-      setDisplayProgress(100)
-    }
-  }, [progress, isLoading])
-
+const ProgressBar: React.FC<ProgressBarProps> = ({ progress, label }) => {
   const greenProgress = Math.min(progress, 50)
   const yellowProgress = Math.min(Math.max(progress - 50, 0), 35)
   const redProgress = Math.min(Math.max(progress - 85, 0), 15)
@@ -41,7 +27,7 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
         </div>
         <div className="text-right">
           <span className="text-xs font-semibold inline-block text-blue-600">
-            {isLoading ? 'Loading...' : `${progress.toFixed(2)}%`}
+            {`${progress.toFixed(2)}%`}
           </span>
         </div>
       </div>
@@ -58,7 +44,7 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
                 )
               `,
             transition: 'width 1s ease-in-out',
-            width: `${displayProgress}%`,
+            width: `${progress}%`,
           }}
           className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center w-full"
         ></div>

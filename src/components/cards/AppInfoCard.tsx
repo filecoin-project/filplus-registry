@@ -41,7 +41,7 @@ import TextField from '@mui/material/TextField'
 import axios from 'axios'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { toast } from 'react-toastify'
 
 interface ComponentProps {
@@ -96,13 +96,11 @@ const AppInfoCard: React.FC<ComponentProps> = ({
   const [walletConnected, setWalletConnected] = useState(false)
   const [isWalletConnecting, setIsWalletConnecting] = useState(false)
   const [progress, setProgress] = useState(0)
-  const [isProgressBarLoading, setIsProgressBarLoading] = useState(true)
   const [currentActorType, setCurrentActorType] = useState<LDNActorType | ''>(
     '',
   )
 
-  const [isProgressBarVisible, setIsProgressBarVisible] = useState(true)
-
+  const [isProgressBarVisible, setIsProgressBarVisible] = useState(false)
   const [isSelectAccountModalOpen, setIsSelectAccountModalOpen] =
     useState(false)
 
@@ -143,6 +141,13 @@ const AppInfoCard: React.FC<ComponentProps> = ({
       'Allocation Amount'
     ] ?? 0
 
+  const isApplicationUpdatedLessThanOneMinuteAgo = useCallback((): boolean => {
+    const currentTime = new Date(Date.now()).getTime()
+    const updateDatePlusOneMinute =
+      new Date(application.Lifecycle['Updated At']).getTime() + 60 * 1000
+    return updateDatePlusOneMinute > currentTime
+  }, [application.Lifecycle])
+
   useEffect(() => {
     setModalMessage(message)
   }, [message])
@@ -170,8 +175,10 @@ const AppInfoCard: React.FC<ComponentProps> = ({
           lastAllocation['Allocation Amount'] ?? '0',
         )
 
-        if (allocationAmount < allowance) {
-          setIsProgressBarLoading(false)
+        if (
+          allocationAmount < allowance ||
+          isApplicationUpdatedLessThanOneMinuteAgo()
+        ) {
           setIsProgressBarVisible(false)
           return
         }
@@ -179,12 +186,9 @@ const AppInfoCard: React.FC<ComponentProps> = ({
         const usedDatacap = allocationAmount - allowance
 
         const progressPercentage = (usedDatacap / allocationAmount) * 100
-
+        setIsProgressBarVisible(true)
         setProgress(progressPercentage)
-        setIsProgressBarLoading(false)
       } else {
-        setIsProgressBarLoading(false)
-
         if (response.error === 'Address not found') {
           setIsProgressBarVisible(application.Lifecycle.State === 'Granted')
           if (application.Lifecycle.State === 'Granted') {
@@ -195,7 +199,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
         }
       }
     })()
-  }, [application])
+  }, [application, isApplicationUpdatedLessThanOneMinuteAgo])
 
   useEffect(() => {
     if (
@@ -806,11 +810,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
 
         <CardContent>
           {isProgressBarVisible && (
-            <ProgressBar
-              progress={progress}
-              label="Datacap used"
-              isLoading={isProgressBarLoading}
-            />
+            <ProgressBar progress={progress} label="Datacap used" />
           )}
         </CardContent>
         <div>
