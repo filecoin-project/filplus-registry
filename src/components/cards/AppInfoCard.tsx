@@ -4,7 +4,6 @@ import AccountSelectionDialog from '@/components/ui/ledger-account-select'
 import { Modal } from '@/components/ui/modal'
 import ProgressBar from '@/components/ui/progress-bar'
 import { Spinner } from '@/components/ui/spinner'
-import { config } from '@/config'
 import calculateAmountToRequest from '@/helpers/calculateAmountToRefill'
 import useApplicationActions from '@/hooks/useApplicationActions'
 import { useAllocator } from '@/lib/AllocatorProvider'
@@ -697,7 +696,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
       <div className="flex items-center flex-col mb-6">
         <h2 className="text-3xl font-bold">Application Detail</h2>
         <a
-          href={`${config.githubRepoUrl}/issues/${application['Issue Number']}`}
+          href={`https://github.com/${owner}/${repo}/issues/${application['Issue Number']}`}
           target="_blank"
           rel="noopener noreferrer"
         >
