@@ -17,9 +17,9 @@ import {
 } from '@/lib/utils'
 import {
   LDNActorType,
+  RefillUnit,
   type Allocation,
   type Application,
-  RefillUnit,
 } from '@/type'
 import {
   Dialog,
@@ -88,6 +88,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
     message,
     loadMoreAccounts,
     mutationRequestKyc,
+    mutationRemovePendingAllocation,
   } = useApplicationActions(initialApplication, repo, owner)
   const [buttonText, setButtonText] = useState('')
   const [modalMessage, setModalMessage] = useState<string | null>(null)
@@ -681,6 +682,20 @@ const AppInfoCard: React.FC<ComponentProps> = ({
     setApiCalling(false)
   }
 
+  const handleRemovePendingAllocation = async (): Promise<void> => {
+    setApiCalling(true)
+    const userName = session.data?.user?.githubUsername
+    if (!userName) return
+    try {
+      await mutationRemovePendingAllocation.mutateAsync({
+        userName,
+      })
+    } catch (error) {
+      handleMutationError(error as Error)
+    }
+    setApiCalling(false)
+  }
+
   return (
     <>
       <AccountSelectionDialog
@@ -832,6 +847,22 @@ const AppInfoCard: React.FC<ComponentProps> = ({
                           className="bg-green-400 text-black rounded-lg px-4 py-2 hover:bg-green-500"
                         >
                           Request KYC
+                        </Button>
+                      </div>
+                    )}
+                    {application?.Lifecycle?.State === 'ReadyToSign' && (
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => {
+                            void handleRemovePendingAllocation()
+                          }}
+                          disabled={isApiCalling}
+                          style={{
+                            width: '250px',
+                          }}
+                          className="bg-red-400 text-black rounded-lg px-4 py-2 hover:bg-green-500"
+                        >
+                          Remove Pending Allocation
                         </Button>
                       </div>
                     )}

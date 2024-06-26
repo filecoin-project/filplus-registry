@@ -1,13 +1,13 @@
 import {
-  type LDNActorsResponse,
-  type Application,
-  type Allocator,
   type Allocation,
+  type Allocator,
+  type Application,
+  type LDNActorsResponse,
   type RefillUnit,
 } from '@/type'
 import axios from 'axios'
-import { getCurrentDate } from './utils'
 import { getAccessToken } from './session'
+import { getCurrentDate } from './utils'
 
 /**
  * Axios client instance with a predefined base URL for making API requests.
@@ -249,6 +249,31 @@ export const postRequestKyc = async (
   try {
     const { data } = await apiClient.post(
       `verifier/application/request_kyc`,
+      { github_username: actor, repo, owner, id },
+      {
+        params: {
+          github_username: actor,
+          repo,
+          owner,
+          id,
+        },
+      },
+    )
+    return data
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+export const postRemoveAlloc = async (
+  id: string,
+  actor: string,
+  repo: string,
+  owner: string,
+): Promise<Application | undefined> => {
+  try {
+    const { data } = await apiClient.post(
+      `verifier/application/remove_pending_allocation`,
       { github_username: actor, repo, owner, id },
       {
         params: {
