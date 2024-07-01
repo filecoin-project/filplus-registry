@@ -513,11 +513,13 @@ const AppInfoCard: React.FC<ComponentProps> = ({
 
   let totalAllocation = 0
 
-  application['Allocation Requests'].forEach((item) => {
-    const allocationAmount = anyToBytes(item['Allocation Amount'])
+  application['Allocation Requests']
+    .filter((item) => !item.Active)
+    .forEach((item) => {
+      const allocationAmount = anyToBytes(item['Allocation Amount'])
 
-    totalAllocation += allocationAmount
-  })
+      totalAllocation += allocationAmount
+    })
 
   const remaining =
     anyToBytes(application.Datacap['Total Requested Amount']) - totalAllocation
