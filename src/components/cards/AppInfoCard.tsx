@@ -371,6 +371,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
         case 'Submitted':
         case 'AdditionalInfoRequired':
         case 'AdditionalInfoSubmitted':
+        case 'KYCRequested':
           if (userName != null) {
             setAllocationAmountConfig((prev) => {
               return {
