@@ -40,7 +40,7 @@ import TextField from '@mui/material/TextField'
 import axios from 'axios'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState, useCallback } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
 
 interface ComponentProps {
@@ -860,7 +860,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
                           style={{
                             width: '250px',
                           }}
-                          className="bg-red-400 text-black rounded-lg px-4 py-2 hover:bg-green-500"
+                          className="bg-red-400 text-black rounded-lg px-4 py-2 hover:bg-red-500"
                         >
                           Revert Pending Allocation
                         </Button>
