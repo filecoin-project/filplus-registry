@@ -862,7 +862,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
                           }}
                           className="bg-red-400 text-black rounded-lg px-4 py-2 hover:bg-green-500"
                         >
-                          Remove Pending Allocation
+                          Revert Pending Allocation
                         </Button>
                       </div>
                     )}
