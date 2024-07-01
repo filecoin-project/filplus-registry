@@ -1,21 +1,22 @@
-import { useState } from 'react'
+import useWallet from '@/hooks/useWallet'
 import {
-  useQueryClient,
-  useMutation,
-  type UseMutationResult,
-} from 'react-query'
-import {
-  postApplicationTrigger,
-  postApplicationProposal,
-  postApplicationApproval,
-  postApproveChanges,
-  postApplicationDecline,
   postAdditionalInfoRequest,
+  postApplicationApproval,
+  postApplicationDecline,
+  postApplicationProposal,
+  postApplicationTrigger,
+  postApproveChanges,
+  postRemoveAlloc,
   postRequestKyc,
   triggerSSA,
 } from '@/lib/apiClient'
-import useWallet from '@/hooks/useWallet'
-import { type RefillUnit, type Application } from '@/type'
+import { type Application, type RefillUnit } from '@/type'
+import { useState } from 'react'
+import {
+  useMutation,
+  useQueryClient,
+  type UseMutationResult,
+} from 'react-query'
 
 interface ApplicationActions {
   application: Application
@@ -35,6 +36,12 @@ interface ApplicationActions {
     unknown
   >
   mutationRequestKyc: UseMutationResult<
+    Application | undefined,
+    unknown,
+    { userName: string },
+    unknown
+  >
+  mutationRemovePendingAllocation: UseMutationResult<
     Application | undefined,
     unknown,
     { userName: string },
@@ -218,6 +225,26 @@ const useApplicationActions = (
   >(
     async ({ userName }) => {
       return await postRequestKyc(initialApplication.ID, userName, repo, owner)
+    },
+    {
+      onSuccess: (data) => {
+        setApiCalling(false)
+        if (data != null) updateCache(data)
+      },
+      onError: () => {
+        setApiCalling(false)
+      },
+    },
+  )
+
+  const mutationRemovePendingAllocation = useMutation<
+    Application | undefined,
+    unknown,
+    { userName: string },
+    unknown
+  >(
+    async ({ userName }) => {
+      return await postRemoveAlloc(initialApplication.ID, userName, repo, owner)
     },
     {
       onSuccess: (data) => {
@@ -489,6 +516,7 @@ const useApplicationActions = (
     accounts,
     loadMoreAccounts,
     mutationTriggerSSA,
+    mutationRemovePendingAllocation,
   }
 }
 
