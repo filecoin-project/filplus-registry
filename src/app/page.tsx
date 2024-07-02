@@ -374,12 +374,12 @@ export default function Home(): JSX.Element {
                 repo={
                   selectedAllocator && typeof selectedAllocator !== 'string'
                     ? selectedAllocator.repo
-                    : ''
+                    : undefined
                 }
                 owner={
                   selectedAllocator && typeof selectedAllocator !== 'string'
                     ? selectedAllocator.owner
-                    : ''
+                    : undefined
                 }
                 key={app.ID}
               />
