@@ -190,6 +190,7 @@ const useWallet = (): WalletState => {
       try {
         pendingTxs = await wallet.api.pendingTransactions(multisigAddress)
       } catch (error) {
+        console.log(error)
         throw new Error(
           'An error with the lotus node occurred. Please reload. If the problem persists, contact support.',
         )
