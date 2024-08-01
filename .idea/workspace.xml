@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="0071e67d-da5d-4653-be1b-88fe83407210" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/src/components/DatacapAmountModal.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.env.prod.template" beforeDir="false" afterPath="$PROJECT_DIR$/.env.prod.template" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/cards/AppInfoCard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/cards/AppInfoCard.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/helpers/calculateAmountToRefill.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/helpers/calculateAmountToRefill.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/type.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/type.ts" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitToolBoxStore">
+    <option name="projectConfigVersion" value="5" />
+    <option name="recentBranches">
+      <RecentBranches>
+        <option name="branchesForRepo">
+          <list>
+            <RecentBranchesForRepo>
+              <option name="branches">
+                <list>
+                  <RecentBranch>
+                    <option name="branchName" value="fix/FIL-163-streamline-refill-process" />
+                    <option name="lastUsedInstant" value="1722347250" />
+                  </RecentBranch>
+                  <RecentBranch>
+                    <option name="branchName" value="main" />
+                    <option name="lastUsedInstant" value="1722328668" />
+                  </RecentBranch>
+                </list>
+              </option>
+              <option name="repositoryRootUrl" value="file://$PROJECT_DIR$" />
+            </RecentBranchesForRepo>
+          </list>
+        </option>
+      </RecentBranches>
+    </option>
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;customColor&quot;: &quot;&quot;,
+  &quot;associatedIndex&quot;: 4
+}</component>
+  <component name="ProjectId" id="2etqUyL6qXQ3e9TQeICUcNDR5sr" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;dart.analysis.tool.window.visible&quot;: &quot;false&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;fix/FIL-163-streamline-refill-process&quot;,
+    &quot;js.ns.project&quot;: &quot;true&quot;,
+    &quot;js.ns.project.flavor&quot;: &quot;TypeScript&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/tomaszplocic/code/filplus-registry/src/hooks&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;prettierjs.PrettierConfiguration.Package&quot;: &quot;/Users/tomaszplocic/code/filplus-registry/node_modules/prettier&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;/Users/tomaszplocic/code/filplus-registry/node_modules/typescript/lib&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  }
+}</component>
+  <component name="ReactBuddySettings">
+    <option name="extensionsIgnore" value="true" />
+  </component>
+  <component name="ReactDesignerToolWindowState">
+    <option name="myId2Visible">
+      <map>
+        <entry key="com.intellij.reactbuddy.reactComponents" value="false" />
+        <entry key="com.intellij.reactbuddy.reactInspector" value="false" />
+        <entry key="com.intellij.reactbuddy.storybook" value="false" />
+      </map>
+    </option>
+  </component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/src/hooks" />
+    </key>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-js-predefined-1d06a55b98c1-74d2a5396914-JavaScript-WS-241.14494.235" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="0071e67d-da5d-4653-be1b-88fe83407210" name="Changes" comment="" />
+      <created>1691096153104</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1691096153104</updated>
+      <workItem from="1712734244721" duration="13047000" />
+      <workItem from="1712827453641" duration="2367000" />
+      <workItem from="1712910813318" duration="1580000" />
+      <workItem from="1713176776041" duration="2717000" />
+      <workItem from="1713274326320" duration="3918000" />
+      <workItem from="1713345918834" duration="5546000" />
+      <workItem from="1713432187704" duration="3284000" />
+      <workItem from="1713517764933" duration="2186000" />
+      <workItem from="1714385151507" duration="723000" />
+      <workItem from="1714472807372" duration="614000" />
+      <workItem from="1716362799915" duration="6000" />
+      <workItem from="1722328505540" duration="1741000" />
+      <workItem from="1722331086360" duration="1153000" />
+      <workItem from="1722332282868" duration="8228000" />
+      <workItem from="1722434854212" duration="3918000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+</project>

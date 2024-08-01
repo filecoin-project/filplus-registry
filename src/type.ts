@@ -6,7 +6,6 @@ export enum RefillUnit {
 
 export interface RequestAmount {
   amount: string
-  amountType: RefillUnit
 }
 
 export interface Application {

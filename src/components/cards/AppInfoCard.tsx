@@ -9,17 +9,12 @@ import useApplicationActions from '@/hooks/useApplicationActions'
 import { useAllocator } from '@/lib/AllocatorProvider'
 import { stateColor, stateMapping } from '@/lib/constants'
 import { getAllowanceForAddress } from '@/lib/dmobApi'
-import {
-  anyToBytes,
-  bytesToiB,
-  calculateDatacap,
-  getLastDatacapAllocation,
-} from '@/lib/utils'
+import { anyToBytes, bytesToiB, getLastDatacapAllocation } from '@/lib/utils'
 import {
   LDNActorType,
-  RefillUnit,
   type Allocation,
   type Application,
+  type RefillUnit,
 } from '@/type'
 import {
   Dialog,
@@ -27,15 +22,6 @@ import {
   DialogContent,
   DialogTitle,
 } from '@mui/material'
-import Box from '@mui/material/Box'
-import FormControl from '@mui/material/FormControl'
-import FormControlLabel from '@mui/material/FormControlLabel'
-import FormLabel from '@mui/material/FormLabel'
-import InputLabel from '@mui/material/InputLabel'
-import MenuItem from '@mui/material/MenuItem'
-import Radio from '@mui/material/Radio'
-import RadioGroup from '@mui/material/RadioGroup'
-import Select, { type SelectChangeEvent } from '@mui/material/Select'
 import TextField from '@mui/material/TextField'
 import axios from 'axios'
 import { useSession } from 'next-auth/react'
@@ -43,6 +29,7 @@ import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
 import AllocatorBalance from '../AllocatorBalance'
+import DatacapAmountModal from '@/components/DatacapAmountModal'
 
 interface ComponentProps {
   application: Application
@@ -107,11 +94,11 @@ const AppInfoCard: React.FC<ComponentProps> = ({
 
   const [refillInfoParams, setRefillInfoParams] = useState<{
     amount: string
-    unit: RefillUnit
+    allocationType: string
     isDialogOpen: boolean
   }>({
     amount: '0',
-    unit: RefillUnit.GIB,
+    allocationType: '',
     isDialogOpen: false,
   })
 
@@ -158,11 +145,11 @@ const AppInfoCard: React.FC<ComponentProps> = ({
    */
   useEffect(() => {
     void (async (): Promise<void> => {
-      const { amount, amountType } = calculateAmountToRequest(application)
+      const { amount } = calculateAmountToRequest(application)
 
       setRefillInfoParams({
-        amount: amount.toString(),
-        unit: amountType,
+        amount,
+        allocationType: '',
         isDialogOpen: false,
       })
       const address = application.Lifecycle['On Chain Address']
@@ -441,7 +428,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
                 throw new Error('No datacap allocation found')
               }
               const queryParams = [
-                `client=${encodeURIComponent(res?.Client.Name)}`,
+                `client=${encodeURIComponent(res?.Client.Name ?? '')}`,
                 `messageCID=${encodeURIComponent(
                   lastDatacapAllocation.Signers[1]['Message CID'],
                 )}`,
@@ -586,16 +573,32 @@ const AppInfoCard: React.FC<ComponentProps> = ({
 
     setApiCalling(false)
   }
+
+  const getUnitFromDatacap = (datacap: string): RefillUnit => {
+    return datacap.substring(datacap.length - 3) as RefillUnit
+  }
+
+  const getAmountFromDatacap = (datacap: string): string => {
+    return datacap.substring(0, datacap.length - 3)
+  }
+
   const handleSSASubmit = async (): Promise<void> => {
     setApiCalling(true)
     const userName = session.data?.user?.githubUsername
     if (!userName) return
 
     try {
+      console.log('handleSSASubmit')
+      console.log(refillInfoParams)
+      console.log({
+        userName,
+        amount: getAmountFromDatacap(refillInfoParams.amount),
+        unit: getUnitFromDatacap(refillInfoParams.amount),
+      })
       await mutationTriggerSSA.mutateAsync({
         userName,
-        amount: refillInfoParams.amount,
-        unit: refillInfoParams.unit,
+        amount: getAmountFromDatacap(refillInfoParams.amount),
+        unit: getUnitFromDatacap(refillInfoParams.amount),
       })
     } catch (err) {
       handleSSAError(err)
@@ -881,14 +884,18 @@ const AppInfoCard: React.FC<ComponentProps> = ({
                           'AdditionalInfoRequired',
                           'AdditionalInfoSubmitted',
                           'ChangesRequested',
-                        ].includes(application?.Lifecycle?.State)) && (
+                        ].includes(
+                          application?.Lifecycle?.State.toString() ?? '',
+                        )) && (
                         <>
                           {[
                             'KYCRequested',
                             'Submitted',
                             'AdditionalInfoRequired',
                             'AdditionalInfoSubmitted',
-                          ].includes(application?.Lifecycle?.State) && (
+                          ].includes(
+                            application?.Lifecycle?.State.toString() ?? '',
+                          ) && (
                             <div className="flex gap-2">
                               <Button
                                 onClick={() => {
@@ -940,7 +947,9 @@ const AppInfoCard: React.FC<ComponentProps> = ({
                         'ChangesRequested',
                         'AdditionalInfoRequired',
                         'AdditionalInfoSubmitted',
-                      ].includes(application?.Lifecycle?.State) && (
+                      ].includes(
+                        application?.Lifecycle?.State.toString() ?? '',
+                      ) && (
                         <Button
                           onClick={() => void handleConnectLedger()}
                           disabled={
@@ -963,8 +972,8 @@ const AppInfoCard: React.FC<ComponentProps> = ({
                       disabled={isApiCalling}
                       onClick={() => {
                         setRefillInfoParams((prev) => ({
-                          amount: prev.amount || '1',
-                          unit: prev.unit || RefillUnit.GIB,
+                          allocationType: '',
+                          amount: '0',
                           isDialogOpen: true,
                         }))
                       }}
@@ -983,105 +992,32 @@ const AppInfoCard: React.FC<ComponentProps> = ({
           </CardFooter>
         </div>
       </Card>
-      <Dialog
-        open={refillInfoParams.isDialogOpen}
+      <DatacapAmountModal
+        application={application}
+        allocation={allocation}
+        allocationConfig={refillInfoParams}
+        setAllocationConfig={setRefillInfoParams}
+        title="Datacap Refill Request"
+        isWalletConnecting={isWalletConnecting}
+        isApiCalling={isApiCalling}
         onClose={() => {
           setRefillInfoParams((prev) => ({
             ...prev,
             isDialogOpen: false,
           }))
         }}
-        fullWidth
-      >
-        <DialogTitle>Datacap Refill Request</DialogTitle>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault()
-            void handleSSASubmit()
-          }}
-        >
-          <DialogContent
-            style={{
-              paddingTop: '8px',
-            }}
-          >
-            {(isApiCalling || isWalletConnecting) && (
-              <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-                <Spinner />
-              </div>
-            )}
-            <div className="flex gap-3 items-center">
-              <div>
-                <Box sx={{ width: 230 }}>
-                  <FormControl fullWidth>
-                    <TextField
-                      label="Amount"
-                      id="outlined-number"
-                      type="number"
-                      InputProps={{
-                        inputProps: { min: 1 },
-                      }}
-                      value={refillInfoParams.amount}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        setRefillInfoParams((prev) => ({
-                          ...prev,
-                          amount: e.target.value,
-                        }))
-                      }}
-                      variant="outlined"
-                      required
-                    />
-                  </FormControl>
-                </Box>
-              </div>
-              <div>
-                <Box sx={{ width: 230 }}>
-                  <FormControl fullWidth>
-                    <InputLabel>Unit</InputLabel>
-                    <Select
-                      value={refillInfoParams.unit}
-                      label="Unit"
-                      onChange={(e: SelectChangeEvent) => {
-                        setRefillInfoParams((prev) => ({
-                          ...prev,
-                          unit: e.target.value as RefillUnit,
-                        }))
-                      }}
-                    >
-                      {Object.values(RefillUnit).map((e) => (
-                        <MenuItem key={e} value={e}>
-                          {e}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Box>
-              </div>
-            </div>
-          </DialogContent>
-          <DialogActions
-            style={{
-              padding: '0 24px 20px 24px',
-            }}
-          >
-            <Button
-              type="button"
-              disabled={isApiCalling}
-              onClick={() => {
-                setRefillInfoParams((prev) => ({
-                  ...prev,
-                  isDialogOpen: false,
-                }))
-              }}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isApiCalling}>
-              Submit
-            </Button>
-          </DialogActions>
-        </form>
-      </Dialog>
+        onCancel={() => {
+          setRefillInfoParams((prev) => ({
+            ...prev,
+            isDialogOpen: false,
+          }))
+        }}
+        onConfirm={() => {
+          console.log('confirm')
+          console.log(refillInfoParams)
+          void handleSSASubmit()
+        }}
+      />
       <Dialog
         open={additionalInfoConfig.isDialogOpen}
         onClose={() => {
@@ -1140,165 +1076,20 @@ const AppInfoCard: React.FC<ComponentProps> = ({
           </Button>
         </DialogActions>
       </Dialog>
-      <Dialog
-        open={allocationAmountConfig.isDialogOpen}
+      <DatacapAmountModal
+        application={application}
+        allocation={allocation}
+        allocationConfig={allocationAmountConfig}
+        setAllocationConfig={setAllocationAmountConfig}
         onClose={() => {
           void handleAllocationAmountClose(false)
         }}
-        fullWidth
-      >
-        <DialogTitle
-        // className='flex justify-center'
-        >
-          Fill DataCap Amount for current allocation
-        </DialogTitle>
-        <DialogContent
-          style={{
-            paddingTop: '8px',
-          }}
-        >
-          {(isApiCalling || isWalletConnecting) && (
-            <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-              <Spinner />
-            </div>
-          )}
-          <div className="flex gap-3 items-center">
-            <FormControl>
-              <FormLabel id="demo-controlled-radio-buttons-group">
-                Allocation Amount Type
-              </FormLabel>
-              <RadioGroup
-                aria-labelledby="demo-controlled-radio-buttons-group"
-                value={allocationAmountConfig.allocationType}
-                onChange={(e) => {
-                  if (e.target.value !== 'manual') {
-                    setAllocationAmountConfig({
-                      ...allocationAmountConfig,
-                      amount: '',
-                    })
-                  }
-                  setAllocationAmountConfig((prev) => ({
-                    ...prev,
-                    allocationType: (e.target as HTMLInputElement).value,
-                  }))
-                }}
-              >
-                <FormControlLabel
-                  value={
-                    allocation?.allocation_amount_type
-                      ? allocation.allocation_amount_type
-                      : 'fixed'
-                  }
-                  control={<Radio />}
-                  label={
-                    allocation?.allocation_amount_type
-                      ? allocation.allocation_amount_type
-                          .charAt(0)
-                          .toUpperCase() +
-                        allocation.allocation_amount_type.slice(1)
-                      : 'Fixed'
-                  }
-                />
-                <FormControlLabel
-                  value="manual"
-                  control={<Radio />}
-                  label="Manual"
-                />
-              </RadioGroup>
-            </FormControl>
-            <div>
-              {!allocationAmountConfig.allocationType ||
-              allocationAmountConfig.allocationType === 'percentage' ||
-              allocationAmountConfig.allocationType === 'fixed' ? (
-                <Box sx={{ width: 230 }}>
-                  <FormControl fullWidth>
-                    <InputLabel>Amount</InputLabel>
-                    <Select
-                      disabled={!allocationAmountConfig.allocationType}
-                      value={allocationAmountConfig.amount}
-                      label="Allocation Amount"
-                      onChange={(e: SelectChangeEvent) => {
-                        setAllocationAmountConfig((prev) => ({
-                          ...prev,
-                          amount: e.target.value,
-                        }))
-                      }}
-                    >
-                      {(allocation?.allocation_amount_type
-                        ? allocation.allocation_amount_quantity_options
-                        : ['1TiB', '5TiB', '50TiB', '100TiB', '1PiB']
-                      ).map((e) => {
-                        return (
-                          <MenuItem
-                            key={e}
-                            value={
-                              allocationAmountConfig.allocationType ===
-                              'percentage'
-                                ? calculateDatacap(
-                                    e,
-                                    application.Datacap[
-                                      'Total Requested Amount'
-                                    ],
-                                  )
-                                : e
-                            }
-                          >
-                            {e}
-                            {allocationAmountConfig.allocationType ===
-                            'percentage'
-                              ? `% - ${calculateDatacap(
-                                  e,
-                                  application.Datacap['Total Requested Amount'],
-                                )}`
-                              : ''}
-                          </MenuItem>
-                        )
-                      })}
-                    </Select>
-                  </FormControl>
-                </Box>
-              ) : (
-                <Box
-                  sx={{
-                    width: 230,
-                  }}
-                >
-                  <TextField
-                    id="outlined-controlled"
-                    label="Amount"
-                    disabled={!allocationAmountConfig.allocationType}
-                    value={allocationAmountConfig.amount}
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                      setAllocationAmountConfig((prev) => ({
-                        ...prev,
-                        amount: event.target.value,
-                      }))
-                    }}
-                  />
-                </Box>
-              )}
-            </div>
-          </div>
-        </DialogContent>
-        <DialogActions
-          style={{
-            padding: '0 24px 20px 24px',
-          }}
-        >
-          <Button
-            disabled={isApiCalling}
-            onClick={() => void handleAllocationAmountClose(false)}
-          >
-            Cancel
-          </Button>
-          <Button
-            disabled={isApiCalling || !allocationAmountConfig.amount}
-            onClick={() => void handleAllocationAmountClose(true)}
-          >
-            Submit
-          </Button>
-        </DialogActions>
-      </Dialog>
+        onCancel={() => void handleAllocationAmountClose(false)}
+        onConfirm={() => void handleAllocationAmountClose(true)}
+        isApiCalling={isApiCalling}
+        isWalletConnecting={isWalletConnecting}
+        title="Fill DataCap Amount for current allocation"
+      />
     </>
   )
 }
