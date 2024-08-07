@@ -5,11 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="0071e67d-da5d-4653-be1b-88fe83407210" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/components/DatacapAmountModal.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.env.prod.template" beforeDir="false" afterPath="$PROJECT_DIR$/.env.prod.template" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/filplus-registry.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/codeStyles/Project.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/codeStyles/Project.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/components/cards/AppInfoCard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/cards/AppInfoCard.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/helpers/calculateAmountToRefill.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/helpers/calculateAmountToRefill.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/type.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/type.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -30,11 +31,11 @@
                 <list>
                   <RecentBranch>
                     <option name="branchName" value="fix/FIL-163-streamline-refill-process" />
-                    <option name="lastUsedInstant" value="1722347250" />
+                    <option name="lastUsedInstant" value="1722847152" />
                   </RecentBranch>
                   <RecentBranch>
                     <option name="branchName" value="main" />
-                    <option name="lastUsedInstant" value="1722328668" />
+                    <option name="lastUsedInstant" value="1722501922" />
                   </RecentBranch>
                 </list>
               </option>
@@ -61,14 +62,14 @@
     &quot;git-widget-placeholder&quot;: &quot;fix/FIL-163-streamline-refill-process&quot;,
     &quot;js.ns.project&quot;: &quot;true&quot;,
     &quot;js.ns.project.flavor&quot;: &quot;TypeScript&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/Users/tomaszplocic/code/filplus-registry/src/hooks&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/tomaszplocic/code/filplus-registry&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
     &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
     &quot;prettierjs.PrettierConfiguration.Package&quot;: &quot;/Users/tomaszplocic/code/filplus-registry/node_modules/prettier&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;settings.typescriptcompiler&quot;,
     &quot;ts.external.directory.path&quot;: &quot;/Users/tomaszplocic/code/filplus-registry/node_modules/typescript/lib&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
@@ -89,13 +90,6 @@
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/src/hooks" />
     </key>
-  </component>
-  <component name="SharedIndexes">
-    <attachedChunks>
-      <set>
-        <option value="bundled-js-predefined-1d06a55b98c1-74d2a5396914-JavaScript-WS-241.14494.235" />
-      </set>
-    </attachedChunks>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
@@ -119,7 +113,11 @@
       <workItem from="1722328505540" duration="1741000" />
       <workItem from="1722331086360" duration="1153000" />
       <workItem from="1722332282868" duration="8228000" />
-      <workItem from="1722434854212" duration="3918000" />
+      <workItem from="1722434854212" duration="5176000" />
+      <workItem from="1722847119736" duration="3881000" />
+      <workItem from="1722931897120" duration="125000" />
+      <workItem from="1723030810219" duration="170000" />
+      <workItem from="1723030985636" duration="1850000" />
     </task>
     <servers />
   </component>

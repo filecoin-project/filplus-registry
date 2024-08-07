@@ -382,12 +382,17 @@ const AppInfoCard: React.FC<ComponentProps> = ({
         case 'ReadyToSign':
           if (requestId != null && userName != null) {
             if (application['Allocation Requests'].length > 1) {
+              const newest = application['Allocation Requests'][application['Allocation Requests'].length - 1]
               setAllocationAmountConfig((prev) => {
                 return {
                   ...prev,
-                  isDialogOpen: true,
+                  amount: newest['Allocation Amount'],
+                  isDialogOpen: newest['Request Type'] !== 'Refill',
                 }
               })
+              if (newest['Request Type'] === 'Refill') {
+                await handleAllocationAmountClose(true)
+              }
             } else {
               // check the balance here
 
