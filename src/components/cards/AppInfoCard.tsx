@@ -382,7 +382,10 @@ const AppInfoCard: React.FC<ComponentProps> = ({
         case 'ReadyToSign':
           if (requestId != null && userName != null) {
             if (application['Allocation Requests'].length > 1) {
-              const newest = application['Allocation Requests'][application['Allocation Requests'].length - 1]
+              const newest =
+                application['Allocation Requests'][
+                  application['Allocation Requests'].length - 1
+                ]
               setAllocationAmountConfig((prev) => {
                 return {
                   ...prev,

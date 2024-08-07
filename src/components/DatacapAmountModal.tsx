@@ -81,10 +81,16 @@ const DatacapAmountModal = ({
                     amount: '',
                   })
                 }
-                setAllocationConfig((prev) => ({
-                  ...prev,
-                  allocationType: (e.target as HTMLInputElement).value,
-                }))
+                setAllocationConfig(
+                  (prev: {
+                    amount: string
+                    allocationType: string
+                    isDialogOpen: boolean
+                  }) => ({
+                    ...prev,
+                    allocationType: (e.target as HTMLInputElement).value,
+                  }),
+                )
               }}
             >
               <FormControlLabel
@@ -122,10 +128,16 @@ const DatacapAmountModal = ({
                     value={allocationConfig.amount}
                     label="Allocation Amount"
                     onChange={(e: SelectChangeEvent) => {
-                      setAllocationConfig((prev) => ({
-                        ...prev,
-                        amount: e.target.value,
-                      }))
+                      setAllocationConfig(
+                        (prev: {
+                          amount: string
+                          allocationType: string
+                          isDialogOpen: boolean
+                        }) => ({
+                          ...prev,
+                          amount: e.target.value,
+                        }),
+                      )
                     }}
                   >
                     {(allocation?.allocation_amount_type
@@ -169,10 +181,16 @@ const DatacapAmountModal = ({
                   disabled={!allocationConfig.allocationType}
                   value={allocationConfig.amount}
                   onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                    setAllocationConfig((prev) => ({
-                      ...prev,
-                      amount: event.target.value,
-                    }))
+                    setAllocationConfig(
+                      (prev: {
+                        amount: string
+                        allocationType: string
+                        isDialogOpen: boolean
+                      }) => ({
+                        ...prev,
+                        amount: event.target.value,
+                      }),
+                    )
                   }}
                 />
               </Box>

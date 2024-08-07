@@ -5,11 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="0071e67d-da5d-4653-be1b-88fe83407210" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/filplus-registry.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/codeStyles/Project.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/codeStyles/Project.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/DatacapAmountModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/DatacapAmountModal.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/components/cards/AppInfoCard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/cards/AppInfoCard.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -117,7 +114,7 @@
       <workItem from="1722847119736" duration="3881000" />
       <workItem from="1722931897120" duration="125000" />
       <workItem from="1723030810219" duration="170000" />
-      <workItem from="1723030985636" duration="1850000" />
+      <workItem from="1723030985636" duration="2102000" />
     </task>
     <servers />
   </component>
