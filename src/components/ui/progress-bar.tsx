@@ -3,6 +3,7 @@ import React from 'react'
 interface ProgressBarProps {
   progress: number
   label: string
+  usedDesc?: string
 }
 
 /**
@@ -12,7 +13,11 @@ interface ProgressBarProps {
  * @prop {number} progress - The progress of the progress bar.
  * @prop {string} label - The label of the progress bar.
  */
-const ProgressBar: React.FC<ProgressBarProps> = ({ progress, label }) => {
+const ProgressBar: React.FC<ProgressBarProps> = ({
+  progress,
+  label,
+  usedDesc,
+}) => {
   const greenProgress = Math.min(progress, 50)
   const yellowProgress = Math.min(Math.max(progress - 50, 0), 35)
   const redProgress = Math.min(Math.max(progress - 85, 0), 15)
@@ -27,7 +32,7 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ progress, label }) => {
         </div>
         <div className="text-right">
           <span className="text-xs font-semibold inline-block text-blue-600">
-            {`${progress.toFixed(2)}%`}
+            {usedDesc} ({progress.toFixed(2)}%)
           </span>
         </div>
       </div>

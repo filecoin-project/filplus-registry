@@ -97,6 +97,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
   const [walletConnected, setWalletConnected] = useState(false)
   const [isWalletConnecting, setIsWalletConnecting] = useState(false)
   const [progress, setProgress] = useState(0)
+  const [allocationProgressDesc, setAllocationProgressDesc] = useState('-')
   const [currentActorType, setCurrentActorType] = useState<LDNActorType | ''>(
     '',
   )
@@ -172,9 +173,9 @@ const AppInfoCard: React.FC<ComponentProps> = ({
         const lastAllocation = getLastDatacapAllocation(application)
         if (lastAllocation === undefined) return
 
-        const allocationAmount = anyToBytes(
-          lastAllocation['Allocation Amount'] ?? '0',
-        )
+        const lastAllocationUnit = lastAllocation['Allocation Amount'] ?? '0'
+
+        const allocationAmount = anyToBytes(lastAllocationUnit)
 
         if (
           allocationAmount < allowance ||
@@ -185,15 +186,18 @@ const AppInfoCard: React.FC<ComponentProps> = ({
         }
 
         const usedDatacap = allocationAmount - allowance
+        const usedDatacapUnit = bytesToiB(usedDatacap, true)
 
         const progressPercentage = (usedDatacap / allocationAmount) * 100
         setIsProgressBarVisible(true)
         setProgress(progressPercentage)
+        setAllocationProgressDesc(`${usedDatacapUnit} / ${lastAllocationUnit}`)
       } else {
         if (response.error === 'Address not found') {
           setIsProgressBarVisible(application.Lifecycle.State === 'Granted')
           if (application.Lifecycle.State === 'Granted') {
             setProgress(100)
+            setAllocationProgressDesc('Recent allocation fully used')
           }
         } else {
           console.error(response.error)
@@ -828,7 +832,11 @@ const AppInfoCard: React.FC<ComponentProps> = ({
 
         <CardContent>
           {isProgressBarVisible && (
-            <ProgressBar progress={progress} label="Datacap used" />
+            <ProgressBar
+              progress={progress}
+              label="Datacap used from most recent allocation"
+              usedDesc={allocationProgressDesc}
+            />
           )}
         </CardContent>
         <div>
