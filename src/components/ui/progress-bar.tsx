@@ -32,7 +32,7 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
         </div>
         <div className="text-right">
           <span className="text-xs font-semibold inline-block text-blue-600">
-            {usedDesc}
+            {usedDesc} ({progress.toFixed(2)}%)
           </span>
         </div>
       </div>

@@ -197,7 +197,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
           setIsProgressBarVisible(application.Lifecycle.State === 'Granted')
           if (application.Lifecycle.State === 'Granted') {
             setProgress(100)
-            setAllocationProgressDesc('Datacap fully used')
+            setAllocationProgressDesc('Recent allocation fully used')
           }
         } else {
           console.error(response.error)
@@ -834,7 +834,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
           {isProgressBarVisible && (
             <ProgressBar
               progress={progress}
-              label="Datacap used"
+              label="Datacap used from most recent allocation"
               usedDesc={allocationProgressDesc}
             />
           )}
