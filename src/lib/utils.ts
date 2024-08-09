@@ -1,11 +1,11 @@
-import { type ClassValue, clsx } from 'clsx'
-import { twMerge } from 'tailwind-merge'
-import ByteConverter from '@wtfcode/byte-converter'
 import {
-  type Application,
   type AllocationRequest,
+  type Application,
   type ByteConverterAutoscaleOptions,
 } from '@/type'
+import ByteConverter from '@wtfcode/byte-converter'
+import { type ClassValue, clsx } from 'clsx'
+import { twMerge } from 'tailwind-merge'
 
 export function cn(...inputs: ClassValue[]): string {
   return twMerge(clsx(inputs))
@@ -44,8 +44,13 @@ export function anyToBytes(inputDatacap: string): number {
     .replace(/\s*/g, '')
   const ext = formatDc.replace(/[0-9.]/g, '')
   const datacap = formatDc.replace(/[^0-9.]/g, '')
-  const bytes = byteConverter.convert(parseFloat(datacap), ext, 'B')
-  return bytes
+  try {
+    const bytes = byteConverter.convert(parseFloat(datacap), ext, 'B')
+    return bytes
+  } catch (e) {
+    console.error(e)
+    return 0
+  }
 }
 
 export const getLastDatacapAllocation = (

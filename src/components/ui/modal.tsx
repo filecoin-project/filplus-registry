@@ -1,6 +1,6 @@
 import { Button } from './button'
 interface ModalProps {
-  message?: string
+  message?: React.ReactNode
   onClose: () => void
   error?: boolean
 }
