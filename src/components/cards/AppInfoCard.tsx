@@ -4,7 +4,9 @@ import AccountSelectionDialog from '@/components/ui/ledger-account-select'
 import { Modal } from '@/components/ui/modal'
 import ProgressBar from '@/components/ui/progress-bar'
 import { Spinner } from '@/components/ui/spinner'
-import calculateAmountToRequest from '@/helpers/calculateAmountToRefill'
+import calculateAmountToRequest, {
+  validateAmount,
+} from '@/helpers/calculateAmountToRefill'
 import useApplicationActions from '@/hooks/useApplicationActions'
 import { useAllocator } from '@/lib/AllocatorProvider'
 import { stateColor, stateMapping } from '@/lib/constants'
@@ -40,7 +42,13 @@ import TextField from '@mui/material/TextField'
 import axios from 'axios'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { useCallback, useEffect, useState } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react'
 import { toast } from 'react-toastify'
 import AllocatorBalance from '../AllocatorBalance'
 
@@ -92,7 +100,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
     mutationRemovePendingAllocation,
   } = useApplicationActions(initialApplication, repo, owner)
   const [buttonText, setButtonText] = useState('')
-  const [modalMessage, setModalMessage] = useState<string | null>(null)
+  const [modalMessage, setModalMessage] = useState<ReactNode | null>(null)
   const [error, setError] = useState<boolean>(false)
   const [walletConnected, setWalletConnected] = useState(false)
   const [isWalletConnecting, setIsWalletConnecting] = useState(false)
@@ -608,6 +616,30 @@ const AppInfoCard: React.FC<ComponentProps> = ({
     }))
   }
 
+  const totalAmountIsValid = useMemo(
+    () => validateAmount(application.Datacap['Total Requested Amount']),
+    [application.Datacap],
+  )
+  const weeklyAllocationRequestIsValid = useMemo(
+    () => validateAmount(application.Datacap['Weekly Allocation']),
+    [application.Datacap],
+  )
+
+  const createInvalidFieldsModalContent = (
+    totalAmountIsValid: boolean,
+    weeklyAllocationRequestIsValid: boolean,
+  ): string => {
+    let modalMessage = ''
+    if (!totalAmountIsValid) modalMessage = '"Total Requested Amount"'
+    if (!weeklyAllocationRequestIsValid) {
+      if (!totalAmountIsValid) modalMessage += ' and '
+      modalMessage += '"Weekly Allocation"'
+    }
+    modalMessage +=
+      ' is not a valid amount format. Please navigate to the application below and update the field. (e.g 100TiB, 600.46GiB, 1.5PiB)'
+    return modalMessage
+  }
+
   useEffect(() => {
     // if not the first allocation, prefill the amount with ssa bot suggested value
     if (
@@ -623,7 +655,38 @@ const AppInfoCard: React.FC<ComponentProps> = ({
         isDialogOpen: false,
       }))
     }
-  }, [application])
+
+    if (!totalAmountIsValid || !weeklyAllocationRequestIsValid) {
+      const modalMessage = createInvalidFieldsModalContent(
+        totalAmountIsValid,
+        weeklyAllocationRequestIsValid,
+      )
+
+      const link = (
+        <a
+          target="_blank noopener noreferrer"
+          href={`https://github.com/${owner}/${repo}/issues/${application['Issue Number']}`}
+        >
+          https://github.com/{owner}/{repo}/issues/
+          {application['Issue Number']}
+        </a>
+      )
+      setModalMessage(
+        <>
+          {modalMessage}
+          <br />
+          {link}
+        </>,
+      )
+      setError(true)
+    }
+  }, [
+    application,
+    totalAmountIsValid,
+    weeklyAllocationRequestIsValid,
+    owner,
+    repo,
+  ])
 
   const stateLabel =
     stateMapping[application.Lifecycle.State as keyof typeof stateMapping] ??
