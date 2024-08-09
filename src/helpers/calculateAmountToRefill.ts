@@ -49,8 +49,7 @@ export default function calculateAmountToRequest(
     )
 
     let retObj: RequestAmount = {
-      amount: '0',
-      amountType: RefillUnit.GIB,
+      amount: '0GiB',
     }
     if (sumTotalAmountWithNextRequest > totaldDcRequestedByClient) {
       nextRequest = totaldDcRequestedByClient - totalDcGrantedForClientSoFar
@@ -58,8 +57,7 @@ export default function calculateAmountToRequest(
     }
     if (nextRequest <= 0) {
       retObj = {
-        amount: '0',
-        amountType: RefillUnit.GIB,
+        amount: '0GiB',
       }
       return retObj
     }
@@ -72,8 +70,7 @@ export default function calculateAmountToRequest(
     )
     if (matchedAvailableType) {
       retObj = {
-        amount,
-        amountType: matchedAvailableType,
+        amount: `${amount}${matchedAvailableType}`,
       }
       return retObj
     }
