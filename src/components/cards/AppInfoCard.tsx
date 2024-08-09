@@ -640,7 +640,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
       modalMessage += '"Weekly Allocation"'
     }
     modalMessage +=
-      ' is not a valid amount format. Please navigate to the application below and update the field. (e.g 100TiB, 600.46GiB, 1.5PiB)'
+      ' field has invalid value. Usually this means a missing unit. Please navigate to the application below and update the field. (examples of correct formats: 100TiB, 600.46GiB, 1.5PiB)'
     return modalMessage
   }
 
