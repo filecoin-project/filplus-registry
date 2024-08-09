@@ -145,13 +145,6 @@ const AppInfoCard: React.FC<ComponentProps> = ({
    */
   useEffect(() => {
     void (async (): Promise<void> => {
-      const { amount } = calculateAmountToRequest(application)
-
-      setRefillInfoParams({
-        amount,
-        allocationType: '',
-        isDialogOpen: false,
-      })
       const address = application.Lifecycle['On Chain Address']
       const response = await getAllowanceForAddress(address)
       if (response.success) {
@@ -979,11 +972,21 @@ const AppInfoCard: React.FC<ComponentProps> = ({
                     <Button
                       disabled={isApiCalling}
                       onClick={() => {
-                        setRefillInfoParams((prev) => ({
-                          allocationType: '',
-                          amount: '0',
+                        const { amount } = calculateAmountToRequest(application)
+                        const allocationType = [
+                          '1TiB',
+                          '5TiB',
+                          '50TiB',
+                          '100TiB',
+                          '1PiB',
+                        ].includes(amount)
+                          ? 'fixed'
+                          : 'manual'
+                        setRefillInfoParams({
+                          amount,
+                          allocationType,
                           isDialogOpen: true,
-                        }))
+                        })
                       }}
                     >
                       Trigger Refill
