@@ -1,9 +1,9 @@
-import { useState, useCallback } from 'react'
-import { LedgerWallet } from '@/lib/wallet/LedgerWallet'
-import { BurnerWallet } from '@/lib/wallet/BurnerWallet'
-import { config } from '../config'
-import { type IWallet } from '@/type'
 import { anyToBytes } from '@/lib/utils'
+import { BurnerWallet } from '@/lib/wallet/BurnerWallet'
+import { LedgerWallet } from '@/lib/wallet/LedgerWallet'
+import { type IWallet } from '@/type'
+import { useCallback, useState } from 'react'
+import { config } from '../config'
 
 /**
  * Registry that maps wallet class names to their respective classes.
@@ -222,16 +222,23 @@ const useWallet = (): WalletState => {
       setMessage('Sending proposal...')
 
       const bytesDatacap = Math.floor(anyToBytes(datacap))
-      const messageCID = await wallet.api.multisigVerifyClient(
-        multisigAddress,
-        clientAddress,
-        BigInt(bytesDatacap),
-        activeAccountIndex,
-      )
+      try {
+        const messageCID = await wallet.api.multisigVerifyClient(
+          multisigAddress,
+          clientAddress,
+          BigInt(bytesDatacap),
+          activeAccountIndex,
+        )
 
-      setMessage(`Proposal sent correctly. CID: ${messageCID as string}`)
+        setMessage(`Proposal sent correctly. CID: ${messageCID as string}`)
 
-      return messageCID
+        return messageCID
+      } catch (error) {
+        console.log(error)
+        throw new Error(
+          'Error sending proposal. Please try again or contact support.',
+        )
+      }
     },
     [wallet, multisigAddress, activeAccountIndex],
   )
@@ -250,16 +257,23 @@ const useWallet = (): WalletState => {
       if (multisigAddress == null) throw new Error('Multisig address not set.')
 
       setMessage('Sending approval...')
+      try {
+        const messageCID = await wallet.api.approvePending(
+          multisigAddress,
+          txHash,
+          activeAccountIndex,
+        )
 
-      const messageCID = await wallet.api.approvePending(
-        multisigAddress,
-        txHash,
-        activeAccountIndex,
-      )
+        setMessage(`Approval sent correctly. CID: ${messageCID as string}`)
 
-      setMessage(`Approval sent correctly. CID: ${messageCID as string}`)
+        return messageCID
+      } catch (error) {
+        console.log(error)
 
-      return messageCID
+        throw new Error(
+          'Error sending approval. Please try again or contact support.',
+        )
+      }
     },
     [wallet, multisigAddress, activeAccountIndex],
   )
