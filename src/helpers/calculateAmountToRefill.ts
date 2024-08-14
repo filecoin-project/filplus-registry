@@ -114,6 +114,6 @@ const splitString = (input: string): [string, string] => {
 }
 
 export const validateAmount = (amount: string): boolean => {
-  const regex = /^(\d+(\.\d+)?)([A-Za-z]iB)$/
+  const regex = /^(\d+(\.\d+)?)(\s?[A-Za-z]iB)$/
   return regex.test(amount)
 }
