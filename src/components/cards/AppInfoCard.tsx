@@ -573,27 +573,35 @@ const AppInfoCard: React.FC<ComponentProps> = ({
       return
     }
 
-    if (application.Lifecycle.State === 'ReadyToSign') {
-      const requestId = application['Allocation Requests'].find(
-        (alloc) => alloc.Active,
-      )?.ID
-      if (!requestId) return
+    try {
+      if (application.Lifecycle.State === 'ReadyToSign') {
+        const requestId = application['Allocation Requests'].find(
+          (alloc) => alloc.Active,
+        )?.ID
+        if (!requestId) return
 
+        setAllocationAmountConfig((prev) => ({
+          ...prev,
+          isDialogOpen: false,
+        }))
+
+        await mutationProposal.mutateAsync({
+          requestId,
+          userName,
+          allocationAmount: validatedAllocationAmount,
+        })
+      } else {
+        await mutationTrigger.mutateAsync({
+          userName,
+          allocationAmount: validatedAllocationAmount,
+        })
+      }
+    } catch (error) {
       setAllocationAmountConfig((prev) => ({
         ...prev,
         isDialogOpen: false,
       }))
-
-      await mutationProposal.mutateAsync({
-        requestId,
-        userName,
-        allocationAmount: validatedAllocationAmount,
-      })
-    } else {
-      await mutationTrigger.mutateAsync({
-        userName,
-        allocationAmount: validatedAllocationAmount,
-      })
+      handleSSAError(error)
     }
 
     setApiCalling(false)

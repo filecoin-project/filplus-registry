@@ -175,6 +175,7 @@ export const postApplicationDecline = async (
     return data
   } catch (error) {
     console.error(error)
+    throw error
   }
 }
 
@@ -211,6 +212,7 @@ export const postAdditionalInfoRequest = async (
     return data
   } catch (error) {
     console.error(error)
+    throw error
   }
 }
 
@@ -262,6 +264,7 @@ export const postRequestKyc = async (
     return data
   } catch (error) {
     console.error(error)
+    throw error
   }
 }
 
@@ -287,6 +290,7 @@ export const postRemoveAlloc = async (
     return data
   } catch (error) {
     console.error(error)
+    throw error
   }
 }
 
@@ -322,6 +326,7 @@ export const postApplicationTrigger = async (
     return data
   } catch (error) {
     console.error(error)
+    throw error
   }
 }
 
@@ -354,6 +359,7 @@ export const postApproveChanges = async (
     return data
   } catch (error) {
     console.error(error)
+    throw error
   }
 }
 
@@ -401,6 +407,7 @@ export const postApplicationProposal = async (
     return data
   } catch (error) {
     console.error(error)
+    throw error
   }
 }
 
@@ -445,6 +452,7 @@ export const postApplicationApproval = async (
     return data
   } catch (error) {
     console.error(error)
+    throw error
   }
 }
 
@@ -462,6 +470,7 @@ export const fetchLDNActors = async (): Promise<
     return data
   } catch (e) {
     console.error(e)
+    throw e
   }
 }
 /**
