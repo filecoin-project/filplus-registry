@@ -5,7 +5,7 @@ import ProjectInfoCard from '@/components/cards/ProjectInfoCard'
 import { Spinner } from '@/components/ui/spinner'
 import { useAllocator } from '@/lib/AllocatorProvider'
 import { getApplicationByParams } from '@/lib/apiClient'
-import { getAllowanceForAddress } from '@/lib/dmobApi'
+import { getAllowanceForVerifier } from '@/lib/glifApi'
 // import { anyToBytes, bytesToiB } from '@/lib/utils'
 import { useEffect, useState } from 'react'
 import { useQuery } from 'react-query'
@@ -35,7 +35,7 @@ const ApplicationDetailPage: React.FC<ComponentProps> = ({
 
   const getAllowance = async (address: string): Promise<void> => {
     try {
-      const response = await getAllowanceForAddress(address)
+      const response = await getAllowanceForVerifier(address)
 
       if (response.success) {
         setAllowanceMultisig(parseInt(response.data))
