@@ -10,7 +10,7 @@ import calculateAmountToRequest, {
 import useApplicationActions from '@/hooks/useApplicationActions'
 import { useAllocator } from '@/lib/AllocatorProvider'
 import { stateColor, stateMapping } from '@/lib/constants'
-import { getAllowanceForAddress } from '@/lib/dmobApi'
+import { getAllowanceForClient } from '@/lib/glifApi'
 import {
   anyToBytes,
   bytesToiB,
@@ -175,7 +175,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
         isDialogOpen: false,
       })
       const address = application.Lifecycle['On Chain Address']
-      const response = await getAllowanceForAddress(address)
+      const response = await getAllowanceForClient(address)
       if (response.success) {
         const allowance = parseFloat(response.data)
         const lastAllocation = getLastDatacapAllocation(application)

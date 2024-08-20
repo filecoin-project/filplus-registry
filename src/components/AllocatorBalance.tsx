@@ -1,5 +1,5 @@
 import { useAllocator } from '@/lib/AllocatorProvider'
-import { getAllowanceForAddress } from '@/lib/dmobApi'
+import { getAllowanceForVerifier } from '@/lib/glifApi'
 import { bytesToiB } from '@/lib/utils'
 import { useEffect, useMemo, useState } from 'react'
 
@@ -9,7 +9,7 @@ interface ComponentProps {
 }
 
 const getAllowance = async (address: string): Promise<number | null> => {
-  const response = await getAllowanceForAddress(address)
+  const response = await getAllowanceForVerifier(address)
 
   if (response.success) {
     return parseInt(response.data)

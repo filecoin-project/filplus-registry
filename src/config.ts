@@ -18,8 +18,12 @@ const localConfig = {
   numberOfWalletAccounts: 5,
   mnemonic: process.env.NEXT_PUBLIC_MNEMONIC,
   walletClass: 'LedgerWallet',
-  dmobApiUrl: 'https://api.filplus.d.interplanetary.one/public/api',
+  dmobApiUrl:
+    process.env.NEXT_PUBLIC_DMOB_API_URL ??
+    'https://api.datacapstats.io/public/api',
   dmobApiKey: process.env.NEXT_PUBLIC_DMOB_API_KEY ?? '',
+  glifNodeUrl:
+    process.env.NEXT_PUBLIC_GLIF_URL ?? 'https://api.node.glif.io/rpc/v1',
 }
 
 const prodConfig = {
@@ -42,8 +46,9 @@ const prodConfig = {
   numberOfWalletAccounts: 5,
   mnemonic: process.env.MNEMONIC,
   walletClass: 'LedgerWallet',
-  dmobApiUrl: 'https://api.filplus.d.interplanetary.one/public/api',
+  dmobApiUrl: process.env.NEXT_PUBLIC_DMOB_API_URL ?? '',
   dmobApiKey: process.env.NEXT_PUBLIC_DMOB_API_KEY ?? '',
+  glifNodeUrl: process.env.NEXT_PUBLIC_GLIF_URL ?? '',
 }
 
 export const config =
