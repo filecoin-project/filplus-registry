@@ -14,7 +14,7 @@
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.0",
     "@fontsource/roboto": "^5.0.12",
-    "@keyko-io/filecoin-verifier-tools": "^2.2.4",
+    "@glif/filecoin-address": "^3.0.4",
     "@ledgerhq/hw-transport-webusb": "^6.27.19",
     "@mui/material": "^5.15.14",
     "@radix-ui/react-avatar": "^1.0.3",
@@ -36,6 +36,7 @@
     "class-variance-authority": "^0.6.1",
     "clsx": "^2.0.0",
     "eslint-config-next": "^12.3.4",
+    "filecoin-verifier-tools": "^2.3.0",
     "fuse.js": "^6.6.2",
     "lucide-react": "^0.260.0",
     "next": "13.5.6",
@@ -49,6 +50,7 @@
     "tailwind-merge": "^1.14.0",
     "tailwindcss": "3.3.2",
     "tailwindcss-animate": "^1.0.6",
+    "viem": "^2.9.21",
     "webpack-node-externals": "^3.0.0"
   },
   "devDependencies": {

@@ -1,6 +1,6 @@
-import { config } from '../../config'
-import { VerifyAPI } from '@keyko-io/filecoin-verifier-tools'
 import signer from '@zondax/filecoin-signing-tools/js'
+import { VerifyAPI } from 'filecoin-verifier-tools'
+import { config } from '../../config'
 import { BaseWallet } from './BaseWallet'
 
 /**

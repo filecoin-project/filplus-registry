@@ -130,6 +130,10 @@ export interface Allocator {
   repo: string
   installation_id: string
   multisig_address: string
+  multisig_threshold: number
+  allocation_amount_type: string | null
+  address: string
+  tooling: string
   verifiers_gh_handles: string | string[]
 }
 
@@ -144,4 +148,16 @@ export interface ByteConverterAutoscaleOptions {
   preferOppositeUnit: boolean
   // eslint-disable-next-line @typescript-eslint/ban-types
   handler: (curDataFormat: string, isUppingDataFormat: boolean) => {}
+}
+
+export enum AllocatorTypeEnum {
+  DIRECT = 'direct',
+  CONTRACT = 'contract',
+}
+
+export interface SendProposalProps {
+  allocatorType: AllocatorTypeEnum
+  contractAddress: string
+  clientAddress: string
+  proposalAllocationAmount: string
 }
