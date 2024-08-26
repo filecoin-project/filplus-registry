@@ -1,8 +1,8 @@
-import { config } from '../../config'
 import TransportWebUSB from '@ledgerhq/hw-transport-webusb'
-import FilecoinApp from '@zondax/ledger-filecoin'
 import signer from '@zondax/filecoin-signing-tools/js'
-import { VerifyAPI } from '@keyko-io/filecoin-verifier-tools'
+import FilecoinApp from '@zondax/ledger-filecoin'
+import { VerifyAPI } from 'filecoin-verifier-tools'
+import { config } from '../../config'
 import { BaseWallet } from './BaseWallet'
 
 /**

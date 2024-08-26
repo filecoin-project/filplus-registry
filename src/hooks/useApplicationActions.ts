@@ -1,4 +1,5 @@
 import useWallet from '@/hooks/useWallet'
+import { useAllocator } from '@/lib/AllocatorProvider'
 import {
   postAdditionalInfoRequest,
   postApplicationApproval,
@@ -10,8 +11,8 @@ import {
   postRequestKyc,
   triggerSSA,
 } from '@/lib/apiClient'
-import { type Application, type RefillUnit } from '@/type'
-import { useState } from 'react'
+import { AllocatorTypeEnum, type Application, type RefillUnit } from '@/type'
+import { useMemo, useState } from 'react'
 import {
   useMutation,
   useQueryClient,
@@ -118,6 +119,22 @@ const useApplicationActions = (
     accounts,
     loadMoreAccounts,
   } = useWallet()
+  const { selectedAllocator } = useAllocator()
+
+  const allocatorType: AllocatorTypeEnum = useMemo(() => {
+    if (
+      !!selectedAllocator &&
+      typeof selectedAllocator !== 'string' &&
+      selectedAllocator?.tooling
+        .split(', ')
+        .includes('smart_contract_allocator') &&
+      !!selectedAllocator?.address
+    ) {
+      return AllocatorTypeEnum.CONTRACT
+    } else {
+      return AllocatorTypeEnum.DIRECT
+    }
+  }, [selectedAllocator])
 
   /**
    * Updates the application cache with the latest data from the API.
@@ -292,6 +309,13 @@ const useApplicationActions = (
     },
   )
 
+  const getClientAddress = (): string => {
+    return (
+      (process.env.NEXT_PUBLIC_MODE === 'development' ? 't' : 'f') +
+      initialApplication.Lifecycle['On Chain Address'].substring(1)
+    )
+  }
+
   /**
    * Mutation function to handle the triggering of an SSA.
    * It makes an API call to trigger the SSA and updates the cache on success.
@@ -398,15 +422,21 @@ const useApplicationActions = (
       const proposalTx = await getProposalTx(
         clientAddress,
         proposalAllocationAmount,
+        allocatorType,
       )
       if (proposalTx !== false) {
         throw new Error('This datacap allocation is already proposed')
       }
 
-      const messageCID = await sendProposal(
+      const messageCID = await sendProposal({
+        allocatorType,
+        contractAddress:
+          typeof selectedAllocator !== 'string'
+            ? selectedAllocator?.address ?? ''
+            : '',
         clientAddress,
         proposalAllocationAmount,
-      )
+      })
 
       if (messageCID == null) {
         throw new Error(
@@ -451,16 +481,18 @@ const useApplicationActions = (
     unknown
   >(
     async ({ requestId, userName }) => {
-      const clientAddress =
-        (process.env.NEXT_PUBLIC_MODE === 'development' ? 't' : 'f') +
-        initialApplication.Lifecycle['On Chain Address'].substring(1)
+      const clientAddress = getClientAddress()
       const datacap = initialApplication['Allocation Requests'].find(
         (alloc) => alloc.Active,
       )?.['Allocation Amount']
 
       if (datacap == null) throw new Error('No active allocation found')
 
-      const proposalTx = await getProposalTx(clientAddress, datacap)
+      const proposalTx = await getProposalTx(
+        clientAddress,
+        datacap,
+        allocatorType,
+      )
 
       if (proposalTx === false) {
         throw new Error(

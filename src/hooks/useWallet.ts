@@ -2,8 +2,11 @@ import { useState, useCallback } from 'react'
 import { LedgerWallet } from '@/lib/wallet/LedgerWallet'
 import { BurnerWallet } from '@/lib/wallet/BurnerWallet'
 import { config } from '../config'
-import { type IWallet } from '@/type'
+import { AllocatorTypeEnum, type IWallet, type SendProposalProps } from '@/type'
 import { anyToBytes } from '@/lib/utils'
+import { newFromString } from '@glif/filecoin-address'
+import { decodeFunctionData, encodeFunctionData, parseAbi } from 'viem'
+import { type Hex } from 'viem/types/misc'
 
 /**
  * Registry that maps wallet class names to their respective classes.
@@ -33,8 +36,9 @@ interface WalletState {
   getProposalTx: (
     clientAddress: string,
     datacap: string,
+    allocatorType: AllocatorTypeEnum,
   ) => Promise<string | boolean>
-  sendProposal: (clientAddress: string, datacap: string) => Promise<string>
+  sendProposal: (props: SendProposalProps) => Promise<string>
   sendApproval: (txHash: string) => Promise<string>
   sign: (message: string) => Promise<string>
   initializeWallet: (multisigAddress?: string) => Promise<string[]>
@@ -181,6 +185,7 @@ const useWallet = (): WalletState => {
     async (
       clientAddress: string,
       datacap: string,
+      allocatorType: AllocatorTypeEnum,
     ): Promise<string | boolean> => {
       if (wallet == null) throw new Error('No wallet initialized.')
       if (multisigAddress == null) throw new Error('Multisig address not set.')
@@ -195,14 +200,78 @@ const useWallet = (): WalletState => {
           'An error with the lotus node occurred. Please reload. If the problem persists, contact support.',
         )
       }
-      const pendingForClient = pendingTxs?.filter(
-        (tx: any) =>
-          tx?.parsed?.params?.address === clientAddress &&
-          tx?.parsed?.params?.cap === BigInt(bytesDatacap),
-      )
+      let pendingForClient = null
+      if (allocatorType !== AllocatorTypeEnum.CONTRACT) {
+        pendingForClient = pendingTxs?.filter(
+          (tx: any) =>
+            tx?.parsed?.params?.address === clientAddress &&
+            tx?.parsed?.params?.cap === BigInt(bytesDatacap),
+        )
+      } else {
+        pendingForClient = pendingTxs?.filter((tx: any) => {
+          const abi = parseAbi([
+            'function addVerifiedClient(bytes clientAddress, uint256 amount)',
+          ])
+
+          const paramsHex: string = tx.parsed.params.toString('hex')
+          const dataHex: Hex = `0x${paramsHex}`
+
+          const decodedData = decodeFunctionData({ abi, data: dataHex })
+          const [clientAddressData, amount] = decodedData.args
+          const address = newFromString(clientAddress)
+          const addressHex: Hex = `0x${Buffer.from(address.bytes).toString('hex')}`
+          return (
+            clientAddressData === addressHex && amount === BigInt(bytesDatacap)
+          )
+        })
+      }
       return pendingForClient.length > 0 ? pendingForClient.at(-1) : false
     },
     [wallet, multisigAddress],
+  )
+
+  const sendProposalDirect = useCallback(
+    async (clientAddress: string, bytesDatacap: number) => {
+      if (wallet == null) throw new Error('No wallet initialized.')
+
+      return wallet.api.multisigVerifyClient(
+        multisigAddress,
+        clientAddress,
+        BigInt(bytesDatacap),
+        activeAccountIndex,
+      )
+    },
+    [wallet, multisigAddress, activeAccountIndex],
+  )
+
+  const sendProposalContract = useCallback(
+    async (
+      clientAddress: string,
+      bytesDatacap: number,
+      contractAddress: string,
+    ) => {
+      if (wallet == null) throw new Error('No wallet initialized.')
+
+      const abi = parseAbi([
+        'function addVerifiedClient(bytes clientAddress, uint256 amount)',
+      ])
+
+      const address = newFromString(clientAddress)
+      const addressHex: Hex = `0x${Buffer.from(address.bytes).toString('hex')}`
+      const calldataHex: Hex = encodeFunctionData({
+        abi,
+        args: [addressHex, BigInt(bytesDatacap)],
+      })
+      const calldata = Buffer.from(calldataHex.substring(2), 'hex')
+      return wallet.api.multisigEvmInvoke(
+        multisigAddress,
+        contractAddress,
+        calldata,
+        activeAccountIndex,
+        wallet,
+      )
+    },
+    [wallet, multisigAddress, activeAccountIndex],
   )
 
   /**
@@ -215,25 +284,34 @@ const useWallet = (): WalletState => {
    * @throws {Error} - Throws an error if no wallet is initialized.
    */
   const sendProposal = useCallback(
-    async (clientAddress: string, datacap: string): Promise<string> => {
+    async (props: SendProposalProps): Promise<string> => {
       if (wallet == null) throw new Error('No wallet initialized.')
       if (multisigAddress == null) throw new Error('Multisig address not set.')
 
+      const {
+        clientAddress,
+        proposalAllocationAmount,
+        allocatorType,
+        contractAddress,
+      } = props
+
       setMessage('Sending proposal...')
 
-      const bytesDatacap = Math.floor(anyToBytes(datacap))
-      const messageCID = await wallet.api.multisigVerifyClient(
-        multisigAddress,
-        clientAddress,
-        BigInt(bytesDatacap),
-        activeAccountIndex,
-      )
+      const bytesDatacap = Math.floor(anyToBytes(proposalAllocationAmount))
+      const messageCID =
+        allocatorType === AllocatorTypeEnum.CONTRACT
+          ? await sendProposalContract(
+              clientAddress,
+              bytesDatacap,
+              contractAddress,
+            )
+          : await sendProposalDirect(clientAddress, bytesDatacap)
 
       setMessage(`Proposal sent correctly. CID: ${messageCID as string}`)
 
       return messageCID
     },
-    [wallet, multisigAddress, activeAccountIndex],
+    [wallet, multisigAddress, sendProposalContract, sendProposalDirect],
   )
 
   /**
