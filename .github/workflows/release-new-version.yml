@@ -1,0 +1,38 @@
+name: Release New Version
+run-name: New release for "${{ github.ref_name }}" triggered by ${{ github.actor }}
+on:
+  pull_request:
+    types: [opened, synchronize]
+  push:
+    branches:
+      - workflows
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+
+env:
+  ECR_REPOSITORY: 'filplus-registry'
+
+jobs:
+  format_and_lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '16.14.2'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run Prettier
+        run: npm run prettier
