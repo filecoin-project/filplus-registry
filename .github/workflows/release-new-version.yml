@@ -58,4 +58,17 @@ jobs:
         run: npm ci
 
       - name: Build with Next.js
+        env:
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          API_KEY: ${{ secrets.API_KEY }}
+          NEXT_PUBLIC_DMOB_API_KEY: ${{secrets.NEXT_PUBLIC_DMOB_API_KEY}}
+          NEXT_PUBLIC_MODE: ${{secrets.NEXT_PUBLIC_MODE}}
+          NEXT_PUBLIC_NODE_ADDRESS: ${{secrets.NEXT_PUBLIC_NODE_ADDRESS}}
+          NEXT_PUBLIC_NODE_TOKEN: ${{secrets.NEXT_PUBLIC_NODE_TOKEN}}
+          NEXT_PUBLIC_DMOB_API_URL: ${{secrets.NEXT_PUBLIC_DMOB_API_URL}}
+          NEXT_PUBLIC_GLIF_URL: ${{secrets.NEXT_PUBLIC_GLIF_URL}}
+          NEXTAUTH_SECRET: ${{secrets.NEXTAUTH_SECRET}}
+          NEXTAUTH_URL: ${{secrets.NEXTAUTH_URL}}
+          GITHUB_ID: ${{secrets.GITHUB_ID}}
+          GITHUB_SECRET: ${{secrets.GITHUB_SECRET}}
         run: npm run build
