@@ -45,30 +45,61 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Restore cache
-        uses: actions/cache@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Cache Docker
+        uses: actions/cache@v3
         with:
-          path: |
-            .next/cache
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**.[jt]s', '**.[jt]sx') }}
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-docker-build-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-
+            ${{ runner.os }}-docker-build-
 
-      - name: Install Dependencies
-        run: npm ci
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
 
-      - name: Build with Next.js
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v1
+        with:
+          mask-password: 'true'
+          registry-type: public
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          flavor: latest=false
+          images: public.ecr.aws/f4h6r4m9/${{ env.ECR_REPOSITORY }}
+          tags: |
+            type=semver,pattern={{version}},value=v${{ inputs.version }},enable=${{inputs.version != ''}}
+            type=raw,value={{branch}},enable=${{inputs.version != ''}}
+            type=ref,event=pr,pattern={{branch}}
+
+      - name: Build tag
+        uses: docker/build-push-action@v6
         env:
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
           API_KEY: ${{ secrets.API_KEY }}
-          NEXT_PUBLIC_DMOB_API_KEY: ${{secrets.NEXT_PUBLIC_DMOB_API_KEY}}
-          NEXT_PUBLIC_MODE: ${{secrets.NEXT_PUBLIC_MODE}}
-          NEXT_PUBLIC_NODE_ADDRESS: ${{secrets.NEXT_PUBLIC_NODE_ADDRESS}}
-          NEXT_PUBLIC_NODE_TOKEN: ${{secrets.NEXT_PUBLIC_NODE_TOKEN}}
-          NEXT_PUBLIC_DMOB_API_URL: ${{secrets.NEXT_PUBLIC_DMOB_API_URL}}
-          NEXT_PUBLIC_GLIF_URL: ${{secrets.NEXT_PUBLIC_GLIF_URL}}
-          NEXTAUTH_SECRET: ${{secrets.NEXTAUTH_SECRET}}
-          NEXTAUTH_URL: ${{secrets.NEXTAUTH_URL}}
-          GITHUB_ID: ${{secrets.GITHUB_ID}}
-          GITHUB_SECRET: ${{secrets.GITHUB_SECRET}}
-        run: npm run build
+          NEXT_PUBLIC_DMOB_API_KEY: ${{ secrets.NEXT_PUBLIC_DMOB_API_KEY }}
+          NEXT_PUBLIC_MODE: ${{ secrets.NEXT_PUBLIC_MODE }}
+          NEXT_PUBLIC_NODE_ADDRESS: ${{ secrets.NEXT_PUBLIC_NODE_ADDRESS }}
+          NEXT_PUBLIC_NODE_TOKEN: ${{ secrets.NEXT_PUBLIC_NODE_TOKEN }}
+          NEXT_PUBLIC_DMOB_API_URL: ${{ secrets.NEXT_PUBLIC_DMOB_API_URL }}
+          NEXT_PUBLIC_GLIF_URL: ${{ secrets.NEXT_PUBLIC_GLIF_URL }}
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+          NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL }}
+          GITHUB_ID: ${{ secrets.GITHUB_ID }}
+          GITHUB_SECRET: ${{ secrets.GITHUB_SECRET }}
+        with:
+          context: .
+          push: false
+          tags: workflow-test-tag
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          outputs: type=cacheonly
