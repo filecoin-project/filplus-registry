@@ -40,6 +40,15 @@ jobs:
   build_and_push:
     runs-on: ubuntu-latest
     needs: format_and_lint
+    strategy:
+      matrix:
+        build-type: [production, staging]
+        include:
+          - build-type: production
+            tag_suffix: prod
+
+          - build-type: staging
+            tag_suffix: stg
 
     steps:
       - name: Checkout code
@@ -56,24 +65,26 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-docker-build-
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+      # - name: Configure AWS credentials
+      #   uses: aws-actions/configure-aws-credentials@v2
+      #   with:
+      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #     aws-region: us-east-1
 
-      - name: Login to Amazon ECR
-        uses: aws-actions/amazon-ecr-login@v1
-        with:
-          mask-password: 'true'
-          registry-type: public
+      # - name: Login to Amazon ECR
+      #   uses: aws-actions/amazon-ecr-login@v1
+      #   with:
+      #     mask-password: 'true'
+      #     registry-type: public
 
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v5
         with:
-          flavor: latest=false
+          flavor: |
+            latest=false
+            suffix={{ matrix.tag_suffix }}
           images: public.ecr.aws/f4h6r4m9/${{ env.ECR_REPOSITORY }}
           tags: |
             type=semver,pattern={{version}},value=v${{ inputs.version }},enable=${{inputs.version != ''}}
