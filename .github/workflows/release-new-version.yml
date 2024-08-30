@@ -49,6 +49,7 @@ jobs:
 
           - build-type: staging
             tag_suffix: stg
+    continue-on-error: false
 
     steps:
       - name: Checkout code
@@ -84,12 +85,11 @@ jobs:
         with:
           flavor: |
             latest=false
-            suffix={{ matrix.tag_suffix }}
           images: public.ecr.aws/f4h6r4m9/${{ env.ECR_REPOSITORY }}
           tags: |
-            type=semver,pattern={{version}},value=v${{ inputs.version }},enable=${{inputs.version != ''}}
-            type=raw,value={{branch}},enable=${{inputs.version != ''}}
-            type=ref,event=pr,pattern={{branch}}
+            type=semver,pattern={{version}},value=v${{ inputs.version }},enable=${{inputs.version != ''}},suffix={{ matrix.tag_suffix }}
+            type=raw,value={{branch}},enable=${{inputs.version != ''}},suffix={{ matrix.tag_suffix }}
+            type=ref,event=pr,pattern={{branch}},suffix={{ matrix.tag_suffix }}
 
       - name: Build tag
         uses: docker/build-push-action@v6
