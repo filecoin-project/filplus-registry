@@ -89,7 +89,7 @@ jobs:
           tags: |
             type=semver,pattern={{version}},value=v${{ inputs.version }},enable=${{inputs.version != ''}},suffix={{ matrix.tag_suffix }}
             type=raw,value={{branch}},enable=${{inputs.version != ''}},suffix={{ matrix.tag_suffix }}
-            type=ref,event=pr,pattern={{branch}},suffix={{ matrix.tag_suffix }}
+            type=ref,event=pr,pattern={{branch}-{matrix.tag_suffix}}
 
       - name: Build tag
         uses: docker/build-push-action@v6
