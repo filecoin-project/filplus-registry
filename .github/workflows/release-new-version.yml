@@ -46,9 +46,12 @@ jobs:
         include:
           - build-type: production
             tag_suffix: prod
+            environment: production-fidl
 
           - build-type: staging
             tag_suffix: stg
+            environment: staging-fidl
+
     continue-on-error: false
 
     steps:
@@ -66,18 +69,18 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-docker-build-
 
-      # - name: Configure AWS credentials
-      #   uses: aws-actions/configure-aws-credentials@v2
-      #   with:
-      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      #     aws-region: us-east-1
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets[matrix.environment].AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets[matrix.environment].AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
 
-      # - name: Login to Amazon ECR
-      #   uses: aws-actions/amazon-ecr-login@v1
-      #   with:
-      #     mask-password: 'true'
-      #     registry-type: public
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v1
+        with:
+          mask-password: 'true'
+          registry-type: public
 
       - name: Docker meta
         id: meta
@@ -85,7 +88,7 @@ jobs:
         with:
           flavor: |
             latest=false
-            suffix=${{ matrix.tag_suffix }}
+            suffix=-${{ matrix.tag_suffix }}
           images: public.ecr.aws/f4h6r4m9/${{ env.ECR_REPOSITORY }}
           tags: |
             type=semver,pattern={{version}},value=v${{ inputs.version }},enable=${{inputs.version != ''}}
@@ -95,23 +98,22 @@ jobs:
       - name: Build tag
         uses: docker/build-push-action@v6
         env:
-          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
-          API_KEY: ${{ secrets.API_KEY }}
-          NEXT_PUBLIC_DMOB_API_KEY: ${{ secrets.NEXT_PUBLIC_DMOB_API_KEY }}
-          NEXT_PUBLIC_MODE: ${{ secrets.NEXT_PUBLIC_MODE }}
-          NEXT_PUBLIC_NODE_ADDRESS: ${{ secrets.NEXT_PUBLIC_NODE_ADDRESS }}
-          NEXT_PUBLIC_NODE_TOKEN: ${{ secrets.NEXT_PUBLIC_NODE_TOKEN }}
-          NEXT_PUBLIC_DMOB_API_URL: ${{ secrets.NEXT_PUBLIC_DMOB_API_URL }}
-          NEXT_PUBLIC_GLIF_URL: ${{ secrets.NEXT_PUBLIC_GLIF_URL }}
-          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
-          NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL }}
-          GITHUB_ID: ${{ secrets.GITHUB_ID }}
-          GITHUB_SECRET: ${{ secrets.GITHUB_SECRET }}
+          NEXT_PUBLIC_API_URL: ${{ vars[matrix.environment].NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_DMOB_API_KEY: ${{ vars[matrix.environment].NEXT_PUBLIC_DMOB_API_KEY }}
+          NEXT_PUBLIC_MODE: ${{ vars[matrix.environment].NEXT_PUBLIC_MODE }}
+          NEXT_PUBLIC_NODE_ADDRESS: ${{ vars[matrix.environment].NEXT_PUBLIC_NODE_ADDRESS }}
+          NEXT_PUBLIC_NODE_TOKEN: ${{ vars[matrix.environment].NEXT_PUBLIC_NODE_TOKEN }}
+          NEXT_PUBLIC_DMOB_API_URL: ${{ vars[matrix.environment].NEXT_PUBLIC_DMOB_API_URL }}
+          NEXT_PUBLIC_GLIF_URL: ${{ vars[matrix.environment].NEXT_PUBLIC_GLIF_URL }}
+          NEXTAUTH_URL: ${{ vars[matrix.environment].NEXTAUTH_URL }}
+          NEXTAUTH_SECRET: ${{ secrets[matrix.environment].NEXTAUTH_SECRET }}
+          GITHUB_ID: ${{ secrets[matrix.environment].GH_ID }}
+          GITHUB_SECRET: ${{ secrets[matrix.environment].GH_SECRET }}
         with:
           context: .
           push: false
           tags: workflow-test-tag
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets[matrix.environment].GITHUB_TOKEN }}
           outputs: type=cacheonly
