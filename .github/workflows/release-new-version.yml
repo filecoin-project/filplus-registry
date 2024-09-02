@@ -39,26 +39,8 @@ jobs:
       - name: Run Prettier
         run: npm run prettier
 
-  create_env:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Create env file for ${{ inputs.environment }} process
-        run: |
-          echo "NEXT_PUBLIC_API_URL='${{ vars.NEXT_PUBLIC_API_URL }}'" >> .env
-          echo "NEXT_PUBLIC_DMOB_API_KEY='${{ vars.NEXT_PUBLIC_DMOB_API_KEY }}'" >> .env
-          echo "NEXT_PUBLIC_MODE='${{ vars.NEXT_PUBLIC_MODE }}'" >> .env
-          echo "NEXT_PUBLIC_NODE_ADDRESS='${{ vars.NEXT_PUBLIC_NODE_ADDRESS }}'" >> .env
-          echo "NEXT_PUBLIC_NODE_TOKEN='${{ vars.NEXT_PUBLIC_NODE_TOKEN }}'" >> .env
-          echo "NEXT_PUBLIC_DMOB_API_URL='${{ vars.NEXT_PUBLIC_DMOB_API_URL }}'" >> .env
-          echo "NEXT_PUBLIC_GLIF_URL='${{ vars.NEXT_PUBLIC_GLIF_URL }}'" >> .env
-          echo "NEXTAUTH_URL='${{ vars.NEXTAUTH_URL }}'" >> .env
-          echo "NEXTAUTH_SECRET='${{ secrets.NEXTAUTH_SECRET }}'" >> .env
-          echo "GITHUB_ID='${{ secrets.GH_ID }}'" >> .env
-          echo "GITHUB_SECRET='${{ secrets.GH_SECRET }}'" >> .env
-
   build_and_push:
-    needs: [format_and_lint, create_env]
+    needs: format_and_lint
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
 
@@ -105,6 +87,20 @@ jobs:
           tags: |
             type=semver,pattern={{branch}}-{{version}},value=v${{ inputs.version }},enable=${{inputs.version != ''}}
             type=ref,event=pr,pattern={{branch}}
+
+      - name: Create env file
+        run: |
+          echo "NEXT_PUBLIC_API_URL='${{ vars.NEXT_PUBLIC_API_URL }}'" >> .env
+          echo "NEXT_PUBLIC_DMOB_API_KEY='${{ vars.NEXT_PUBLIC_DMOB_API_KEY }}'" >> .env
+          echo "NEXT_PUBLIC_MODE='${{ vars.NEXT_PUBLIC_MODE }}'" >> .env
+          echo "NEXT_PUBLIC_NODE_ADDRESS='${{ vars.NEXT_PUBLIC_NODE_ADDRESS }}'" >> .env
+          echo "NEXT_PUBLIC_NODE_TOKEN='${{ vars.NEXT_PUBLIC_NODE_TOKEN }}'" >> .env
+          echo "NEXT_PUBLIC_DMOB_API_URL='${{ vars.NEXT_PUBLIC_DMOB_API_URL }}'" >> .env
+          echo "NEXT_PUBLIC_GLIF_URL='${{ vars.NEXT_PUBLIC_GLIF_URL }}'" >> .env
+          echo "NEXTAUTH_URL='${{ vars.NEXTAUTH_URL }}'" >> .env
+          echo "NEXTAUTH_SECRET='${{ secrets.NEXTAUTH_SECRET }}'" >> .env
+          echo "GITHUB_ID='${{ secrets.GH_ID }}'" >> .env
+          echo "GITHUB_SECRET='${{ secrets.GH_SECRET }}'" >> .env
 
       - name: Build tag
         uses: docker/build-push-action@v6
