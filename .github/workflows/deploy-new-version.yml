@@ -25,7 +25,7 @@ jobs:
       - name: Determine matrix
         id: set-matrix
         run: |
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then            
+          if [[ "${{ github.event_name }}" == "pull_request" ]] || [[ "${{ github.ref_name }}" != "main"  ]]; then
             echo "matrix={\"include\":[{\"build-type\":\"staging\",\"tag_suffix\":\"stg\",\"environment\":\"staging-fidl\"}]}" >> $GITHUB_OUTPUT
           else
             echo "matrix={\"include\":[{\"build-type\":\"production\",\"tag_suffix\":\"prod\",\"environment\":\"production-fidl\"}, {\"build-type\":\"staging\",\"tag_suffix\":\"stg\",\"environment\":\"staging-fidl\"}]}" >> $GITHUB_OUTPUT

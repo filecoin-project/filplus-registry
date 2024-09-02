@@ -104,7 +104,6 @@ jobs:
 
       - name: Build tag
         uses: docker/build-push-action@v6
-
         with:
           context: .
           push: false
