@@ -28,6 +28,7 @@ jobs:
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then            
             echo "matrix={\"include\":[{\"build-type\":\"staging\",\"tag_suffix\":\"stg\",\"environment\":\"staging-fidl\"}]}" >> $GITHUB_OUTPUT
           else
+            echo "matrix={\"include\":[{\"build-type\":\"staging\",\"tag_suffix\":\"stg\",\"environment\":\"staging-fidl\"}]}" >> $GITHUB_OUTPUT
           fi
 
   ReuseableMatrixJobForDeployment:
