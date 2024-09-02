@@ -28,45 +28,16 @@ jobs:
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then            
             echo "matrix={\"include\":[{\"build-type\":\"staging\",\"tag_suffix\":\"stg\",\"environment\":\"staging-fidl\"}]}" >> $GITHUB_OUTPUT
           else
-            echo "matrix={\"include\":[{\"build-type\":\"staging\",\"tag_suffix\":\"stg\",\"environment\":\"staging-fidl\"}]}" >> $GITHUB_OUTPUT
+            echo "matrix={\"include\":[{\"build-type\":\"production\",\"tag_suffix\":\"prod\",\"environment\":\"production-fidl\"}, {\"build-type\":\"staging\",\"tag_suffix\":\"stg\",\"environment\":\"staging-fidl\"}]}" >> $GITHUB_OUTPUT
           fi
 
   ReuseableMatrixJobForDeployment:
     needs: 'prepare-matrix'
     strategy:
-      matrix:
-        ${{ fromJSON(needs.prepare-matrix.outputs.matrix) }}
+      matrix: ${{ fromJSON(needs.prepare-matrix.outputs.matrix) }}
 
-        # - build-type: production
-        #   tag_suffix: prod
-        #   environment: production-fidl
-
-        # - build-type: staging
-        #   tag_suffix: stg
-        #   environment: staging-fidl
     uses: ./.github/workflows/release-new-version.yml
     with:
       tag_suffix: ${{ matrix.tag_suffix }}
       environment: ${{ matrix.environment }}
     secrets: inherit
-
-  # reuseable-matrix-job:
-  #   strategy:
-  #     matrix:
-  #       build-type: [production, staging]
-  #       include:
-  #         - build-type: production
-  #           tag_suffix: prod
-  #           environment: production-fidl
-
-  #         - build-type: staging
-  #           tag_suffix: stg
-  #           environment: staging-fidl
-
-  #   uses: ./.github/workflows/release-new-version.yml
-  #   with:
-  #     stage: ${{ matrix.build-type }}
-  #     tag_suffix: ${{ matrix.tag_suffix }}
-  #     environment: ${{ matrix.environment }}
-
-  #   secrets: inherit

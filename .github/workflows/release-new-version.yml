@@ -42,7 +42,7 @@ jobs:
   build_and_push:
     needs: format_and_lint
     runs-on: ubuntu-latest
-    environment: ${{ inputs.environment }}
+    environment: staging-fidl
 
     steps:
       - name: Run release process for ${{ inputs.environment }}
