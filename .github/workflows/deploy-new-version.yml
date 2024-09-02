@@ -28,9 +28,7 @@ jobs:
         run: |
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
             echo "::set-output name=matrix::['staging']"
-            echo "::set-output name=matrix_include::{include: [
-              { "build-type": "staging", "tag_suffix": "stg", "environment": "staging" }
-            ]}"
+            echo "::set-output name=matrix_include::{"build-type": "staging", "tag_suffix": "stg", "environment": "staging" }"
           else
             echo "::set-output name=matrix::['production', 'staging']"
           fi
