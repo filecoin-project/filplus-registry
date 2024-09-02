@@ -39,8 +39,26 @@ jobs:
       - name: Run Prettier
         run: npm run prettier
 
+  create_env:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Create env file for ${{ inputs.environment }} process
+        run: |
+          echo "NEXT_PUBLIC_API_URL='${{ vars.NEXT_PUBLIC_API_URL }}'" >> .env
+          echo "NEXT_PUBLIC_DMOB_API_KEY='${{ vars.NEXT_PUBLIC_DMOB_API_KEY }}'" >> .env
+          echo "NEXT_PUBLIC_MODE='${{ vars.NEXT_PUBLIC_MODE }}'" >> .env
+          echo "NEXT_PUBLIC_NODE_ADDRESS='${{ vars.NEXT_PUBLIC_NODE_ADDRESS }}'" >> .env
+          echo "NEXT_PUBLIC_NODE_TOKEN='${{ vars.NEXT_PUBLIC_NODE_TOKEN }}'" >> .env
+          echo "NEXT_PUBLIC_DMOB_API_URL='${{ vars.NEXT_PUBLIC_DMOB_API_URL }}'" >> .env
+          echo "NEXT_PUBLIC_GLIF_URL='${{ vars.NEXT_PUBLIC_GLIF_URL }}'" >> .env
+          echo "NEXTAUTH_URL='${{ vars.NEXTAUTH_URL }}'" >> .env
+          echo "NEXTAUTH_SECRET='${{ secrets.NEXTAUTH_SECRET }}'" >> .env
+          echo "GITHUB_ID='${{ secrets.GH_ID }}'" >> .env
+          echo "GITHUB_SECRET='${{ secrets.GH_SECRET }}'" >> .env
+
   build_and_push:
-    needs: format_and_lint
+    needs: [format_and_lint, create_env]
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
 
@@ -99,19 +117,3 @@ jobs:
           cache-to: type=gha,mode=max
           github-token: ${{ secrets.GITHUB_TOKEN }}
           outputs: type=cacheonly
-          secrets: |
-            NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
-            GITHUB_ID: ${{ secrets.GH_ID }}
-            GITHUB_SECRET: ${{ secrets.GH_SECRET }}
-          build-args: |
-            NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
-            NEXT_PUBLIC_DMOB_API_KEY: ${{ vars.NEXT_PUBLIC_DMOB_API_KEY }}
-            NEXT_PUBLIC_MODE: ${{ vars.NEXT_PUBLIC_MODE }}
-            NEXT_PUBLIC_NODE_ADDRESS: ${{ vars.NEXT_PUBLIC_NODE_ADDRESS }}
-            NEXT_PUBLIC_NODE_TOKEN: ${{ vars.NEXT_PUBLIC_NODE_TOKEN }}
-            NEXT_PUBLIC_DMOB_API_URL: ${{ vars.NEXT_PUBLIC_DMOB_API_URL }}
-            NEXT_PUBLIC_GLIF_URL: ${{ vars.NEXT_PUBLIC_GLIF_URL }}
-            NEXTAUTH_URL: ${{ vars.NEXTAUTH_URL }}
-            NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
-            GITHUB_ID: ${{ secrets.GH_ID }}
-            GITHUB_SECRET: ${{ secrets.GH_SECRET }}
