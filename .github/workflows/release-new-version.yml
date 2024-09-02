@@ -86,6 +86,7 @@ jobs:
           images: public.ecr.aws/f4h6r4m9/${{ env.ECR_REPOSITORY }}
           tags: |
             type=semver,pattern={{branch}}-{{version}},value=v${{ inputs.version }},enable=${{inputs.version != ''}}
+            type=ref,event=branch,pattern={{branch}},enable=${{ github.ref_name == 'workflow' }}
             type=ref,event=pr,pattern={{branch}}
 
       - name: Create env file
@@ -107,8 +108,15 @@ jobs:
         with:
           context: .
           push: false
-          tags: workflow-test-tag
+          tags: ${{ steps.meta.outputs.tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           github-token: ${{ secrets.GITHUB_TOKEN }}
           outputs: type=cacheonly
+
+      # - name: Create and push tag
+      #   if: ${{ github.ref == format('refs/heads/{0}', 'main') && inputs.version != '' }}
+      #   run: |
+      #     TAG_NAME="v${{ steps.meta.outputs.tags }}"
+      #     git tag $TAG_NAME
+      #     git push origin $TAG_NAME
