@@ -5,6 +5,9 @@ on:
   workflow_call:
     inputs:
       version:
+        required: false
+        type: string
+      tag_suffix:
         required: true
         type: string
       environment:
@@ -42,6 +45,11 @@ jobs:
     environment: ${{ inputs.environment }}
 
     steps:
+      - name: Run release process for ${{ inputs.environment }}
+        run: |
+          echo "Tag suffix: ${{ inputs.tag_suffix }}"
+          echo "Environment: ${{ inputs.environment }}"
+
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -75,7 +83,7 @@ jobs:
         with:
           flavor: |
             latest=false
-            suffix=-${{ matrix.tag_suffix }}
+            suffix=-${{ inputs.tag_suffix }}
           images: public.ecr.aws/f4h6r4m9/${{ env.ECR_REPOSITORY }}
           tags: |
             type=semver,pattern={{version}},value=v${{ inputs.version }},enable=${{inputs.version != ''}}

@@ -31,7 +31,6 @@ jobs:
             environment: staging-fidl
     uses: ./.github/workflows/release-new-version.yml
     with:
-      stage: ${{ matrix.build-type }}
       tag_suffix: ${{ matrix.tag_suffix }}
       environment: ${{ matrix.environment }}
     secrets: inherit
