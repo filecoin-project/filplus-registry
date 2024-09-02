@@ -13,6 +13,9 @@ on:
       environment:
         required: true
         type: string
+    secrets:
+      envPAT:
+        required: true
 
 env:
   ECR_REPOSITORY: 'filplus-registry'
@@ -42,7 +45,7 @@ jobs:
   build_and_push:
     needs: format_and_lint
     runs-on: ubuntu-latest
-    environment: staging-fidl
+    environment: ${{ inputs.environment }}
 
     steps:
       - name: Run release process for ${{ inputs.environment }}
@@ -90,18 +93,7 @@ jobs:
 
       - name: Build tag
         uses: docker/build-push-action@v6
-        env:
-          NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
-          NEXT_PUBLIC_DMOB_API_KEY: ${{ vars.NEXT_PUBLIC_DMOB_API_KEY }}
-          NEXT_PUBLIC_MODE: ${{ vars.NEXT_PUBLIC_MODE }}
-          NEXT_PUBLIC_NODE_ADDRESS: ${{ vars.NEXT_PUBLIC_NODE_ADDRESS }}
-          NEXT_PUBLIC_NODE_TOKEN: ${{ vars.NEXT_PUBLIC_NODE_TOKEN }}
-          NEXT_PUBLIC_DMOB_API_URL: ${{ vars.NEXT_PUBLIC_DMOB_API_URL }}
-          NEXT_PUBLIC_GLIF_URL: ${{ vars.NEXT_PUBLIC_GLIF_URL }}
-          NEXTAUTH_URL: ${{ vars.NEXTAUTH_URL }}
-          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
-          GITHUB_ID: ${{ secrets.GH_ID }}
-          GITHUB_SECRET: ${{ secrets.GH_SECRET }}
+
         with:
           context: .
           push: false
@@ -110,3 +102,16 @@ jobs:
           cache-to: type=gha,mode=max
           github-token: ${{ secrets.GITHUB_TOKEN }}
           outputs: type=cacheonly
+          secrets: |
+            NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+            GITHUB_ID: ${{ secrets.GH_ID }}
+            GITHUB_SECRET: ${{ secrets.GH_SECRET }}
+          build-args: |
+            NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
+            NEXT_PUBLIC_DMOB_API_KEY: ${{ vars.NEXT_PUBLIC_DMOB_API_KEY }}
+            NEXT_PUBLIC_MODE: ${{ vars.NEXT_PUBLIC_MODE }}
+            NEXT_PUBLIC_NODE_ADDRESS: ${{ vars.NEXT_PUBLIC_NODE_ADDRESS }}
+            NEXT_PUBLIC_NODE_TOKEN: ${{ vars.NEXT_PUBLIC_NODE_TOKEN }}
+            NEXT_PUBLIC_DMOB_API_URL: ${{ vars.NEXT_PUBLIC_DMOB_API_URL }}
+            NEXT_PUBLIC_GLIF_URL: ${{ vars.NEXT_PUBLIC_GLIF_URL }}
+            NEXTAUTH_URL: ${{ vars.NEXTAUTH_URL }}
