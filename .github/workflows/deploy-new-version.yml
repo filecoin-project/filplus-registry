@@ -17,10 +17,26 @@ on:
         default: 'latest'
 
 jobs:
+  prepare-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.prepare-matrix.outputs.matrix }}
+    steps:
+      - name: Determine matrix
+        id: set-matrix
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "matrix=$(jq -cr '@json' <<< "['staging']")" >> $GITHUB_OUTPUT
+          else
+            echo "matrix=$(jq -cr '@json' <<< "['production', 'staging']")" >> $GITHUB_OUTPUT
+          fi
+
   ReuseableMatrixJobForDeployment:
+    needs: 'prepare-matrix'
     strategy:
       matrix:
-        build-type: [production, staging]
+        build-type: ${{ fromJSON(needs.prepare-matrix.outputs.matrix) }}
+
         include:
           - build-type: production
             tag_suffix: prod
