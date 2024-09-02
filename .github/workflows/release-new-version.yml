@@ -13,9 +13,6 @@ on:
       environment:
         required: true
         type: string
-    secrets:
-      envPAT:
-        required: true
 
 env:
   ECR_REPOSITORY: 'filplus-registry'
