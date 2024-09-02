@@ -26,16 +26,16 @@ jobs:
         id: set-matrix
         run: |
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            echo "matrix=$(jq -cr '@json' <<< "['staging']")" >> $GITHUB_OUTPUT
+            echo "::set-output name=matrix::['staging']"
           else
-            echo "matrix=$(jq -cr '@json' <<< "['production', 'staging']")" >> $GITHUB_OUTPUT
+            echo "::set-output name=matrix::['production', 'staging']"
           fi
 
   ReuseableMatrixJobForDeployment:
     needs: 'prepare-matrix'
     strategy:
       matrix:
-        build-type: ${{ fromJSON(steps.prepare-matrix.outputs.matrix) }}
+        build-type: ${{ fromJSON(needs.prepare-matrix.outputs.matrix) }}
 
         include:
           - build-type: production
