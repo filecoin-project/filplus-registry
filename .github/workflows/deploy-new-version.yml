@@ -21,33 +21,28 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
-      matrix_include: ${{ steps.set-matrix.outputs.matrix_include }}
     steps:
       - name: Determine matrix
         id: set-matrix
         run: |
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            echo "::set-output name=matrix::['staging']"
-            echo "::set-output name=matrix_include::{"build-type": "staging", "tag_suffix": "stg", "environment": "staging" }"
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then            
+            echo "matrix={\"include\":[{\"build-type\":\"staging\",\"tag_suffix\":\"stg\",\"environment\":\"staging-fidl\"}]}" >> $GITHUB_OUTPUT
           else
-            echo "::set-output name=matrix::['production', 'staging']"
           fi
 
   ReuseableMatrixJobForDeployment:
     needs: 'prepare-matrix'
     strategy:
       matrix:
-        build-type: ${{ fromJSON(needs.prepare-matrix.outputs.matrix) }}
+        ${{ fromJSON(needs.prepare-matrix.outputs.matrix) }}
 
-        include:
-          ${{ fromJSON(needs.prepare-matrix.outputs.matrix_include) }}
-          # - build-type: production
-          #   tag_suffix: prod
-          #   environment: production-fidl
+        # - build-type: production
+        #   tag_suffix: prod
+        #   environment: production-fidl
 
-          # - build-type: staging
-          #   tag_suffix: stg
-          #   environment: staging-fidl
+        # - build-type: staging
+        #   tag_suffix: stg
+        #   environment: staging-fidl
     uses: ./.github/workflows/release-new-version.yml
     with:
       tag_suffix: ${{ matrix.tag_suffix }}
