@@ -1,0 +1,58 @@
+name: Deploy New Version
+run-name: New deployment for "${{ github.ref_name }}" triggered by ${{ github.actor }}
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+  push:
+    branches:
+      - workflows
+
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Enter the version number'
+        required: true
+        default: 'latest'
+
+jobs:
+  ReuseableMatrixJobForDeployment:
+    strategy:
+      matrix:
+        build-type: [production, staging]
+        include:
+          - build-type: production
+            tag_suffix: prod
+            environment: production-fidl
+
+          - build-type: staging
+            tag_suffix: stg
+            environment: staging-fidl
+    uses: ./.github/workflows/release-new-version.yml
+    with:
+      stage: ${{ matrix.build-type }}
+      tag_suffix: ${{ matrix.tag_suffix }}
+      environment: ${{ matrix.environment }}
+    secrets: inherit
+
+  # reuseable-matrix-job:
+  #   strategy:
+  #     matrix:
+  #       build-type: [production, staging]
+  #       include:
+  #         - build-type: production
+  #           tag_suffix: prod
+  #           environment: production-fidl
+
+  #         - build-type: staging
+  #           tag_suffix: stg
+  #           environment: staging-fidl
+
+  #   uses: ./.github/workflows/release-new-version.yml
+  #   with:
+  #     stage: ${{ matrix.build-type }}
+  #     tag_suffix: ${{ matrix.tag_suffix }}
+  #     environment: ${{ matrix.environment }}
+
+  #   secrets: inherit

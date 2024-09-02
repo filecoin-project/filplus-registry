@@ -1,14 +1,13 @@
-name: Release New Version
+name: Release new version
 run-name: New release for "${{ github.ref_name }}" triggered by ${{ github.actor }}
+
 on:
-  pull_request:
-    types: [opened, synchronize]
-  push:
-    branches:
-      - workflows
   workflow_call:
     inputs:
       version:
+        required: true
+        type: string
+      environment:
         required: true
         type: string
 
@@ -38,22 +37,9 @@ jobs:
         run: npm run prettier
 
   build_and_push:
-    runs-on: ubuntu-latest
     needs: format_and_lint
-    strategy:
-      matrix:
-        build-type: [production, staging]
-        include:
-          - build-type: production
-            tag_suffix: prod
-            environment: production-fidl
-
-          - build-type: staging
-            tag_suffix: stg
-            environment: staging-fidl
-
-    continue-on-error: false
-    environment: ${{ matrix.environment }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
 
     steps:
       - name: Checkout code
