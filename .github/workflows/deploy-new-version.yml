@@ -35,7 +35,7 @@ jobs:
     needs: 'prepare-matrix'
     strategy:
       matrix:
-        build-type: ${{ fromJSON(needs.prepare-matrix.outputs.matrix) }}
+        build-type: ${{ fromJSON(steps.prepare-matrix.outputs.matrix) }}
 
         include:
           - build-type: production
