@@ -47,7 +47,7 @@ jobs:
       - name: Determine matrix
         id: set-matrix
         run: |
-          if [[ "${{ github.ref_name }}" == "workflows" ]]; then
+          if [[ "${{ github.ref_name }}" == "main" ]]; then
             echo "matrix={\"include\":[{\"build-type\":\"production\",\"tag_suffix\":\"production\",\"environment\":\"production-fidl\"}, {\"build-type\":\"staging\",\"tag_suffix\":\"stg\",\"environment\":\"staging-fidl\"}]}" >> $GITHUB_OUTPUT
           else
             echo "matrix={\"include\":[{\"build-type\":\"staging\",\"tag_suffix\":\"staging\",\"environment\":\"staging-fidl\"}]}" >> $GITHUB_OUTPUT  
