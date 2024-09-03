@@ -17,6 +17,28 @@ on:
         default: 'latest'
 
 jobs:
+  check-version:
+    if: ${{ github.ref_name == 'main' && inputs.version != '' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Git config
+        run: |
+          git config user.name "${GITHUB_ACTOR}"
+          git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+
+      - name: Bump version
+        run: |
+          npm version ${{ inputs.version }} --no-git-tag-version
+
+      - name: Commit version change
+        run: |
+          git commit -am "Update version to ${{ inputs.version }}"
+          git push origin main
+
   prepare-matrix:
     runs-on: ubuntu-latest
     outputs:
@@ -25,10 +47,10 @@ jobs:
       - name: Determine matrix
         id: set-matrix
         run: |
-          if [[ "${{ github.ref_name }}" == "workflow" ]]; then
-            echo "matrix={\"include\":[{\"build-type\":\"production\",\"tag_suffix\":\"prod\",\"environment\":\"production-fidl\"}, {\"build-type\":\"staging\",\"tag_suffix\":\"stg\",\"environment\":\"staging-fidl\"}]}" >> $GITHUB_OUTPUT
+          if [[ "${{ github.ref_name }}" == "workflows" ]]; then
+            echo "matrix={\"include\":[{\"build-type\":\"production\",\"tag_suffix\":\"production\",\"environment\":\"production-fidl\"}, {\"build-type\":\"staging\",\"tag_suffix\":\"stg\",\"environment\":\"staging-fidl\"}]}" >> $GITHUB_OUTPUT
           else
-            echo "matrix={\"include\":[{\"build-type\":\"staging\",\"tag_suffix\":\"stg\",\"environment\":\"staging-fidl\"}]}" >> $GITHUB_OUTPUT  
+            echo "matrix={\"include\":[{\"build-type\":\"staging\",\"tag_suffix\":\"staging\",\"environment\":\"staging-fidl\"}]}" >> $GITHUB_OUTPUT  
           fi
 
   ReuseableMatrixJobForDeployment:
@@ -38,6 +60,7 @@ jobs:
 
     uses: ./.github/workflows/release-new-version.yml
     with:
+      version: ${{ inputs.version }}
       tag_suffix: ${{ matrix.tag_suffix }}
       environment: ${{ matrix.environment }}
     secrets: inherit

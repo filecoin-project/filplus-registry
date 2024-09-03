@@ -85,8 +85,8 @@ jobs:
             latest=false
           images: public.ecr.aws/f4h6r4m9/${{ env.ECR_REPOSITORY }}
           tags: |
-            type=semver,pattern={{branch}}-{{version}},value=v${{ inputs.version }},suffix={{ matrix.tag_suffix }},enable=${{inputs.version != ''}}
-            type=ref,event=branch,pattern={{branch}},suffix={{ matrix.tag_suffix }},enable=${{ github.ref_name == 'workflow' }}
+            type=semver,pattern={{branch}}-{{version}},value=v${{ inputs.version }},suffix=-{{ matrix.tag_suffix }},enable=${{inputs.version != ''}}
+            type=ref,event=branch,pattern={{branch}},suffix=-{{ matrix.tag_suffix }},enable=${{ github.ref_name == 'workflow' }}
             type=ref,event=pr,pattern={{branch}}
 
       - name: Create env file
