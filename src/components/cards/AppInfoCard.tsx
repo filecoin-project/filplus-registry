@@ -177,7 +177,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
       const address = application.Lifecycle['On Chain Address']
       const response = await getAllowanceForClient(address)
       if (response.success) {
-        const allowance = parseFloat(response.data)
+        const allowance = parseFloat(response.data ?? 0)
         const lastAllocation = getLastDatacapAllocation(application)
         if (lastAllocation === undefined) return
 
