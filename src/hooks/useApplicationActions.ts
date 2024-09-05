@@ -125,6 +125,7 @@ const useApplicationActions = (
     if (
       !!selectedAllocator &&
       typeof selectedAllocator !== 'string' &&
+      typeof selectedAllocator?.tooling === 'string' &&
       selectedAllocator?.tooling
         .split(', ')
         .includes('smart_contract_allocator') &&
