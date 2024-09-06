@@ -46,25 +46,29 @@ jobs:
       - name: Should continue
         run: |
           if [[ ${{ github.ref_name != 'main' && inputs.version == '' }} ]]; then
-            exit 0
+            echo "SKIP=true" >> $GITHUB_ENV
           fi
 
       - name: Checkout code
+        if: ${{ env.SKIP_JOB != 'true' }}
         uses: actions/checkout@v4
 
       - name: Git config
+        if: ${{ env.SKIP_JOB != 'true' }}
         run: |
           git config user.name "${GITHUB_ACTOR}"
           git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
 
       - name: Install semver
+        if: ${{ env.SKIP_JOB != 'true' }}
         run: npm install semver
 
       - name: Get current version
-        id: get_version
+        if: ${{ env.SKIP_JOB != 'true' }}
         run: echo "current_version=$(jq -r '.version' package.json)" >> $GITHUB_ENV
 
       - name: Validate and set new version
+        if: ${{ env.SKIP_JOB != 'true' }}
         run: |
           new_version="${{ inputs.version }}"
           current_version="${{ env.current_version }}"
@@ -75,10 +79,12 @@ jobs:
           fi
 
       - name: Bump version
+        if: ${{ env.SKIP_JOB != 'true' }}
         run: |
           npm version ${{ inputs.version }} --no-git-tag-version
 
       - name: Commit version change
+        if: ${{ env.SKIP_JOB != 'true' }}
         run: |
           git commit -am "Update version to ${{ inputs.version }}"
           git push origin main
