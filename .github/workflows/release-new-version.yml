@@ -7,9 +7,6 @@ on:
       version:
         required: false
         type: string
-      tag_suffix:
-        required: true
-        type: string
       environment:
         required: true
         type: string
@@ -18,36 +15,13 @@ env:
   ECR_REPOSITORY: 'filplus-registry'
 
 jobs:
-  format_and_lint:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '16.14.2'
-
-      - name: Install Dependencies
-        run: npm ci
-
-      - name: Run ESLint
-        run: npm run lint
-
-      - name: Run Prettier
-        run: npm run prettier
-
   build_and_push:
-    needs: format_and_lint
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
 
     steps:
       - name: Run release process for ${{ inputs.environment }}
         run: |
-          echo "Tag suffix: ${{ inputs.tag_suffix }}"
           echo "Environment: ${{ inputs.environment }}"
 
       - name: Checkout code
@@ -85,8 +59,8 @@ jobs:
             latest=false
           images: public.ecr.aws/f4h6r4m9/${{ env.ECR_REPOSITORY }}
           tags: |
-            type=semver,pattern={{branch}}-{{version}},value=v${{ inputs.version }},suffix=-{{ matrix.tag_suffix }},enable=${{inputs.version != ''}}
-            type=ref,event=branch,pattern={{branch}},suffix=-{{ matrix.tag_suffix }},enable=${{ github.ref_name == 'main' }}
+            type=semver,pattern={{branch}}-{{version}},value=v${{ inputs.version }},suffix=-${{ matrix.environment }},enable=${{inputs.version != ''}}
+            type=ref,event=branch,pattern={{branch}},suffix=-${{ matrix.environment }},enable=${{ github.ref_name == 'main' }}
             type=ref,event=pr,pattern={{branch}}
 
       - name: Create env file
@@ -107,16 +81,15 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          push: false
+          push: true
           tags: ${{ steps.meta.outputs.tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          outputs: type=cacheonly
 
-      # - name: Create and push tag
-      #   if: ${{ github.ref == format('refs/heads/{0}', 'main') && inputs.version != '' }}
-      #   run: |
-      #     TAG_NAME="v${{ steps.meta.outputs.tags }}"
-      #     git tag $TAG_NAME
-      #     git push origin $TAG_NAME
+      - name: Create and push tag
+        if: ${{ github.ref == format('refs/heads/{0}', 'main') && inputs.version != '' }}
+        run: |
+          TAG_NAME="v${{ steps.meta.outputs.tags }}"
+          git tag $TAG_NAME
+          git push origin $TAG_NAME
