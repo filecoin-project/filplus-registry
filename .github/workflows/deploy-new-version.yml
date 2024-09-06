@@ -81,7 +81,6 @@ jobs:
     if: github.ref_name != 'main'
     uses: ./.github/workflows/release-new-version.yml
     needs: [format_and_lint]
-
     with:
       environment: staging-fidl
     secrets: inherit
@@ -95,6 +94,7 @@ jobs:
 
     strategy:
       matrix:
+        build-type: [production, staging]
         include:
           - build-type: production
             environment: production-fidl
