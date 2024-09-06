@@ -46,7 +46,7 @@ jobs:
       - name: Should continue
         run: |
           if [[ ${{ github.ref_name != 'main' && inputs.version == '' }} ]]; then
-            echo "SKIP=true" >> $GITHUB_ENV
+            echo "SKIP_JOB=true" >> $GITHUB_ENV
           fi
 
       - name: Checkout code
