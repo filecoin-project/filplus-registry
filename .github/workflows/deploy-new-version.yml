@@ -92,13 +92,14 @@ jobs:
         id: set-matrix
         run: |
           if [[ "${{ github.ref_name }}" == "main" ]]; then
-            echo "matrix={\"include\":[{\"build-type\":\"production\",\"environment\":\"production-fidl\"}, {\"build-type\":\"staging\",\"tag_suffix\":\"stg\",\"environment\":\"staging-fidl\"}]}" >> $GITHUB_OUTPUT
+            echo "matrix={\"include\":[{\"build-type\":\"production\",\"environment\":\"production-fidl\"}, {\"build-type\":\"staging\",\"environment\":\"staging-fidl\"}]}" >> $GITHUB_OUTPUT
           else
             echo "matrix={\"include\":[{\"build-type\":\"staging\",\"environment\":\"staging-fidl\"}]}" >> $GITHUB_OUTPUT  
           fi
 
   ReuseableMatrixJobForDeployment:
-    needs: 'prepare-matrix'
+    needs: prepare-matrix
+
     strategy:
       matrix: ${{ fromJSON(needs.prepare-matrix.outputs.matrix) }}
 
