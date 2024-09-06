@@ -1,5 +1,5 @@
 name: Release new version
-run-name: New release for "${{ github.ref_name }}" triggered by ${{ github.actor }}
+run-name: New release for "${{ github.ref_name }}" triggered by ${{ github.actor }} for ${{ inputs.environment }}
 
 on:
   workflow_call:
@@ -29,14 +29,6 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
-
-      - name: Cache Docker
-        uses: actions/cache@v3
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-docker-build-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-docker-build-
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -73,9 +65,9 @@ jobs:
           echo "NEXT_PUBLIC_DMOB_API_URL='${{ vars.NEXT_PUBLIC_DMOB_API_URL }}'" >> .env
           echo "NEXT_PUBLIC_GLIF_URL='${{ vars.NEXT_PUBLIC_GLIF_URL }}'" >> .env
           echo "NEXTAUTH_URL='${{ vars.NEXTAUTH_URL }}'" >> .env
-          echo "NEXTAUTH_SECRET='${{ secrets.NEXTAUTH_SECRET }}'" >> .env
-          echo "GITHUB_ID='${{ secrets.GH_ID }}'" >> .env
-          echo "GITHUB_SECRET='${{ secrets.GH_SECRET }}'" >> .env
+          echo "NEXTAUTH_SECRET='placeholder'" >> .env
+          echo "GITHUB_ID='placeholder'" >> .env
+          echo "GITHUB_SECRET='placeholder'" >> .env
 
       - name: Build tag
         uses: docker/build-push-action@v6
@@ -88,7 +80,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create and push tag
-        if: ${{ github.ref == format('refs/heads/{0}', 'main') && inputs.version != '' }}
+        if: ${{ github.ref_name == 'main' && inputs.version != '' }}
         run: |
           TAG_NAME="v${{ steps.meta.outputs.tags }}"
           git tag $TAG_NAME
