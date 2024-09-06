@@ -82,6 +82,7 @@ jobs:
     needs: [format_and_lint, check-version]
     if: |
       always() &&
+      (needs.format_and_lint.result == 'success') &&
       (needs.check-version.result == 'success' || needs.check-version.result == 'skipped')
 
     outputs:
