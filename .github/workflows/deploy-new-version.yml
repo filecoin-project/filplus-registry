@@ -45,7 +45,7 @@ jobs:
     steps:
       - name: Should continue
         run: |
-          if [[ ${{ github.ref_name == 'main' && inputs.version != '' }} ]]; then
+          if [[ ${{ github.ref_name != 'main' && inputs.version == '' }} ]]; then
             exit 0
           fi
 
