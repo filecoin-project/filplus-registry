@@ -77,30 +77,19 @@ jobs:
           git commit -am "Update version to ${{ inputs.version }}"
           git push origin main
 
-  staging-only-deployment:
-    if: github.ref_name != 'main'
+  staging-only-publish:
     uses: ./.github/workflows/release-new-version.yml
     needs: format_and_lint
     with:
       environment: staging-fidl
     secrets: inherit
 
-  ReuseableMatrixJobForDeployment:
-    needs: [format_and_lint, check-version]
-    if: github.ref_name != 'main'
-
-    strategy:
-      matrix:
-        build-type: [production, staging]
-        include:
-          - build-type: production
-            environment: production-fidl
-
-          - build-type: staging
-            environment: staging-fidl
-
+  production-only-publish:
+    needs: format_and_lint
     uses: ./.github/workflows/release-new-version.yml
+    if: ${{ github.ref_name == 'main' && inputs.version != '' }}
     with:
+      environment: production-fidl
       version: ${{ inputs.version }}
-      environment: ${{ matrix.environment }}
+
     secrets: inherit
