@@ -32,7 +32,7 @@
     "@zondax/filecoin-signing-tools": "^0.7.1",
     "@zondax/ledger-filecoin": "^0.13.0",
     "autoprefixer": "10.4.14",
-    "axios": "^1.6.8",
+    "axios": "^1.7.4",
     "bufferutil": "^4.0.8",
     "class-variance-authority": "^0.6.1",
     "clsx": "^2.0.0",
