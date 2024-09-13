@@ -15,22 +15,17 @@ on:
         default: 'latest'
 
 jobs:
-  format-and-lint:
+  code-check:
     uses: ./.github/workflows/code-check.yml
 
   bump-version:
     runs-on: ubuntu-latest
-    needs: format-and-lint
+    needs: code-check
     if: ${{ github.ref_name == 'main' && inputs.version != '' }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Git config
-        run: |
-          git config user.name "${GITHUB_ACTOR}"
-          git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
 
       - name: Install semver
         run: npm install semver
@@ -52,6 +47,11 @@ jobs:
         run: |
           npm version ${{ inputs.version }} --no-git-tag-version
 
+      - name: Git config
+        run: |
+          git config user.name "${GITHUB_ACTOR}"
+          git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+
       - name: Commit version change
         run: |
           git commit -am "Update version to ${{ inputs.version }}"
@@ -60,7 +60,7 @@ jobs:
   staging-only-publish:
     uses: ./.github/workflows/build-docker-image.yml
     needs:
-      - format-and-lint
+      - code-check
       - bump-version
     if: |
       always() &&
@@ -72,7 +72,7 @@ jobs:
 
   production-only-publish:
     needs:
-      - format-and-lint
+      - code-check
       - bump-version
     uses: ./.github/workflows/build-docker-image.yml
     if: |
