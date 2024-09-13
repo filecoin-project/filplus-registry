@@ -79,17 +79,28 @@ jobs:
 
   staging-only-publish:
     uses: ./.github/workflows/release-new-version.yml
-    needs: format_and_lint
+    needs:
+      - format_and_lint
+      - check-version
+    if: |
+      always() &&
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled')
     with:
       environment: staging-fidl
     secrets: inherit
 
   production-only-publish:
-    needs: format_and_lint
+    needs:
+      - format_and_lint
+      - check-version
     uses: ./.github/workflows/release-new-version.yml
-    if: ${{ github.ref_name == 'main' && inputs.version != '' }}
+    if: |
+      ${{ github.ref_name == 'main' && inputs.version != '' }} &&
+      always() &&
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled')
     with:
       environment: production-fidl
       version: ${{ inputs.version }}
-
     secrets: inherit
