@@ -1,0 +1,95 @@
+name: Deploy New Version
+run-name: New deployment for "${{ github.ref_name }}" triggered by ${{ github.actor }}
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+  push:
+    branches:
+      - main
+
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Enter the version number'
+        required: true
+        default: 'latest'
+
+jobs:
+  format_and_lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '16.14.2'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run Prettier
+        run: npm run prettier
+
+  check-version:
+    runs-on: ubuntu-latest
+    needs: format_and_lint
+    if: ${{ github.ref_name == 'main' && inputs.version != '' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Git config
+        run: |
+          git config user.name "${GITHUB_ACTOR}"
+          git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+
+      - name: Install semver
+        run: npm install semver
+
+      - name: Get current version
+        run: echo "current_version=$(jq -r '.version' package.json)" >> $GITHUB_ENV
+
+      - name: Validate and set new version
+        run: |
+          new_version="${{ inputs.version }}"
+          current_version="${{ env.current_version }}"
+
+          if npx semver $new_version -r "<=$current_version"; then
+            echo "Error: New version ($new_version) is lowest or the same as current ($current_version)"
+            exit 1
+          fi
+
+      - name: Bump version
+        run: |
+          npm version ${{ inputs.version }} --no-git-tag-version
+
+      - name: Commit version change
+        run: |
+          git commit -am "Update version to ${{ inputs.version }}"
+          git push origin main
+
+  staging-only-publish:
+    uses: ./.github/workflows/release-new-version.yml
+    needs: format_and_lint
+    with:
+      environment: staging-fidl
+    secrets: inherit
+
+  production-only-publish:
+    needs: format_and_lint
+    uses: ./.github/workflows/release-new-version.yml
+    if: ${{ github.ref_name == 'main' && inputs.version != '' }}
+    with:
+      environment: production-fidl
+      version: ${{ inputs.version }}
+
+    secrets: inherit

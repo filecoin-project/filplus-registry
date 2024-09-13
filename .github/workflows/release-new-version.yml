@@ -1,0 +1,87 @@
+name: Release new version
+run-name: New release for "${{ github.ref_name }}" triggered by ${{ github.actor }} for ${{ inputs.environment }}
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        required: false
+        type: string
+      environment:
+        required: true
+        type: string
+
+env:
+  ECR_REPOSITORY: 'filplus-registry'
+
+jobs:
+  build_and_push:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+
+    steps:
+      - name: Run release process for ${{ inputs.environment }}
+        run: |
+          echo "Environment: ${{ inputs.environment }}"
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v1
+        with:
+          mask-password: 'true'
+          registry-type: public
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          flavor: |
+            latest=false
+          images: public.ecr.aws/f4h6r4m9/${{ env.ECR_REPOSITORY }}
+          tags: |
+            type=semver,pattern={{branch}}-{{version}},value=v${{ inputs.version }},suffix=-${{ matrix.environment }},enable=${{inputs.version != ''}}
+            type=ref,event=branch,pattern={{branch}},suffix=-${{ matrix.environment }},enable=${{ github.ref_name == 'main' }}
+            type=ref,event=pr,pattern={{branch}}
+
+      - name: Create env file
+        run: |
+          echo "NEXT_PUBLIC_API_URL='${{ vars.NEXT_PUBLIC_API_URL }}'" >> .env
+          echo "NEXT_PUBLIC_DMOB_API_KEY='${{ vars.NEXT_PUBLIC_DMOB_API_KEY }}'" >> .env
+          echo "NEXT_PUBLIC_MODE='${{ vars.NEXT_PUBLIC_MODE }}'" >> .env
+          echo "NEXT_PUBLIC_NODE_ADDRESS='${{ vars.NEXT_PUBLIC_NODE_ADDRESS }}'" >> .env
+          echo "NEXT_PUBLIC_NODE_TOKEN='${{ vars.NEXT_PUBLIC_NODE_TOKEN }}'" >> .env
+          echo "NEXT_PUBLIC_DMOB_API_URL='${{ vars.NEXT_PUBLIC_DMOB_API_URL }}'" >> .env
+          echo "NEXT_PUBLIC_GLIF_URL='${{ vars.NEXT_PUBLIC_GLIF_URL }}'" >> .env
+          echo "NEXTAUTH_URL='${{ vars.NEXTAUTH_URL }}'" >> .env
+          echo "NEXTAUTH_SECRET='placeholder'" >> .env
+          echo "GITHUB_ID='placeholder'" >> .env
+          echo "GITHUB_SECRET='placeholder'" >> .env
+
+      - name: Build tag
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create and push tag
+        if: ${{ github.ref_name == 'main' && inputs.version != '' }}
+        run: |
+          TAG_NAME="v${{ inputs.version }}"
+          git tag $TAG_NAME
+          git push origin $TAG_NAME
