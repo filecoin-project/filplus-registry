@@ -199,7 +199,6 @@ const AppInfoCard: React.FC<ComponentProps> = ({
           return
         }
 
-
         if (allocationAmount < allowance) {
           setIsProgressBarVisible(true)
           setProgress(0)
