@@ -298,6 +298,8 @@ const useWallet = (): WalletState => {
       setMessage('Sending proposal...')
 
       const bytesDatacap = Math.floor(anyToBytes(proposalAllocationAmount))
+      if (bytesDatacap === 0) throw new Error("Can't grant 0 datacap.");
+
       const messageCID =
         allocatorType === AllocatorTypeEnum.CONTRACT
           ? await sendProposalContract(
