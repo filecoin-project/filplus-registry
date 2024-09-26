@@ -127,7 +127,7 @@ export const getStateWaitMsg = async (
     })
 
     const data = await response.json()
-    if (data?.error && data.error.data === "Request timeout") {
+    if (data?.error && data.error.data === 'Request timeout') {
       return await getStateWaitMsg(cid)
     }
 
