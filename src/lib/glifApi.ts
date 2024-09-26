@@ -127,7 +127,8 @@ export const getStateWaitMsg = async (
     })
 
     const data = await response.json()
-    if (data?.error && data.error.code === -32603) {
+    const requestTimeoutErrorCode = -32603
+    if (data?.error && data.error.code === requestTimeoutErrorCode) {
       return await getStateWaitMsg(cid)
     }
 
