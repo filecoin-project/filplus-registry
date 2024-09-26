@@ -1,4 +1,4 @@
-import type { ApiAllowanceResponse, ApiAStateWaitMsgResponse } from '@/type'
+import type { ApiAllowanceResponse, ApiStateWaitMsgResponse } from '@/type'
 import { config } from '@/config'
 
 /**
@@ -99,12 +99,15 @@ export const getAllowanceForClient = async (
  * Wait for a message to appear on chain and get it.
  *
  * @param {string} cid - Transaction CID.
- * @returns {Promise<ApiAStateWaitMsgResponse>} ApiAStateWaitMsgResponse - The response from the API.
+ * @returns {Promise<ApiStateWaitMsgResponse>} ApiStateWaitMsgResponse - The response from the API.
  */
 export const getStateWaitMsg = async (
   cid: string,
-): Promise<ApiAStateWaitMsgResponse> => {
+): Promise<ApiStateWaitMsgResponse> => {
   try {
+    const confidence = 1
+    const limitChainEpoch = 10
+    const allowReplaced = true
     const requestBody = {
       jsonrpc: '2.0',
       method: 'Filecoin.StateWaitMsg',
@@ -112,9 +115,9 @@ export const getStateWaitMsg = async (
         {
           '/': cid,
         },
-        1,
-        10,
-        true,
+        confidence,
+        limitChainEpoch,
+        allowReplaced,
       ],
       id: 1,
     }

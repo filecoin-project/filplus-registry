@@ -115,11 +115,11 @@ export interface ApiAllowanceResponse {
   data: string
 }
 
-export interface ApiAStateWaitMsgResponse {
+export interface ApiStateWaitMsgResponse {
   error: string
   success: boolean
   data:
-    | {
+     {
         Height: number
         Message: {
           '/': string
@@ -130,17 +130,25 @@ export interface ApiAStateWaitMsgResponse {
           GasUsed: number
           Return: string
         }
-        ReturnDec: {
-          Applied: boolean
-          Code: number
-          Ret: string
-          TxnID: number
-        }
+        ReturnDec: ApproveReturn | ProposeReturn
         TipSet: Array<{
           '/': string
         }>
       }
     | string
+}
+
+interface ApproveReturn {
+    Applied: boolean
+    Code: number
+    Ret: string
+}
+
+interface ProposeReturn {
+  Applied: boolean
+  Code: number
+  Ret: string
+  TxnID: number
 }
 
 export interface LDNActorsResponse {
