@@ -119,7 +119,7 @@ export interface ApiStateWaitMsgResponse {
   error: string
   success: boolean
   data:
-     {
+    | {
         Height: number
         Message: {
           '/': string
@@ -139,9 +139,9 @@ export interface ApiStateWaitMsgResponse {
 }
 
 interface ApproveReturn {
-    Applied: boolean
-    Code: number
-    Ret: string
+  Applied: boolean
+  Code: number
+  Ret: string
 }
 
 interface ProposeReturn {

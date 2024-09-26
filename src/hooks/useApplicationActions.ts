@@ -447,7 +447,8 @@ const useApplicationActions = (
       }
       const response = await getStateWaitMsg(messageCID)
       if (
-        typeof response.data === 'object' && response.data.ReturnDec.Applied === true &&
+        typeof response.data === 'object' &&
+        response.data.ReturnDec.Applied &&
         response.data.ReturnDec.Code !== 0
       ) {
         throw new Error(
