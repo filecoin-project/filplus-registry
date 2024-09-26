@@ -115,6 +115,34 @@ export interface ApiAllowanceResponse {
   data: string
 }
 
+export interface ApiAStateWaitMsgResponse {
+  error: string
+  success: boolean
+  data:
+    | {
+        Height: number
+        Message: {
+          '/': string
+        }
+        Receipt: {
+          EventsRoot: string | null
+          ExitCode: number
+          GasUsed: number
+          Return: string
+        }
+        ReturnDec: {
+          Applied: boolean
+          Code: number
+          Ret: string
+          TxnID: number
+        }
+        TipSet: Array<{
+          '/': string
+        }>
+      }
+    | string
+}
+
 export interface LDNActorsResponse {
   governance_gh_handles: string[]
   notary_gh_handles: string[]

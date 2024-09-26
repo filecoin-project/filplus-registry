@@ -39,6 +39,7 @@
     "encoding": "^0.1.13",
     "eslint-config-next": "^12.3.4",
     "filecoin-verifier-tools": "^2.3.0",
+    "filecoin-verifier-tools-temporary": "^2.3.0",
     "fuse.js": "^6.6.2",
     "lucide-react": "^0.260.0",
     "next": "13.5.6",
