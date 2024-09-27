@@ -115,6 +115,42 @@ export interface ApiAllowanceResponse {
   data: string
 }
 
+export interface ApiStateWaitMsgResponse {
+  error: string
+  success: boolean
+  data:
+    | {
+        Height: number
+        Message: {
+          '/': string
+        }
+        Receipt: {
+          EventsRoot: string | null
+          ExitCode: number
+          GasUsed: number
+          Return: string
+        }
+        ReturnDec: ApproveReturn | ProposeReturn
+        TipSet: Array<{
+          '/': string
+        }>
+      }
+    | string
+}
+
+interface ApproveReturn {
+  Applied: boolean
+  Code: number
+  Ret: string
+}
+
+interface ProposeReturn {
+  Applied: boolean
+  Code: number
+  Ret: string
+  TxnID: number
+}
+
 export interface LDNActorsResponse {
   governance_gh_handles: string[]
   notary_gh_handles: string[]

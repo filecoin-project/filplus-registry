@@ -268,7 +268,6 @@ const useWallet = (): WalletState => {
         contractAddress,
         calldata,
         activeAccountIndex,
-        wallet,
       )
     },
     [wallet, multisigAddress, activeAccountIndex],

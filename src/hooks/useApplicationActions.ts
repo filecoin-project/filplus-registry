@@ -18,6 +18,7 @@ import {
   useQueryClient,
   type UseMutationResult,
 } from 'react-query'
+import { getStateWaitMsg } from '@/lib/glifApi'
 
 interface ApplicationActions {
   application: Application
@@ -444,7 +445,16 @@ const useApplicationActions = (
           'Error sending proposal. Please try again or contact support.',
         )
       }
-
+      const response = await getStateWaitMsg(messageCID)
+      if (
+        typeof response.data === 'object' &&
+        response.data.ReturnDec.Applied &&
+        response.data.ReturnDec.Code !== 0
+      ) {
+        throw new Error(
+          `Error sending transaction. Please try again or contact support. Error code: ${response.data.ReturnDec.Code}`,
+        )
+      }
       return await postApplicationProposal(
         initialApplication.ID,
         requestId,
