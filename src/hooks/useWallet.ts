@@ -5,8 +5,12 @@ import { config } from '../config'
 import { AllocatorTypeEnum, type IWallet, type SendProposalProps } from '@/type'
 import { anyToBytes } from '@/lib/utils'
 import { newFromString } from '@glif/filecoin-address'
-import { decodeFunctionData, encodeFunctionData, parseAbi } from 'viem'
+import { decodeFunctionData, encodeFunctionData, parseAbi, fromHex } from 'viem'
 import { type Hex } from 'viem/types/misc'
+import {
+  getEvmAddressFromFilecoinAddress,
+  makeStaticEthCall,
+} from '@/lib/glifApi'
 
 /**
  * Registry that maps wallet class names to their respective classes.
@@ -45,6 +49,10 @@ interface WalletState {
   message: string | null
   setMessage: (message: string | null) => void
   loadMoreAccounts: (number: number) => Promise<void>
+  getAllocatorAllowanceFromContract: (
+    contractAddress: string,
+    allocatorAddress: string,
+  ) => Promise<number>
 }
 
 /**
@@ -273,6 +281,32 @@ const useWallet = (): WalletState => {
     [wallet, multisigAddress, activeAccountIndex],
   )
 
+  const getAllocatorAllowanceFromContract = useCallback(
+    async (
+      contractAddress: string,
+      allocatorAddress: string,
+    ): Promise<number> => {
+      const abi = parseAbi([
+        'function allowance(address allocator) view returns (uint256)',
+      ])
+      const evmAllocatorAddress =
+        await getEvmAddressFromFilecoinAddress(allocatorAddress)
+      const calldataHex: Hex = encodeFunctionData({
+        abi,
+        args: [evmAllocatorAddress.data],
+      })
+      const evmContractAddress =
+        await getEvmAddressFromFilecoinAddress(contractAddress)
+      const response = await makeStaticEthCall(
+        evmContractAddress.data,
+        calldataHex,
+      )
+      const allowance = fromHex(response.data as Hex, 'number')
+      return allowance
+    },
+    [],
+  )
+
   /**
    * Sends a proposal to a multisig wallet.
    *
@@ -358,6 +392,7 @@ const useWallet = (): WalletState => {
     setMessage,
     accounts,
     loadMoreAccounts,
+    getAllocatorAllowanceFromContract,
   }
 }
 

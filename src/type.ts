@@ -1,3 +1,5 @@
+import type { Address } from 'viem'
+
 export enum RefillUnit {
   PIB = 'PiB',
   TIB = 'TiB',
@@ -110,6 +112,18 @@ export interface API {
 }
 
 export interface ApiAllowanceResponse {
+  error: string
+  success: boolean
+  data: string
+}
+
+export interface ApiFilecoinAddressToEthAddressResponse {
+  error: string
+  success: boolean
+  data: Address
+}
+
+export interface ApiEthCallResponse {
   error: string
   success: boolean
   data: string

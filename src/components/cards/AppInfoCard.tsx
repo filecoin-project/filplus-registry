@@ -57,7 +57,7 @@ interface ComponentProps {
   repo: string
   owner: string
   allocation?: Allocation
-  allowanceMultisig: any
+  allowance: any
 }
 
 /**
@@ -75,7 +75,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
   repo,
   owner,
   allocation,
-  allowanceMultisig,
+  allowance,
 }) => {
   const session = useSession()
   const { allocators, setSelectedAllocator } = useAllocator()
@@ -439,7 +439,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
 
               if (
                 lastAllocationAmount &&
-                anyToBytes(lastAllocationAmount) > allowanceMultisig
+                anyToBytes(lastAllocationAmount) > allowance
               ) {
                 toast.error('Amount is bigger than the allowance')
                 return
@@ -458,7 +458,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
 
             if (
               lastAllocationAmount &&
-              anyToBytes(lastAllocationAmount) > allowanceMultisig
+              anyToBytes(lastAllocationAmount) > allowance
             ) {
               toast.error('Amount is bigger than the allowance')
               return
@@ -571,7 +571,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
       return
     }
 
-    if (anyToBytes(allocationAmountConfig.amount) > allowanceMultisig) {
+    if (anyToBytes(allocationAmountConfig.amount) > allowance) {
       toast.error('Amount is bigger than the allowance')
       return
     }
