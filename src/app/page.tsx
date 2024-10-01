@@ -31,7 +31,6 @@ import {
   getApplicationsForRepo,
 } from '@/lib/apiClient'
 import { type Application } from '@/type'
-import Fuse from 'fuse.js'
 import { Search } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
@@ -126,28 +125,31 @@ export default function Home(): JSX.Element {
   useEffect(() => {
     if (isLoading || data == null) return
 
-    const filteredData = data?.filter(
-      (app) => filter === 'all' || app.Lifecycle.State === filter,
-    )
+    const debounceTimeout = setTimeout(() => {
+      const filteredData = data?.filter(
+        (app) => filter === 'all' || app.Lifecycle.State === filter,
+      )
 
-    const fuseOptions =
-      filteredData?.length > 0
-        ? {
-            keys: [
-              ...Object.keys(filteredData[0].Client).map(
-                (key) => `Client.${key}`,
-              ),
-              'id',
-            ],
-          }
-        : { keys: [] }
+      const searchResults = searchTerm
+        ? filteredData.filter((app) => {
+            const clientName = app.Client?.Name?.toLowerCase() || ''
+            const owner = app.owner?.toLowerCase() || ''
+            const repo = app.repo?.toLowerCase() || ''
+            const searchLower = searchTerm.toLowerCase()
 
-    const fuse = new Fuse(filteredData, fuseOptions)
-    const results = fuse.search(searchTerm)
+            return (
+              clientName.includes(searchLower) ||
+              owner.includes(searchLower) ||
+              repo.includes(searchLower)
+            )
+          })
+        : filteredData
+      setSearchResults(searchResults)
+    }, 500)
 
-    const searchResults =
-      searchTerm !== '' ? results.map((result) => result.item) : filteredData
-    setSearchResults(searchResults)
+    return () => {
+      clearTimeout(debounceTimeout)
+    }
   }, [searchTerm, filter, data, isLoading])
 
   const handleRenewal = async (): Promise<void> => {
