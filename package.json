@@ -1,6 +1,6 @@
 {
   "name": "filecoin-registry",
-  "version": "1.1.2",
+  "version": "1.2.1",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -38,9 +38,7 @@
     "clsx": "^2.0.0",
     "encoding": "^0.1.13",
     "eslint-config-next": "^12.3.4",
-    "filecoin-verifier-tools": "^2.3.0",
-    "filecoin-verifier-tools-temporary": "^2.3.0",
-    "fuse.js": "^6.6.2",
+    "filecoin-verifier-tools": "^2.3.1",
     "lucide-react": "^0.260.0",
     "next": "13.5.6",
     "next-auth": "^4.22.1",

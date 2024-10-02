@@ -1,5 +1,5 @@
 import signer from '@zondax/filecoin-signing-tools/js'
-import { VerifyAPI } from 'filecoin-verifier-tools-temporary'
+import { VerifyAPI } from 'filecoin-verifier-tools'
 import { config } from '../../config'
 import { BaseWallet } from './BaseWallet'
 
