@@ -32,34 +32,38 @@ const ApplicationDetailPage: React.FC<ComponentProps> = ({
 
   const [allowance, setAllowance] = useState<any>()
 
-  const getAllowance = async (
-    contractAddress: string,
+  const getAllowanceClassic = async (
     multisigAddress: string,
-    allocatorSmartContract: boolean,
   ): Promise<void> => {
-    let allowance = 0
-    if (!allocatorSmartContract) {
-      const multisigAllowance = await getAllowanceForVerifier(multisigAddress)
-      if (multisigAllowance.success) {
-        allowance = parseInt(multisigAllowance.data)
-      }
-    } else {
-      const contractAllowance = await getAllowanceForVerifier(contractAddress)
-      const allocatorAllowance = await getAllocatorAllowanceFromContract(
-        contractAddress,
-        multisigAddress,
-      )
-      if (contractAllowance.success) {
-        allowance = Math.min(
-          parseInt(contractAllowance.data),
-          allocatorAllowance,
-        )
+    const multisigAllowance = await getAllowanceForVerifier(multisigAddress)
+    if (multisigAllowance.success) {
+      const allowance = parseInt(multisigAllowance.data)
+      if (!isNaN(allowance)) {
+        setAllowance(allowance)
+      } else {
+        setAllowance(0)
       }
     }
-    if (!isNaN(allowance)) {
-      setAllowance(allowance)
-    } else {
-      setAllowance(0)
+  }
+
+  const getAllowanceSmartContract = async (
+    contractAddress: string,
+    multisigAddress: string,
+  ): Promise<void> => {
+    const [contractAllowance, allocatorAllowance] = await Promise.all([
+      getAllowanceForVerifier(contractAddress),
+      getAllocatorAllowanceFromContract(contractAddress, multisigAddress),
+    ])
+    if (contractAllowance.success) {
+      const allowance = Math.min(
+        parseInt(contractAllowance.data),
+        allocatorAllowance,
+      )
+      if (!isNaN(allowance)) {
+        setAllowance(allowance)
+      } else {
+        setAllowance(0)
+      }
     }
   }
 
@@ -68,11 +72,14 @@ const ApplicationDetailPage: React.FC<ComponentProps> = ({
       const isMetaallocatorContract = selectedAllocator?.tooling
         .split(', ')
         .includes('smart_contract_allocator')
-      void getAllowance(
-        selectedAllocator.address,
-        selectedAllocator.multisig_address,
-        isMetaallocatorContract,
-      )
+      if (!isMetaallocatorContract) {
+        void getAllowanceClassic(selectedAllocator.multisig_address)
+      } else {
+        void getAllowanceSmartContract(
+          selectedAllocator.address,
+          selectedAllocator.multisig_address,
+        )
+      }
     }
   }, [selectedAllocator]) // eslint-disable-line react-hooks/exhaustive-deps
 
