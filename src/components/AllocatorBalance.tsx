@@ -19,47 +19,52 @@ const AllocatorBalance: React.FC<ComponentProps> = ({ owner, repo }) => {
     [allocators, owner, repo],
   )
 
-  const getAllowance = async (
-    contractAddress: string,
+  const getAllowanceClassic = async (
     multisigAddress: string,
-    allocatorSmartContract: boolean,
-  ): Promise<number> => {
-    let allowance = 0
-    if (!allocatorSmartContract) {
-      const multisigAllowance = await getAllowanceForVerifier(multisigAddress)
-      if (multisigAllowance.success) {
-        allowance = parseInt(multisigAllowance.data)
-      }
-    } else {
-      const contractAllowance = await getAllowanceForVerifier(contractAddress)
-      const allocatorAllowance = await getAllocatorAllowanceFromContract(
-        contractAddress,
-        multisigAddress,
-      )
-      if (contractAllowance.success) {
-        allowance = Math.min(
-          parseInt(contractAllowance.data),
-          allocatorAllowance,
-        )
+  ): Promise<void> => {
+    const multisigAllowance = await getAllowanceForVerifier(multisigAddress)
+    if (multisigAllowance.success) {
+      const allowance = parseInt(multisigAllowance.data)
+      if (!isNaN(allowance)) {
+        setBalance(allowance)
+      } else {
+        setBalance(0)
       }
     }
+  }
 
-    if (!isNaN(allowance)) {
-      return allowance
-    } else {
-      return 0
+  const getAllowanceSmartContract = async (
+    contractAddress: string,
+    multisigAddress: string,
+  ): Promise<void> => {
+    const [contractAllowance, allocatorAllowance] = await Promise.all([
+      getAllowanceForVerifier(contractAddress),
+      getAllocatorAllowanceFromContract(contractAddress, multisigAddress),
+    ])
+    if (contractAllowance.success) {
+      const allowance = Math.min(
+        parseInt(contractAllowance.data),
+        allocatorAllowance,
+      )
+      if (!isNaN(allowance)) {
+        setBalance(allowance)
+      } else {
+        setBalance(0)
+      }
     }
   }
 
   const fetchBalance = async (
     address: string,
     multisigAddress: string,
-    allocatorSmartContract: boolean,
+    isMetaallocatorContract: boolean,
   ): Promise<void> => {
     setLoading(true)
-    setBalance(
-      await getAllowance(address, multisigAddress, allocatorSmartContract),
-    )
+    if (!isMetaallocatorContract) {
+      await getAllowanceClassic(multisigAddress)
+    } else {
+      await getAllowanceSmartContract(address, multisigAddress)
+    }
     setLoading(false)
   }
 
