@@ -1,7 +1,7 @@
 import TransportWebUSB from '@ledgerhq/hw-transport-webusb'
 import signer from '@zondax/filecoin-signing-tools/js'
 import FilecoinApp from '@zondax/ledger-filecoin'
-import { VerifyAPI } from 'filecoin-verifier-tools-temporary'
+import { VerifyAPI } from 'filecoin-verifier-tools'
 import { config } from '../../config'
 import { BaseWallet } from './BaseWallet'
 
