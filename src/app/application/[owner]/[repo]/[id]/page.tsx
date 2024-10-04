@@ -69,7 +69,7 @@ const ApplicationDetailPage: React.FC<ComponentProps> = ({
 
   useEffect(() => {
     if (typeof selectedAllocator === 'object') {
-      const isMetaallocatorContract = selectedAllocator?.tooling
+      const isMetaallocatorContract = (selectedAllocator?.tooling ?? '')
         .split(', ')
         .includes('smart_contract_allocator')
       if (!isMetaallocatorContract) {
