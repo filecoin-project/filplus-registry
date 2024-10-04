@@ -183,7 +183,7 @@ export interface Allocator {
   multisig_threshold: number
   allocation_amount_type: string | null
   address: string
-  tooling: string
+  tooling: string | null
   verifiers_gh_handles: string | string[]
 }
 

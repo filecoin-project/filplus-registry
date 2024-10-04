@@ -70,7 +70,7 @@ const AllocatorBalance: React.FC<ComponentProps> = ({ owner, repo }) => {
 
   useEffect(() => {
     if (allocator) {
-      const isMetaallocatorContract = allocator?.tooling
+      const isMetaallocatorContract = (allocator?.tooling ?? '')
         .split(', ')
         .includes('smart_contract_allocator')
       void fetchBalance(
