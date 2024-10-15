@@ -9,6 +9,7 @@ import {
   postApproveChanges,
   postRemoveAlloc,
   postRequestKyc,
+  postRevertApplicationToReadyToSign,
   triggerSSA,
 } from '@/lib/apiClient'
 import { AllocatorTypeEnum, type Application, type RefillUnit } from '@/type'
@@ -518,7 +519,23 @@ const useApplicationActions = (
           'Error sending proposal. Please try again or contact support.',
         )
       }
-
+      const response = await getStateWaitMsg(messageCID)
+      if (
+        typeof response.data === 'object' &&
+        response.data.ReturnDec.Applied &&
+        response.data.ReturnDec.Code !== 0
+      ) {
+        await postRevertApplicationToReadyToSign(
+          userName,
+          initialApplication.ID,
+          owner,
+          repo,
+        )
+        // After changing the error message, please check the handleClose() function and adapt the changes
+        throw new Error(
+          `Datacap allocation transaction failed on the chain. Application reverted to ReadyToSign. Error code: ${response.data.ReturnDec.Code}`,
+        )
+      }
       return await postApplicationApproval(
         initialApplication.ID,
         requestId,
