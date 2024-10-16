@@ -533,7 +533,7 @@ const useApplicationActions = (
         )
         // After changing the error message, please check the handleClose() function and adapt the changes
         throw new Error(
-          `Datacap allocation transaction failed on the chain. Application reverted to ReadyToSign. Error code: ${response.data.ReturnDec.Code}`,
+          `Datacap allocation transaction failed on chain. Application reverted to ReadyToSign. Please try again. Error code: ${response.data.ReturnDec.Code}`,
         )
       }
       return await postApplicationApproval(

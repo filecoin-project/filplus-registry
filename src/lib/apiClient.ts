@@ -464,8 +464,8 @@ export const postRevertApplicationToReadyToSign = async (
 ): Promise<Application | undefined> => {
   try {
     const { data } = await apiClient.post(
-      `verifier/application/revert_to_ready_to_sign`,
-      { github_username: githubUsername, repo, owner, id },
+      `verifier/application/allocation_failed`,
+      {},
       {
         params: {
           github_username: githubUsername,
