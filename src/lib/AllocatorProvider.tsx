@@ -1,10 +1,12 @@
 'use client'
 import { type Allocator } from '@/type'
-import React, { createContext, useContext, useEffect, useState } from 'react'
-import type { ReactNode } from 'react'
-import { getAllocators } from './apiClient'
-import { useQuery } from 'react-query'
 import { useSession } from 'next-auth/react'
+import type { ReactNode } from 'react'
+import React, { createContext, useContext, useEffect, useState } from 'react'
+import { useQuery } from 'react-query'
+import { getAllocators } from './apiClient'
+
+import { FileCoinClient, type IFileCoinClient } from './publicClient'
 
 // Define the shape of your context data for TypeScript
 interface AllocatorContextType {
@@ -14,6 +16,7 @@ interface AllocatorContextType {
   setSelectedAllocator: React.Dispatch<
     React.SetStateAction<Allocator | undefined | 'all'>
   > // Adjust the type as needed
+  filecoinClient: IFileCoinClient | undefined
 }
 
 // Provide a default value matching the structure
@@ -22,6 +25,7 @@ const defaultContextValue: AllocatorContextType = {
   setAllocators: () => {}, // No-op function for initialization
   selectedAllocator: undefined,
   setSelectedAllocator: () => {},
+  filecoinClient: undefined,
 }
 
 interface AllocatorProviderProps {
@@ -35,6 +39,8 @@ const AllocatorContext =
 export const AllocatorProvider: React.FunctionComponent<
   AllocatorProviderProps
 > = ({ children }): React.ReactElement => {
+  const filecoinClient = new FileCoinClient()
+
   const [allocators, setAllocators] = useState<Allocator[]>([])
   const [selectedAllocator, setSelectedAllocator] = useState<
     Allocator | 'all'
@@ -76,6 +82,7 @@ export const AllocatorProvider: React.FunctionComponent<
         setAllocators,
         selectedAllocator,
         setSelectedAllocator,
+        filecoinClient,
       }}
     >
       {children}
