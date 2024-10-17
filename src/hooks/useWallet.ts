@@ -223,8 +223,13 @@ const useWallet = (): WalletState => {
 
           const paramsHex: string = tx.parsed.params.toString('hex')
           const dataHex: Hex = `0x${paramsHex}`
-
-          const decodedData = decodeFunctionData({ abi, data: dataHex })
+          let decodedData
+          try {
+            decodedData = decodeFunctionData({ abi, data: dataHex })
+          } catch (err) {
+            console.error(err)
+            return false
+          }
           const [clientAddressData, amount] = decodedData.args
           const address = newFromString(clientAddress)
           const addressHex: Hex = `0x${Buffer.from(address.bytes).toString('hex')}`

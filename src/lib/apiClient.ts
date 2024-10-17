@@ -456,6 +456,32 @@ export const postApplicationApproval = async (
   }
 }
 
+export const postRevertApplicationToReadyToSign = async (
+  githubUsername: string,
+  id: string,
+  owner: string,
+  repo: string,
+): Promise<Application | undefined> => {
+  try {
+    const { data } = await apiClient.post(
+      `verifier/application/allocation_failed`,
+      {},
+      {
+        params: {
+          github_username: githubUsername,
+          repo,
+          owner,
+          id,
+        },
+      },
+    )
+    return data
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
 /**
  * Retrieves an application based on its ID.
  *
