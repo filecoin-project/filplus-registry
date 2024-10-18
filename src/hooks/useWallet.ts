@@ -1,16 +1,16 @@
-import { useState, useCallback } from 'react'
-import { LedgerWallet } from '@/lib/wallet/LedgerWallet'
-import { BurnerWallet } from '@/lib/wallet/BurnerWallet'
-import { config } from '../config'
-import { AllocatorTypeEnum, type IWallet, type SendProposalProps } from '@/type'
-import { anyToBytes } from '@/lib/utils'
-import { newFromString } from '@glif/filecoin-address'
-import { decodeFunctionData, encodeFunctionData, parseAbi, fromHex } from 'viem'
-import { type Hex } from 'viem/types/misc'
 import {
   getEvmAddressFromFilecoinAddress,
   makeStaticEthCall,
 } from '@/lib/glifApi'
+import { anyToBytes } from '@/lib/utils'
+import { BurnerWallet } from '@/lib/wallet/BurnerWallet'
+import { LedgerWallet } from '@/lib/wallet/LedgerWallet'
+import { AllocatorTypeEnum, type IWallet, type SendProposalProps } from '@/type'
+import { newFromString } from '@glif/filecoin-address'
+import { useCallback, useState } from 'react'
+import { decodeFunctionData, encodeFunctionData, fromHex, parseAbi } from 'viem'
+import { type Hex } from 'viem/types/misc'
+import { config } from '../config'
 
 /**
  * Registry that maps wallet class names to their respective classes.
@@ -296,16 +296,20 @@ const useWallet = (): WalletState => {
       ])
       const evmAllocatorAddress =
         await getEvmAddressFromFilecoinAddress(allocatorAddress)
+
       const calldataHex: Hex = encodeFunctionData({
         abi,
         args: [evmAllocatorAddress.data],
       })
+
       const evmContractAddress =
         await getEvmAddressFromFilecoinAddress(contractAddress)
+
       const response = await makeStaticEthCall(
         evmContractAddress.data,
         calldataHex,
       )
+
       const allowance = fromHex(response.data as Hex, 'number')
       return allowance
     },

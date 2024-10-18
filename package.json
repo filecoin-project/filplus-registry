@@ -53,7 +53,7 @@
     "tailwindcss": "3.3.2",
     "tailwindcss-animate": "^1.0.6",
     "utf-8-validate": "^5.0.10",
-    "viem": "^2.9.21",
+    "viem": "^2.21.26",
     "webpack-node-externals": "^3.0.0",
     "ws": "^8.18.0"
   },
