@@ -12,6 +12,7 @@ import {
   postRevertApplicationToReadyToSign,
   triggerSSA,
 } from '@/lib/apiClient'
+import { getStateWaitMsg } from '@/lib/glifApi'
 import { AllocatorTypeEnum, type Application, type RefillUnit } from '@/type'
 import { useMemo, useState } from 'react'
 import {
@@ -19,7 +20,6 @@ import {
   useQueryClient,
   type UseMutationResult,
 } from 'react-query'
-import { getStateWaitMsg } from '@/lib/glifApi'
 
 interface ApplicationActions {
   application: Application
@@ -59,7 +59,11 @@ interface ApplicationActions {
   mutationTrigger: UseMutationResult<
     Application | undefined,
     unknown,
-    { allocationAmount: string; userName: string },
+    {
+      allocationAmount: string
+      userName: string
+      clientContractAddress?: string
+    },
     unknown
   >
   mutationApproveChanges: UseMutationResult<
@@ -289,16 +293,21 @@ const useApplicationActions = (
   const mutationTrigger = useMutation<
     Application | undefined,
     unknown,
-    { userName: string; allocationAmount: string },
+    {
+      userName: string
+      allocationAmount: string
+      clientContractAddress?: string
+    },
     unknown
   >(
-    async ({ userName, allocationAmount }) => {
+    async ({ userName, allocationAmount, clientContractAddress }) => {
       return await postApplicationTrigger(
         initialApplication.ID,
         userName,
         repo,
         owner,
         allocationAmount,
+        clientContractAddress,
       )
     },
     {

@@ -185,6 +185,7 @@ export interface Allocator {
   address: string
   tooling: string | null
   verifiers_gh_handles: string | string[]
+  client_contract_address: string | null
 }
 
 export interface ByteConverterAutoscaleOptions {
