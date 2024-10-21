@@ -1,12 +1,14 @@
 import type {
   ApiAllowanceResponse,
-  ApiStateWaitMsgResponse,
-  ApiFilecoinAddressToEthAddressResponse,
   ApiEthCallResponse,
+  ApiFilecoinAddressToEthAddressResponse,
+  ApiStateWaitMsgResponse,
 } from '@/type'
-import { config } from '@/config'
 import type { Address, Hex } from 'viem'
 import { getAddress } from 'viem'
+import { FilecoinClient } from './publicClient'
+
+const filecoinClient = new FilecoinClient()
 
 /**
  * Get the allowance for a verfier from the API.
@@ -18,28 +20,10 @@ export const getAllowanceForVerifier = async (
   address: string,
 ): Promise<ApiAllowanceResponse> => {
   try {
-    const requestBody = {
-      jsonrpc: '2.0',
-      method: 'Filecoin.StateVerifierStatus',
-      params: [address, null],
-      id: 1,
-    }
-    const response = await fetch(`${config.glifNodeUrl}`, {
-      method: 'POST',
-      body: JSON.stringify(requestBody),
-    })
-
-    const data = await response.json()
-    if (data?.type === 'error') {
-      return {
-        data: '',
-        error: data.error.message,
-        success: false,
-      }
-    }
+    const result = await filecoinClient.verifierStatus(address)
 
     return {
-      data: data.result,
+      data: result ?? '',
       error: '',
       success: true,
     }
@@ -47,6 +31,7 @@ export const getAllowanceForVerifier = async (
     const errMessage = `Error accessing GLIF API Filecoin.StateVerifierStatus: ${
       (error as Error).message
     }`
+
     return {
       data: '',
       error: errMessage,
@@ -65,28 +50,10 @@ export const getAllowanceForClient = async (
   address: string,
 ): Promise<ApiAllowanceResponse> => {
   try {
-    const requestBody = {
-      jsonrpc: '2.0',
-      method: 'Filecoin.StateVerifiedClientStatus',
-      params: [address, null],
-      id: 1,
-    }
-    const response = await fetch(`${config.glifNodeUrl}`, {
-      method: 'POST',
-      body: JSON.stringify(requestBody),
-    })
-
-    const data = await response.json()
-    if (data?.error) {
-      return {
-        data: '',
-        error: data.error.message,
-        success: false,
-      }
-    }
+    const result = await filecoinClient.verifiedClientStatus(address)
 
     return {
-      data: data.result,
+      data: result ?? '',
       error: '',
       success: true,
     }
@@ -112,28 +79,10 @@ export const getEvmAddressFromFilecoinAddress = async (
   address: string,
 ): Promise<ApiFilecoinAddressToEthAddressResponse> => {
   try {
-    const requestBody = {
-      jsonrpc: '2.0',
-      method: 'Filecoin.FilecoinAddressToEthAddress',
-      params: [address, null],
-      id: 1,
-    }
-    const response = await fetch(`${config.glifNodeUrl}`, {
-      method: 'POST',
-      body: JSON.stringify(requestBody),
-    })
-
-    const data = await response.json()
-    if (data?.error) {
-      return {
-        data: getAddress(''),
-        error: data.error.message,
-        success: false,
-      }
-    }
+    const result = await filecoinClient.filecoinAddressToEthAddress(address)
 
     return {
-      data: data.result,
+      data: result ?? getAddress(''),
       error: '',
       success: true,
     }
@@ -161,35 +110,17 @@ export const makeStaticEthCall = async (
   callData: Hex,
 ): Promise<ApiEthCallResponse> => {
   try {
-    const requestBody = {
-      jsonrpc: '2.0',
-      method: 'Filecoin.EthCall',
-      params: [
-        {
-          from: null,
-          to: contractAddress,
-          data: callData,
-        },
-        'latest',
-      ],
-      id: 0,
-    }
-    const response = await fetch(`${config.glifNodeUrl}`, {
-      method: 'POST',
-      body: JSON.stringify(requestBody),
-    })
-
-    const data = await response.json()
-    if (data?.error) {
-      return {
-        data: '',
-        error: data.error.message,
-        success: false,
-      }
-    }
+    const result = await filecoinClient.staticCall(
+      {
+        from: null,
+        to: contractAddress,
+        data: callData,
+      },
+      'latest',
+    )
 
     return {
-      data: data.result,
+      data: result ?? '',
       error: '',
       success: true,
     }
@@ -218,39 +149,16 @@ export const getStateWaitMsg = async (
     const confidence = 1
     const limitChainEpoch = 10
     const allowReplaced = true
-    const requestBody = {
-      jsonrpc: '2.0',
-      method: 'Filecoin.StateWaitMsg',
-      params: [
-        {
-          '/': cid,
-        },
-        confidence,
-        limitChainEpoch,
-        allowReplaced,
-      ],
-      id: 1,
-    }
-    const response = await fetch(`${config.glifNodeUrl}`, {
-      method: 'POST',
-      body: JSON.stringify(requestBody),
-    })
 
-    const data = await response.json()
-    if (data?.error && data.error.data === 'Request timeout') {
-      return await getStateWaitMsg(cid)
-    }
-
-    if (data?.error) {
-      return {
-        data: '',
-        error: data.error.message,
-        success: false,
-      }
-    }
+    const result = await filecoinClient.waitMsg(
+      cid,
+      confidence,
+      limitChainEpoch,
+      allowReplaced,
+    )
 
     return {
-      data: data.result,
+      data: result ?? '',
       error: '',
       success: true,
     }
