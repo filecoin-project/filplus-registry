@@ -6,7 +6,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react'
 import { useQuery } from 'react-query'
 import { getAllocators } from './apiClient'
 
-import { FileCoinClient, type IFileCoinClient } from './publicClient'
+import { FilecoinClient, type IFilecoinClient } from './publicClient'
 
 // Define the shape of your context data for TypeScript
 interface AllocatorContextType {
@@ -16,7 +16,7 @@ interface AllocatorContextType {
   setSelectedAllocator: React.Dispatch<
     React.SetStateAction<Allocator | undefined | 'all'>
   > // Adjust the type as needed
-  filecoinClient: IFileCoinClient | undefined
+  filecoinClient: IFilecoinClient | undefined
 }
 
 // Provide a default value matching the structure
@@ -39,7 +39,7 @@ const AllocatorContext =
 export const AllocatorProvider: React.FunctionComponent<
   AllocatorProviderProps
 > = ({ children }): React.ReactElement => {
-  const filecoinClient = new FileCoinClient()
+  const filecoinClient = new FilecoinClient()
 
   const [allocators, setAllocators] = useState<Allocator[]>([])
   const [selectedAllocator, setSelectedAllocator] = useState<

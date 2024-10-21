@@ -74,7 +74,7 @@ type FilecoinRpcSchema = [
   },
 ]
 
-export interface IFileCoinClient {
+export interface IFilecoinClient {
   verifierStatus: (address: string) => Promise<string | null>
   verifiedClientStatus: (address: string) => Promise<string | null>
   filecoinAddressToEthAddress: (address: string) => Promise<string | null>
@@ -90,7 +90,7 @@ export interface IFileCoinClient {
   ) => Promise<string | null>
 }
 
-export class FileCoinClient implements IFileCoinClient {
+export class FilecoinClient implements IFilecoinClient {
   private readonly client
 
   constructor() {

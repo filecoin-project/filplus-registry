@@ -6,9 +6,9 @@ import type {
 } from '@/type'
 import type { Address, Hex } from 'viem'
 import { getAddress } from 'viem'
-import { FileCoinClient } from './publicClient'
+import { FilecoinClient } from './publicClient'
 
-const fileCoinClient = new FileCoinClient()
+const filecoinClient = new FilecoinClient()
 
 /**
  * Get the allowance for a verfier from the API.
@@ -20,7 +20,7 @@ export const getAllowanceForVerifier = async (
   address: string,
 ): Promise<ApiAllowanceResponse> => {
   try {
-    const result = await fileCoinClient.verifierStatus(address)
+    const result = await filecoinClient.verifierStatus(address)
 
     return {
       data: result ?? '',
@@ -50,7 +50,7 @@ export const getAllowanceForClient = async (
   address: string,
 ): Promise<ApiAllowanceResponse> => {
   try {
-    const result = await fileCoinClient.verifiedClientStatus(address)
+    const result = await filecoinClient.verifiedClientStatus(address)
 
     return {
       data: result ?? '',
@@ -79,7 +79,7 @@ export const getEvmAddressFromFilecoinAddress = async (
   address: string,
 ): Promise<ApiFilecoinAddressToEthAddressResponse> => {
   try {
-    const result = await fileCoinClient.filecoinAddressToEthAddress(address)
+    const result = await filecoinClient.filecoinAddressToEthAddress(address)
 
     return {
       data: result ?? getAddress(''),
@@ -110,7 +110,7 @@ export const makeStaticEthCall = async (
   callData: Hex,
 ): Promise<ApiEthCallResponse> => {
   try {
-    const result = await fileCoinClient.staticCall(
+    const result = await filecoinClient.staticCall(
       {
         from: null,
         to: contractAddress,
@@ -150,7 +150,7 @@ export const getStateWaitMsg = async (
     const limitChainEpoch = 10
     const allowReplaced = true
 
-    const result = await fileCoinClient.waitMsg(
+    const result = await filecoinClient.waitMsg(
       cid,
       confidence,
       limitChainEpoch,
