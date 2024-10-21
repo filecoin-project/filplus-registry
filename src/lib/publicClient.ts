@@ -45,7 +45,7 @@ type FilecoinRpcSchema = [
   },
   {
     Method: 'Filecoin.FilecoinAddressToEthAddress'
-    Parameters: [string, null]
+    Parameters: [string, string]
     ReturnType: string | null
   },
   {
@@ -124,7 +124,7 @@ export class FilecoinClient implements IFilecoinClient {
   ): Promise<Address | null> {
     const status: Address = await this.client.request({
       method: 'Filecoin.FilecoinAddressToEthAddress',
-      params: [address, null],
+      params: [address, 'latest'],
     })
 
     return status

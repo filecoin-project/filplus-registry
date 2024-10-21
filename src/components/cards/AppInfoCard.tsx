@@ -51,6 +51,7 @@ import {
 } from 'react'
 import { toast } from 'react-toastify'
 import AllocatorBalance from '../AllocatorBalance'
+import AllowedSps from './dialogs/allowedSps'
 
 interface ComponentProps {
   application: Application
@@ -796,6 +797,12 @@ const AppInfoCard: React.FC<ComponentProps> = ({
     setApiCalling(false)
   }
 
+  const handleAllowedSPsSubmit = (
+    addedSPs: string[],
+    removedSPs: string[],
+    maxDeviation: string,
+  ): void => {}
+
   return (
     <>
       <AccountSelectionDialog
@@ -824,7 +831,6 @@ const AppInfoCard: React.FC<ComponentProps> = ({
           </span>
         </a>
       </div>
-
       {modalMessage != null && (
         <Modal
           message={modalMessage}
@@ -832,13 +838,11 @@ const AppInfoCard: React.FC<ComponentProps> = ({
           error={error}
         />
       )}
-
       {(isApiCalling || isWalletConnecting) && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
           <Spinner />
         </div>
       )}
-
       <Card className="bg-gray-50 p-4 rounded-lg shadow-lg">
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="flex-1">
@@ -937,6 +941,23 @@ const AppInfoCard: React.FC<ComponentProps> = ({
               <AllocatorBalance owner={owner} repo={repo} />
             </div>
             <div className="flex justify-end gap-2 pb-4">
+              {LDNActorType.Verifier === currentActorType &&
+                session?.data?.user?.name !== undefined &&
+                application?.Lifecycle?.['On Chain Address'] &&
+                ['ReadyToSing', 'Submitted', 'Granted'].includes(
+                  application?.Lifecycle?.State,
+                ) && (
+                  <div className="flex gap-2">
+                    <AllowedSps
+                      onSubmit={handleAllowedSPsSubmit}
+                      client={application.Lifecycle['On Chain Address']}
+                      clientContractAddress="t410f3rcr3t6omqusetedlme6md722xv3xspqs6k6ftq"
+                      initDeviation="10"
+                      canSubmit={true}
+                    />
+                  </div>
+                )}
+
               {LDNActorType.Verifier === currentActorType ? (
                 session?.data?.user?.name !== undefined &&
                 application?.Lifecycle?.State !== 'Granted' ? (

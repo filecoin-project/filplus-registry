@@ -173,3 +173,24 @@ export const getStateWaitMsg = async (
     }
   }
 }
+
+// export const getAllowedSps = async (
+//   cid: string,
+// ): Promise<ApiEthCallResponse> => {
+//   try {
+//     return {
+//       data: '',
+//       error: '',
+//       success: true,
+//     }
+//   } catch (error: unknown) {
+//     const errMessage = `Error accessing GLIF API Filecoin.StateWaitMsg: ${
+//       (error as Error).message
+//     }`
+//     return {
+//       data: '',
+//       error: errMessage,
+//       success: false,
+//     }
+//   }
+// }

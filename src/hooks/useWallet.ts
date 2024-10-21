@@ -8,7 +8,13 @@ import { LedgerWallet } from '@/lib/wallet/LedgerWallet'
 import { AllocatorTypeEnum, type IWallet, type SendProposalProps } from '@/type'
 import { newFromString } from '@glif/filecoin-address'
 import { useCallback, useState } from 'react'
-import { decodeFunctionData, encodeFunctionData, fromHex, parseAbi } from 'viem'
+import {
+  decodeFunctionData,
+  decodeFunctionResult,
+  encodeFunctionData,
+  fromHex,
+  parseAbi,
+} from 'viem'
 import { type Hex } from 'viem/types/misc'
 import { config } from '../config'
 
@@ -53,6 +59,15 @@ interface WalletState {
     contractAddress: string,
     allocatorAddress: string,
   ) => Promise<number>
+  setClientMaxDeviation: (
+    clientAddress: string,
+    contractAddress: string,
+    maxDeviation: string,
+  ) => Promise<string>
+  getClientSPs: (
+    clientAddress: string,
+    contractAddress: string,
+  ) => Promise<string[]>
 }
 
 /**
@@ -294,6 +309,7 @@ const useWallet = (): WalletState => {
       const abi = parseAbi([
         'function allowance(address allocator) view returns (uint256)',
       ])
+
       const evmAllocatorAddress =
         await getEvmAddressFromFilecoinAddress(allocatorAddress)
 
@@ -386,6 +402,81 @@ const useWallet = (): WalletState => {
     [wallet, multisigAddress, activeAccountIndex],
   )
 
+  const setClientMaxDeviation = useCallback(
+    async (
+      clientAddress: string,
+      contractAddress: string,
+      maxDeviation: string,
+    ): Promise<string> => {
+      if (wallet == null) throw new Error('No wallet initialized.')
+      if (multisigAddress == null) throw new Error('Multisig address not set.')
+
+      const abi = parseAbi([
+        'function setClientMaxDeviationFromFairDistribution(address client, uint256 maxDeviation)',
+      ])
+
+      const address = (await getEvmAddressFromFilecoinAddress(clientAddress))
+        .data
+
+      const validAddress = newFromString(address)
+      const addressHex: Hex = `0x${Buffer.from(validAddress.bytes).toString('hex')}`
+
+      const calldataHex: Hex = encodeFunctionData({
+        abi,
+        args: [addressHex, BigInt(maxDeviation)],
+      })
+
+      const calldata = Buffer.from(calldataHex.substring(2), 'hex')
+
+      return wallet.api.multisigEvmInvoke(
+        multisigAddress,
+        contractAddress,
+        calldata,
+        activeAccountIndex,
+      )
+    },
+    [wallet, multisigAddress, activeAccountIndex],
+  )
+
+  const getClientSPs = useCallback(
+    async (client: string, contractAddress: string): Promise<string[]> => {
+      const abi = parseAbi([
+        'function clientSPs(address client) external view returns (uint256[] memory providers)',
+      ])
+
+      const [evmClientAddress, evmContractAddress] = await Promise.all([
+        getEvmAddressFromFilecoinAddress(client),
+        getEvmAddressFromFilecoinAddress(contractAddress),
+      ])
+
+      const calldataHex: Hex = encodeFunctionData({
+        abi,
+        args: [evmClientAddress.data],
+      })
+
+      const response = await makeStaticEthCall(
+        evmContractAddress.data,
+        calldataHex,
+      )
+
+      if (response.error) {
+        return ['']
+      }
+
+      const test =
+        '0x0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000003e800000000000000000000000000000000000000000000000000000000000004b0'
+
+      const decodedData = decodeFunctionResult({
+        abi,
+        data: test as `0x${string}`,
+      })
+
+      const result: string[] = decodedData.map((x) => x.toString())
+      return result
+    },
+    [],
+  )
+
   const activeAddress = accounts[activeAccountIndex] ?? ''
 
   return {
@@ -402,6 +493,8 @@ const useWallet = (): WalletState => {
     accounts,
     loadMoreAccounts,
     getAllocatorAllowanceFromContract,
+    setClientMaxDeviation,
+    getClientSPs,
   }
 }
 
