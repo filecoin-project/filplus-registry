@@ -307,12 +307,14 @@ export const postApplicationTrigger = async (
   repo: string,
   owner: string,
   allocationAmount: string,
+  clientContractAddress?: string,
 ): Promise<Application | undefined> => {
   try {
     const { data } = await apiClient.post(
       `verifier/application/trigger`,
       {
         allocation_amount: allocationAmount,
+        client_contract_address: clientContractAddress,
       },
       {
         params: {
