@@ -16,7 +16,7 @@ export const Modal: React.FC<ModalProps> = ({ message, onClose, error }) => {
   }
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+    <div className="fixed inset-0 flex items-center justify-center z-[1400] bg-black bg-opacity-50">
       <div className="w-2/3 bg-white rounded shadow-lg p-4 relative">
         <div className="text-center">
           <h2 className="text-xl font-bold mb-4">

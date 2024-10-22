@@ -8,7 +8,6 @@ import calculateAmountToRequest, {
   validateAmount,
 } from '@/helpers/calculateAmountToRefill'
 import useApplicationActions from '@/hooks/useApplicationActions'
-import useWallet from '@/hooks/useWallet'
 import { useAllocator } from '@/lib/AllocatorProvider'
 import { stateColor, stateMapping } from '@/lib/constants'
 import { getAllowanceForClient } from '@/lib/glifApi'
@@ -102,9 +101,8 @@ const AppInfoCard: React.FC<ComponentProps> = ({
     loadMoreAccounts,
     mutationRequestKyc,
     mutationRemovePendingAllocation,
+    mutationChangeAllowedSPs,
   } = useApplicationActions(initialApplication, repo, owner)
-
-  const { submitClientAllowedSpsAndMaxDeviation } = useWallet()
 
   const [buttonText, setButtonText] = useState('')
   const [modalMessage, setModalMessage] = useState<ReactNode | null>(null)
@@ -153,12 +151,12 @@ const AppInfoCard: React.FC<ComponentProps> = ({
 
   const router = useRouter()
 
-  const allocationRequests = application?.['Allocation Requests'] ?? []
+  // const allocationRequests = application?.['Allocation Requests'] ?? []
 
-  const lastAllocationAmount =
-    allocationRequests?.[allocationRequests.length - 1]?.[
-      'Allocation Amount'
-    ] ?? 0
+  // const lastAllocationAmount =
+  //   allocationRequests?.[allocationRequests.length - 1]?.[
+  //     'Allocation Amount'
+  //   ] ?? 0
 
   const isApplicationUpdatedLessThanOneMinuteAgo = useCallback((): boolean => {
     const currentTime = new Date(Date.now()).getTime()
@@ -446,13 +444,13 @@ const AppInfoCard: React.FC<ComponentProps> = ({
             } else {
               // check the balance here
 
-              if (
-                lastAllocationAmount &&
-                anyToBytes(lastAllocationAmount) > allowance
-              ) {
-                toast.error('Amount is bigger than the allowance')
-                return
-              }
+              // if (
+              //   lastAllocationAmount &&
+              //   anyToBytes(lastAllocationAmount) > allowance
+              // ) {
+              //   toast.error('Amount is bigger than the allowance')
+              //   return
+              // }
 
               await mutationProposal.mutateAsync({
                 requestId,
@@ -465,13 +463,13 @@ const AppInfoCard: React.FC<ComponentProps> = ({
           if (requestId != null && userName != null) {
             // check the balance here
 
-            if (
-              lastAllocationAmount &&
-              anyToBytes(lastAllocationAmount) > allowance
-            ) {
-              toast.error('Amount is bigger than the allowance')
-              return
-            }
+            // if (
+            //   lastAllocationAmount &&
+            //   anyToBytes(lastAllocationAmount) > allowance
+            // ) {
+            //   toast.error('Amount is bigger than the allowance')
+            //   return
+            // }
 
             const res = await mutationApproval.mutateAsync({
               requestId,
@@ -581,15 +579,15 @@ const AppInfoCard: React.FC<ComponentProps> = ({
       return
     }
 
-    if (anyToBytes(allocationAmountConfig.amount) > allowance) {
-      toast.error('Amount is bigger than the allowance')
-      return
-    }
+    // if (anyToBytes(allocationAmountConfig.amount) > allowance) {
+    //   toast.error('Amount is bigger than the allowance')
+    //   return
+    // }
 
-    if (anyToBytes(allocationAmountConfig.amount) > remaining) {
-      toast.error('Amount is bigger than remaning')
-      return
-    }
+    // if (anyToBytes(allocationAmountConfig.amount) > remaining) {
+    //   toast.error('Amount is bigger than remaning')
+    //   return
+    // }
 
     setApiCalling(true)
     const userName = session.data?.user?.githubUsername
@@ -821,20 +819,31 @@ const AppInfoCard: React.FC<ComponentProps> = ({
   const handleAllowedSPsSubmit = async (
     client: string,
     clientContractAddress: string,
-    maxDeviation: string,
     addedSPs: string[],
     removedSPs: string[],
+    maxDeviation?: string,
   ): Promise<void> => {
-    debugger
-    const result = await submitClientAllowedSpsAndMaxDeviation(
-      client,
-      clientContractAddress,
-      maxDeviation,
-      addedSPs,
-      removedSPs,
-    )
+    try {
+      setApiCalling(true)
+      if (application.Lifecycle.State === 'ReadyToSign') {
+        const result = await mutationChangeAllowedSPs.mutateAsync({
+          clientAddress: client,
+          contractAddress: clientContractAddress,
+          allowedSps: addedSPs,
+          disallowedSPs: removedSPs,
+          maxDeviation,
+        })
 
-    console.log(result)
+        console.log(result)
+
+        // api post here
+        // postChangeAllowedSPs()
+      }
+    } catch (error) {
+      console.log(error)
+    } finally {
+      setApiCalling(false)
+    }
   }
 
   return (
@@ -873,7 +882,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
         />
       )}
       {(isApiCalling || isWalletConnecting) && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+        <div className="fixed inset-0 flex items-center justify-center z-40 bg-black bg-opacity-50">
           <Spinner />
         </div>
       )}
@@ -976,9 +985,10 @@ const AppInfoCard: React.FC<ComponentProps> = ({
             </div>
             <div className="flex justify-end gap-2 pb-4">
               {LDNActorType.Verifier === currentActorType &&
+                walletConnected &&
                 session?.data?.user?.name !== undefined &&
                 application?.Lifecycle?.['On Chain Address'] &&
-                ['ReadyToSing', 'Granted'].includes(
+                ['ReadyToSign', 'Granted'].includes(
                   application?.Lifecycle?.State,
                 ) && (
                   <div className="flex gap-2">
@@ -1159,7 +1169,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
             }}
           >
             {(isApiCalling || isWalletConnecting) && (
-              <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+              <div className="fixed inset-0 flex items-center justify-center z-40 bg-black bg-opacity-50">
                 <Spinner />
               </div>
             )}
@@ -1249,7 +1259,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
           }}
         >
           {(isApiCalling || isWalletConnecting) && (
-            <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+            <div className="fixed inset-0 flex items-center justify-center z-40 bg-black bg-opacity-50">
               <Spinner />
             </div>
           )}
@@ -1311,7 +1321,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
           }}
         >
           {(isApiCalling || isWalletConnecting) && (
-            <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+            <div className="fixed inset-0 flex items-center justify-center z-40 bg-black bg-opacity-50">
               <Spinner />
             </div>
           )}

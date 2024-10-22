@@ -558,3 +558,43 @@ export const cacheRenewal = async (
     throw e
   }
 }
+
+export const postChangeAllowedSPs = async (
+  id: string,
+  requestId: string,
+  userName: string,
+  owner: string,
+  repo: string,
+  address: string,
+  signature: string,
+  allocationAmount?: string,
+): Promise<void> => {
+  try {
+    // const { data } = await apiClient.post(
+    //   `verifier/application/propose`,
+    //   {
+    //     request_id: requestId,
+    //     new_allocation_amount: allocationAmount,
+    //     owner,
+    //     repo,
+    //     signer: {
+    //       signing_address: address,
+    //       created_at: getCurrentDate(),
+    //       message_cid: signature,
+    //     },
+    //   },
+    //   {
+    //     params: {
+    //       repo,
+    //       owner,
+    //       id,
+    //       github_username: userName,
+    //     },
+    //   },
+    // )
+    // return data
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}

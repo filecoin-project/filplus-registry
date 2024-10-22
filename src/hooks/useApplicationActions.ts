@@ -72,16 +72,28 @@ interface ApplicationActions {
     { userName: string },
     unknown
   >
-  mutationProposal: UseMutationResult<
+  mutationChangeAllowedSPs: UseMutationResult<
     Application | undefined,
     unknown,
-    { requestId: string; userName: string; allocationAmount?: string },
+    {
+      clientAddress: string
+      contractAddress: string
+      allowedSps: string[]
+      disallowedSPs: string[]
+      maxDeviation?: string
+    },
     unknown
   >
   mutationApproval: UseMutationResult<
     Application | undefined,
     unknown,
     { requestId: string; userName: string },
+    unknown
+  >
+  mutationProposal: UseMutationResult<
+    Application | undefined,
+    unknown,
+    { requestId: string; userName: string; allocationAmount?: string },
     unknown
   >
   walletError: Error | null
@@ -124,6 +136,7 @@ const useApplicationActions = (
     message,
     accounts,
     loadMoreAccounts,
+    submitClientAllowedSpsAndMaxDeviation,
   } = useWallet()
   const { selectedAllocator } = useAllocator()
 
@@ -566,6 +579,88 @@ const useApplicationActions = (
     },
   )
 
+  const mutationChangeAllowedSPs = useMutation<
+    Application | undefined,
+    Error,
+    {
+      clientAddress: string
+      contractAddress: string
+      maxDeviation?: string
+      allowedSps: string[]
+      disallowedSPs: string[]
+    },
+    unknown
+  >(
+    async ({
+      clientAddress,
+      contractAddress,
+      maxDeviation,
+      allowedSps,
+      disallowedSPs,
+    }) => {
+      const result = await submitClientAllowedSpsAndMaxDeviation(
+        clientAddress,
+        contractAddress,
+        allowedSps,
+        disallowedSPs,
+        maxDeviation,
+      )
+
+      console.log(result)
+
+      return undefined
+
+      // console.log(result)
+      // if (proposalTx !== false) {
+      //   throw new Error('This datacap allocation is already proposed')
+      // }
+      // const messageCID = ''
+      // const messageCID = await sendProposal({
+      //   allocatorType,
+      //   contractAddress:
+      //     typeof selectedAllocator !== 'string'
+      //       ? selectedAllocator?.address ?? ''
+      //       : '',
+      //   clientAddress,
+      //   proposalAllocationAmount,
+      // })
+      // if (messageCID == null) {
+      //   throw new Error(
+      //     'Error sending proposal. Please try again or contact support.',
+      //   )
+      // }
+      // const response = await getStateWaitMsg(messageCID)
+      // if (
+      //   typeof response.data === 'object' &&
+      //   response.data.ReturnDec.Applied &&
+      //   response.data.ReturnDec.Code !== 0
+      // ) {
+      //   throw new Error(
+      //     `Error sending transaction. Please try again or contact support. Error code: ${response.data.ReturnDec.Code}`,
+      //   )
+      // }
+      // await postChangeAllowedSPs(
+      //   initialApplication.ID,
+      //   requestId,
+      //   userName,
+      //   owner,
+      //   repo,
+      //   activeAddress,
+      //   messageCID,
+      //   maxDeviation,
+      // )
+    },
+    {
+      onSuccess: (data) => {
+        setApiCalling(false)
+        if (data != null) updateCache(data)
+      },
+      onError: () => {
+        setApiCalling(false)
+      },
+    },
+  )
+
   return {
     application,
     mutationRequestKyc,
@@ -586,6 +681,7 @@ const useApplicationActions = (
     loadMoreAccounts,
     mutationTriggerSSA,
     mutationRemovePendingAllocation,
+    mutationChangeAllowedSPs,
   }
 }
 

@@ -21,9 +21,9 @@ interface ComponentProps {
   onSubmit: (
     client: string,
     clientContractAddress: string,
-    maxDeviation: string,
     added: string[],
     removed: string[],
+    maxDeviation?: string,
   ) => Promise<void>
   initDeviation: string
   client: string
@@ -42,16 +42,22 @@ export const AllowedSPs: React.FC<ComponentProps> = ({
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false)
   const [maxDeviation, setMaxDeviation] = useState<string>(initDeviation ?? '')
   const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [data, setData] = useState<string[]>([''])
+  const [initData, setInitData] = useState<string[]>([''])
 
-  const { getClientSPs } = useWallet()
+  const { getClientSPs, getClientConfig } = useWallet()
 
   const { data: availableAllowedSPs } = useQuery({
     queryKey: ['allowedSps', client],
     queryFn: async () => await getClientSPs(client, clientContractAddress),
-    enabled: !!(client && clientContractAddress && maxDeviation),
+    enabled: !!(client && clientContractAddress),
   })
 
-  const [data, setData] = useState<string[]>([''])
+  const { data: clientConfig } = useQuery({
+    queryKey: ['clientConfig', client],
+    queryFn: async () => await getClientConfig(client, clientContractAddress),
+    enabled: !!(client && clientContractAddress),
+  })
 
   const checkIsDirty = (currentData: string[]): void => {
     setIsDirty(false)
@@ -104,22 +110,35 @@ export const AllowedSPs: React.FC<ComponentProps> = ({
         (item) => !data.includes(item),
       ) ?? ['']
 
+      let maxDeviationResult: string | undefined
+
+      if (clientConfig && clientConfig !== maxDeviation) {
+        maxDeviationResult = maxDeviation
+      }
+
+      if (!clientConfig) {
+        maxDeviationResult = maxDeviation
+      }
+
       await onSubmit(
         client,
         clientContractAddress,
-        maxDeviation,
         added,
         removed,
+        maxDeviationResult,
       )
     } catch (error) {
+      console.log(error)
     } finally {
       setIsLoading(false)
+      setIsDialogOpen(false)
     }
   }
 
   useEffect(() => {
     if (availableAllowedSPs?.length) {
       setData(availableAllowedSPs)
+      setInitData(availableAllowedSPs)
     }
   }, [availableAllowedSPs])
 
@@ -142,6 +161,7 @@ export const AllowedSPs: React.FC<ComponentProps> = ({
         open={isDialogOpen}
         onClose={() => {
           setIsDialogOpen(false)
+          setData(initData)
         }}
         fullWidth
       >
@@ -210,6 +230,7 @@ export const AllowedSPs: React.FC<ComponentProps> = ({
             disabled={isLoading}
             onClick={() => {
               setIsDialogOpen(false)
+              setData(initData)
             }}
           >
             Cancel

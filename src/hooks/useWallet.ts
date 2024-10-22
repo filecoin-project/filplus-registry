@@ -66,10 +66,14 @@ interface WalletState {
   submitClientAllowedSpsAndMaxDeviation: (
     clientAddress: string,
     contractAddress: string,
-    maxDeviation: string,
     allowedSps: string[],
     disallowedSPs: string[],
-  ) => Promise<string>
+    maxDeviation?: string,
+  ) => Promise<boolean>
+  getClientConfig: (
+    clientAddress: string,
+    contractAddress: string,
+  ) => Promise<string | null>
 }
 
 /**
@@ -191,7 +195,6 @@ const useWallet = (): WalletState => {
   const sign = useCallback(
     async (message: string): Promise<string> => {
       if (wallet == null) throw new Error('No wallet initialized.')
-
       return await wallet.sign(message, activeAccountIndex)
     },
     [wallet, activeAccountIndex],
@@ -287,12 +290,16 @@ const useWallet = (): WalletState => {
       ])
 
       const address = newFromString(clientAddress)
+
       const addressHex: Hex = `0x${Buffer.from(address.bytes).toString('hex')}`
+
       const calldataHex: Hex = encodeFunctionData({
         abi,
         args: [addressHex, BigInt(bytesDatacap)],
       })
+
       const calldata = Buffer.from(calldataHex.substring(2), 'hex')
+
       return wallet.api.multisigEvmInvoke(
         multisigAddress,
         contractAddress,
@@ -429,9 +436,6 @@ const useWallet = (): WalletState => {
         return ['']
       }
 
-      // const test =
-      //   '0x0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000003e800000000000000000000000000000000000000000000000000000000000004b0'
-
       const decodedData = decodeFunctionResult({
         abi,
         data: response.data as `0x${string}`,
@@ -443,10 +447,45 @@ const useWallet = (): WalletState => {
     [],
   )
 
+  const getClientConfig = useCallback(
+    async (client: string, contractAddress: string): Promise<string | null> => {
+      const abi = parseAbi([
+        'function clientConfigs(address client) external view returns (uint256)',
+      ])
+
+      const [evmClientAddress, evmContractAddress] = await Promise.all([
+        getEvmAddressFromFilecoinAddress(client),
+        getEvmAddressFromFilecoinAddress(contractAddress),
+      ])
+
+      const calldataHex: Hex = encodeFunctionData({
+        abi,
+        args: [evmClientAddress.data],
+      })
+
+      const response = await makeStaticEthCall(
+        evmContractAddress.data,
+        calldataHex,
+      )
+
+      if (response.error) {
+        return null
+      }
+
+      const decodedData = decodeFunctionResult({
+        abi,
+        data: response.data as `0x${string}`,
+      })
+
+      return decodedData.toString()
+    },
+    [],
+  )
+
   const prepareClientMaxDeviation = (
     clientAddressHex: Hex,
     maxDeviation: string,
-  ): Hex => {
+  ): { calldata: Buffer; abi: any } => {
     const abi = parseAbi([
       'function setClientMaxDeviationFromFairDistribution(address client, uint256 maxDeviation)',
     ])
@@ -456,9 +495,9 @@ const useWallet = (): WalletState => {
       args: [clientAddressHex, BigInt(maxDeviation)],
     })
 
-    return calldataHex
+    const calldata = Buffer.from(calldataHex.substring(2), 'hex')
 
-    // const calldata = Buffer.from(calldataHex.substring(2), 'hex')
+    return { calldata, abi }
 
     // return calldata
   }
@@ -466,7 +505,7 @@ const useWallet = (): WalletState => {
   const prepareClientAddAllowedSps = (
     clientAddressHex: Hex,
     allowedSps: string[],
-  ): Hex => {
+  ): { calldata: Buffer; abi: any } => {
     const abi = parseAbi([
       'function addAllowedSPsForClient(address client, uint64[] calldata allowedSPs_)',
     ])
@@ -478,8 +517,9 @@ const useWallet = (): WalletState => {
       args: [clientAddressHex, parsedSps],
     })
 
-    return calldataHex
+    const calldata = Buffer.from(calldataHex.substring(2), 'hex')
 
+    return { calldata, abi }
     // const calldata = Buffer.from(calldataHex.substring(2), 'hex')
 
     // return calldata
@@ -488,7 +528,7 @@ const useWallet = (): WalletState => {
   const prepareClientRemoveAllowedSps = (
     clientAddressHex: Hex,
     disallowedSPs: string[],
-  ): Hex => {
+  ): { calldata: Buffer; abi: any } => {
     const abi = parseAbi([
       'function removeAllowedSPsForClient(address client, uint64[] calldata disallowedSPs_)',
     ])
@@ -500,7 +540,11 @@ const useWallet = (): WalletState => {
       args: [clientAddressHex, parsedSps],
     })
 
-    return calldataHex
+    const calldata = Buffer.from(calldataHex.substring(2), 'hex')
+
+    return { calldata, abi }
+
+    // return calldataHex
 
     // const calldata = Buffer.from(calldataHex.substring(2), 'hex')
     // return calldata
@@ -510,62 +554,74 @@ const useWallet = (): WalletState => {
     async (
       clientAddress: string,
       contractAddress: string,
-      maxDeviation?: string,
       allowedSps?: string[],
       disallowedSPs?: string[],
-    ): Promise<string> => {
+      maxDeviation?: string,
+    ): Promise<boolean> => {
       if (wallet == null) throw new Error('No wallet initialized.')
       if (multisigAddress == null) throw new Error('Multisig address not set.')
 
-      const abi = parseAbi(['function multicall(bytes[] data)'])
-
-      const evmClientAddress = (
+      const evmClientAddress =
         await getEvmAddressFromFilecoinAddress(clientAddress)
-      ).data
 
-      const validClientAddress = newFromString(evmClientAddress)
-      const clientAddressHex: Hex = `0x${Buffer.from(validClientAddress.bytes).toString('hex')}`
-
-      const args: Hex[] = []
+      const wait = async (ms: number): Promise<void> => {
+        await new Promise((resolve) => setTimeout(resolve, ms))
+      }
 
       if (maxDeviation) {
-        const clientMaxDeviationCallData = prepareClientMaxDeviation(
-          clientAddressHex,
+        setMessage('Preparing the max deviation transaction...')
+
+        await wait(3000)
+        const { calldata } = prepareClientMaxDeviation(
+          evmClientAddress.data,
           maxDeviation,
         )
 
-        args.push(clientMaxDeviationCallData)
+        const maxDeviationTransaction = await wallet.api.multisigEvmInvoke(
+          multisigAddress,
+          contractAddress,
+          calldata,
+          activeAccountIndex,
+        )
+
+        console.log(maxDeviationTransaction)
       }
 
       if (allowedSps?.length) {
-        const clientAddAllowedSpsCallData = prepareClientAddAllowedSps(
-          clientAddressHex,
+        setMessage('Preparing the allowed SPs transaction...')
+        await wait(3000)
+
+        const { calldata } = prepareClientAddAllowedSps(
+          evmClientAddress.data,
           allowedSps,
         )
-        args.push(clientAddAllowedSpsCallData)
+
+        await wallet.api.multisigEvmInvoke(
+          multisigAddress,
+          contractAddress,
+          calldata,
+          activeAccountIndex,
+        )
       }
 
-      if (disallowedSPs) {
-        const clientRemoveAllowedSpsCallData = prepareClientRemoveAllowedSps(
-          clientAddressHex,
+      if (disallowedSPs?.length) {
+        setMessage('Preparing the disallowed SPs transaction...')
+        await wait(3000)
+
+        const { calldata } = prepareClientRemoveAllowedSps(
+          evmClientAddress.data,
           disallowedSPs,
         )
-        args.push(clientRemoveAllowedSpsCallData)
+
+        await wallet.api.multisigEvmInvoke(
+          multisigAddress,
+          contractAddress,
+          calldata,
+          activeAccountIndex,
+        )
       }
 
-      const calldataHex: Hex = encodeFunctionData({
-        abi,
-        args: [args],
-      })
-
-      const calldata = Buffer.from(calldataHex.substring(2), 'hex')
-
-      return wallet.api.multisigEvmInvoke(
-        multisigAddress,
-        contractAddress,
-        calldata,
-        activeAccountIndex,
-      )
+      return true
     },
     [wallet, multisigAddress, activeAccountIndex],
   )
@@ -588,6 +644,7 @@ const useWallet = (): WalletState => {
     getAllocatorAllowanceFromContract,
     getClientSPs,
     submitClientAllowedSpsAndMaxDeviation,
+    getClientConfig,
   }
 }
 
