@@ -988,6 +988,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
                 walletConnected &&
                 session?.data?.user?.name !== undefined &&
                 application?.Lifecycle?.['On Chain Address'] &&
+                application?.['Client Contract Address'] &&
                 ['ReadyToSign', 'Granted'].includes(
                   application?.Lifecycle?.State,
                 ) && (
@@ -995,9 +996,10 @@ const AppInfoCard: React.FC<ComponentProps> = ({
                     <AllowedSps
                       onSubmit={handleAllowedSPsSubmit}
                       client={application.Lifecycle['On Chain Address']}
-                      clientContractAddress="t410f3rcr3t6omqusetedlme6md722xv3xspqs6k6ftq"
+                      clientContractAddress={
+                        application['Client Contract Address']
+                      }
                       initDeviation="10"
-                      canSubmit={true}
                     />
                   </div>
                 )}

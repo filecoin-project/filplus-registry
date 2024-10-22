@@ -23,6 +23,7 @@ export interface Application {
   repo: string
   owner: string
   fullSpan?: boolean
+  'Client Contract Address': string | null
 }
 
 export interface Allocation {

@@ -28,7 +28,6 @@ interface ComponentProps {
   initDeviation: string
   client: string
   clientContractAddress: string
-  canSubmit: boolean
 }
 
 export const AllowedSPs: React.FC<ComponentProps> = ({
@@ -36,7 +35,6 @@ export const AllowedSPs: React.FC<ComponentProps> = ({
   clientContractAddress,
   initDeviation,
   onSubmit,
-  canSubmit,
 }) => {
   const [isDirty, setIsDirty] = useState<boolean>(false)
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false)
@@ -235,16 +233,15 @@ export const AllowedSPs: React.FC<ComponentProps> = ({
           >
             Cancel
           </Button>
-          {canSubmit && (
-            <Button
-              disabled={isLoading || !isDirty}
-              onClick={() => {
-                void handleSubmit()
-              }}
-            >
-              Submit allowed SPs
-            </Button>
-          )}
+
+          <Button
+            disabled={isLoading || !isDirty}
+            onClick={() => {
+              void handleSubmit()
+            }}
+          >
+            Submit allowed SPs
+          </Button>
         </DialogActions>
       </Dialog>
     </>
