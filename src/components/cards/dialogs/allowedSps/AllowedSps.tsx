@@ -18,7 +18,13 @@ import { useEffect, useState } from 'react'
 import { useQuery } from 'react-query'
 
 interface ComponentProps {
-  onSubmit: (added: string[], removed: string[], maxDeviation: string) => void
+  onSubmit: (
+    client: string,
+    clientContractAddress: string,
+    maxDeviation: string,
+    added: string[],
+    removed: string[],
+  ) => Promise<void>
   initDeviation: string
   client: string
   clientContractAddress: string
@@ -45,7 +51,7 @@ export const AllowedSPs: React.FC<ComponentProps> = ({
     enabled: !!(client && clientContractAddress && maxDeviation),
   })
 
-  const [data, setData] = useState<string[]>(availableAllowedSPs ?? [' '])
+  const [data, setData] = useState<string[]>([''])
 
   const checkIsDirty = (currentData: string[]): void => {
     setIsDirty(false)
@@ -86,7 +92,7 @@ export const AllowedSPs: React.FC<ComponentProps> = ({
     checkIsDirty(newData)
   }
 
-  const handleSubmit = (): void => {
+  const handleSubmit = async (): Promise<void> => {
     try {
       setIsLoading(true)
 
@@ -98,7 +104,13 @@ export const AllowedSPs: React.FC<ComponentProps> = ({
         (item) => !data.includes(item),
       ) ?? ['']
 
-      onSubmit(added, removed, maxDeviation)
+      await onSubmit(
+        client,
+        clientContractAddress,
+        maxDeviation,
+        added,
+        removed,
+      )
     } catch (error) {
     } finally {
       setIsLoading(false)
@@ -106,7 +118,9 @@ export const AllowedSPs: React.FC<ComponentProps> = ({
   }
 
   useEffect(() => {
-    setData(availableAllowedSPs ?? [''])
+    if (availableAllowedSPs?.length) {
+      setData(availableAllowedSPs)
+    }
   }, [availableAllowedSPs])
 
   return (
@@ -186,8 +200,6 @@ export const AllowedSPs: React.FC<ComponentProps> = ({
               </IconButton>
             </div>
           </div>
-
-          {/* <EditableList initialData={availableAllowedSPs ?? ['']} /> */}
         </DialogContent>
         <DialogActions
           style={{
@@ -203,7 +215,12 @@ export const AllowedSPs: React.FC<ComponentProps> = ({
             Cancel
           </Button>
           {canSubmit && (
-            <Button disabled={isLoading || !isDirty} onClick={handleSubmit}>
+            <Button
+              disabled={isLoading || !isDirty}
+              onClick={() => {
+                void handleSubmit()
+              }}
+            >
               Submit allowed SPs
             </Button>
           )}

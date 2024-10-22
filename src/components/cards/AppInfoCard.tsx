@@ -8,6 +8,7 @@ import calculateAmountToRequest, {
   validateAmount,
 } from '@/helpers/calculateAmountToRefill'
 import useApplicationActions from '@/hooks/useApplicationActions'
+import useWallet from '@/hooks/useWallet'
 import { useAllocator } from '@/lib/AllocatorProvider'
 import { stateColor, stateMapping } from '@/lib/constants'
 import { getAllowanceForClient } from '@/lib/glifApi'
@@ -100,6 +101,9 @@ const AppInfoCard: React.FC<ComponentProps> = ({
     mutationRequestKyc,
     mutationRemovePendingAllocation,
   } = useApplicationActions(initialApplication, repo, owner)
+
+  const { submitClientAllowedSpsAndMaxDeviation } = useWallet()
+
   const [buttonText, setButtonText] = useState('')
   const [modalMessage, setModalMessage] = useState<ReactNode | null>(null)
   const [error, setError] = useState<boolean>(false)
@@ -797,11 +801,24 @@ const AppInfoCard: React.FC<ComponentProps> = ({
     setApiCalling(false)
   }
 
-  const handleAllowedSPsSubmit = (
+  const handleAllowedSPsSubmit = async (
+    client: string,
+    clientContractAddress: string,
+    maxDeviation: string,
     addedSPs: string[],
     removedSPs: string[],
-    maxDeviation: string,
-  ): void => {}
+  ): Promise<void> => {
+    debugger
+    const result = await submitClientAllowedSpsAndMaxDeviation(
+      client,
+      clientContractAddress,
+      maxDeviation,
+      addedSPs,
+      removedSPs,
+    )
+
+    console.log(result)
+  }
 
   return (
     <>
@@ -944,7 +961,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
               {LDNActorType.Verifier === currentActorType &&
                 session?.data?.user?.name !== undefined &&
                 application?.Lifecycle?.['On Chain Address'] &&
-                ['ReadyToSing', 'Submitted', 'Granted'].includes(
+                ['ReadyToSing', 'Granted'].includes(
                   application?.Lifecycle?.State,
                 ) && (
                   <div className="flex gap-2">
@@ -1067,9 +1084,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
                           disabled={
                             isWalletConnecting ||
                             isApiCalling ||
-                            ['Granted', 'Submitted'].includes(
-                              application.Lifecycle.State,
-                            )
+                            ['Submitted'].includes(application.Lifecycle.State)
                           }
                           className="bg-blue-500 text-white rounded-lg px-4 py-2 hover:bg-blue-600"
                         >

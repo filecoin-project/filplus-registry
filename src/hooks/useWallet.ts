@@ -59,15 +59,17 @@ interface WalletState {
     contractAddress: string,
     allocatorAddress: string,
   ) => Promise<number>
-  setClientMaxDeviation: (
-    clientAddress: string,
-    contractAddress: string,
-    maxDeviation: string,
-  ) => Promise<string>
   getClientSPs: (
     clientAddress: string,
     contractAddress: string,
   ) => Promise<string[]>
+  submitClientAllowedSpsAndMaxDeviation: (
+    clientAddress: string,
+    contractAddress: string,
+    maxDeviation: string,
+    allowedSps: string[],
+    disallowedSPs: string[],
+  ) => Promise<string>
 }
 
 /**
@@ -402,42 +404,6 @@ const useWallet = (): WalletState => {
     [wallet, multisigAddress, activeAccountIndex],
   )
 
-  const setClientMaxDeviation = useCallback(
-    async (
-      clientAddress: string,
-      contractAddress: string,
-      maxDeviation: string,
-    ): Promise<string> => {
-      if (wallet == null) throw new Error('No wallet initialized.')
-      if (multisigAddress == null) throw new Error('Multisig address not set.')
-
-      const abi = parseAbi([
-        'function setClientMaxDeviationFromFairDistribution(address client, uint256 maxDeviation)',
-      ])
-
-      const address = (await getEvmAddressFromFilecoinAddress(clientAddress))
-        .data
-
-      const validAddress = newFromString(address)
-      const addressHex: Hex = `0x${Buffer.from(validAddress.bytes).toString('hex')}`
-
-      const calldataHex: Hex = encodeFunctionData({
-        abi,
-        args: [addressHex, BigInt(maxDeviation)],
-      })
-
-      const calldata = Buffer.from(calldataHex.substring(2), 'hex')
-
-      return wallet.api.multisigEvmInvoke(
-        multisigAddress,
-        contractAddress,
-        calldata,
-        activeAccountIndex,
-      )
-    },
-    [wallet, multisigAddress, activeAccountIndex],
-  )
-
   const getClientSPs = useCallback(
     async (client: string, contractAddress: string): Promise<string[]> => {
       const abi = parseAbi([
@@ -463,18 +429,145 @@ const useWallet = (): WalletState => {
         return ['']
       }
 
-      const test =
-        '0x0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000003e800000000000000000000000000000000000000000000000000000000000004b0'
+      // const test =
+      //   '0x0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000003e800000000000000000000000000000000000000000000000000000000000004b0'
 
       const decodedData = decodeFunctionResult({
         abi,
-        data: test as `0x${string}`,
+        data: response.data as `0x${string}`,
       })
 
       const result: string[] = decodedData.map((x) => x.toString())
       return result
     },
     [],
+  )
+
+  const prepareClientMaxDeviation = (
+    clientAddressHex: Hex,
+    maxDeviation: string,
+  ): Hex => {
+    const abi = parseAbi([
+      'function setClientMaxDeviationFromFairDistribution(address client, uint256 maxDeviation)',
+    ])
+
+    const calldataHex: Hex = encodeFunctionData({
+      abi,
+      args: [clientAddressHex, BigInt(maxDeviation)],
+    })
+
+    return calldataHex
+
+    // const calldata = Buffer.from(calldataHex.substring(2), 'hex')
+
+    // return calldata
+  }
+
+  const prepareClientAddAllowedSps = (
+    clientAddressHex: Hex,
+    allowedSps: string[],
+  ): Hex => {
+    const abi = parseAbi([
+      'function addAllowedSPsForClient(address client, uint64[] calldata allowedSPs_)',
+    ])
+
+    const parsedSps = allowedSps.map((x) => BigInt(x))
+
+    const calldataHex: Hex = encodeFunctionData({
+      abi,
+      args: [clientAddressHex, parsedSps],
+    })
+
+    return calldataHex
+
+    // const calldata = Buffer.from(calldataHex.substring(2), 'hex')
+
+    // return calldata
+  }
+
+  const prepareClientRemoveAllowedSps = (
+    clientAddressHex: Hex,
+    disallowedSPs: string[],
+  ): Hex => {
+    const abi = parseAbi([
+      'function removeAllowedSPsForClient(address client, uint64[] calldata disallowedSPs_)',
+    ])
+
+    const parsedSps = disallowedSPs.map((x) => BigInt(x))
+
+    const calldataHex: Hex = encodeFunctionData({
+      abi,
+      args: [clientAddressHex, parsedSps],
+    })
+
+    return calldataHex
+
+    // const calldata = Buffer.from(calldataHex.substring(2), 'hex')
+    // return calldata
+  }
+
+  const submitClientAllowedSpsAndMaxDeviation = useCallback(
+    async (
+      clientAddress: string,
+      contractAddress: string,
+      maxDeviation?: string,
+      allowedSps?: string[],
+      disallowedSPs?: string[],
+    ): Promise<string> => {
+      if (wallet == null) throw new Error('No wallet initialized.')
+      if (multisigAddress == null) throw new Error('Multisig address not set.')
+
+      const abi = parseAbi(['function multicall(bytes[] data)'])
+
+      const evmClientAddress = (
+        await getEvmAddressFromFilecoinAddress(clientAddress)
+      ).data
+
+      const validClientAddress = newFromString(evmClientAddress)
+      const clientAddressHex: Hex = `0x${Buffer.from(validClientAddress.bytes).toString('hex')}`
+
+      const args: Hex[] = []
+
+      if (maxDeviation) {
+        const clientMaxDeviationCallData = prepareClientMaxDeviation(
+          clientAddressHex,
+          maxDeviation,
+        )
+
+        args.push(clientMaxDeviationCallData)
+      }
+
+      if (allowedSps?.length) {
+        const clientAddAllowedSpsCallData = prepareClientAddAllowedSps(
+          clientAddressHex,
+          allowedSps,
+        )
+        args.push(clientAddAllowedSpsCallData)
+      }
+
+      if (disallowedSPs) {
+        const clientRemoveAllowedSpsCallData = prepareClientRemoveAllowedSps(
+          clientAddressHex,
+          disallowedSPs,
+        )
+        args.push(clientRemoveAllowedSpsCallData)
+      }
+
+      const calldataHex: Hex = encodeFunctionData({
+        abi,
+        args: [args],
+      })
+
+      const calldata = Buffer.from(calldataHex.substring(2), 'hex')
+
+      return wallet.api.multisigEvmInvoke(
+        multisigAddress,
+        contractAddress,
+        calldata,
+        activeAccountIndex,
+      )
+    },
+    [wallet, multisigAddress, activeAccountIndex],
   )
 
   const activeAddress = accounts[activeAccountIndex] ?? ''
@@ -493,8 +586,8 @@ const useWallet = (): WalletState => {
     accounts,
     loadMoreAccounts,
     getAllocatorAllowanceFromContract,
-    setClientMaxDeviation,
     getClientSPs,
+    submitClientAllowedSpsAndMaxDeviation,
   }
 }
 
