@@ -60,6 +60,8 @@ interface ComponentProps {
   allowance: any
 }
 
+type DeviationType = 'contract' | 'directly'
+
 /**
  * Represents the information for a specific application.
  * Provides buttons to interact with the application.
@@ -78,7 +80,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
   allowance,
 }) => {
   const session = useSession()
-  const { allocators, setSelectedAllocator } = useAllocator()
+  const { allocators, setSelectedAllocator, selectedAllocator } = useAllocator()
   const {
     application,
     isApiCalling,
@@ -135,10 +137,12 @@ const AppInfoCard: React.FC<ComponentProps> = ({
   const [allocationAmountConfig, setAllocationAmountConfig] = useState<{
     amount: string
     allocationType: string
+    deviationType: DeviationType
     isDialogOpen: boolean
   }>({
     amount: '',
-    allocationType: '',
+    allocationType: 'fixed',
+    deviationType: 'directly',
     isDialogOpen: false,
   })
 
@@ -567,6 +571,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
         ...prev,
         isDialogOpen: false,
         amount: '',
+        deviationType: 'directly',
       }))
       return
     }
@@ -599,6 +604,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
         const requestId = application['Allocation Requests'].find(
           (alloc) => alloc.Active,
         )?.ID
+
         if (!requestId) return
 
         setAllocationAmountConfig((prev) => ({
@@ -612,9 +618,19 @@ const AppInfoCard: React.FC<ComponentProps> = ({
           allocationAmount: validatedAllocationAmount,
         })
       } else {
+        const clientContractAddress =
+          typeof selectedAllocator === 'object'
+            ? selectedAllocator?.client_contract_address
+            : undefined
+
         await mutationTrigger.mutateAsync({
           userName,
           allocationAmount: validatedAllocationAmount,
+          clientContractAddress:
+            allocationAmountConfig.deviationType === 'contract' &&
+            clientContractAddress
+              ? clientContractAddress
+              : undefined,
         })
       }
     } catch (error) {
@@ -680,6 +696,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
       application['Allocation Requests'].length > 1
     ) {
       setAllocationAmountConfig((prev) => ({
+        deviationType: 'directly',
         allocationType: 'manual',
         amount:
           application['Allocation Requests'].find((e) => e.Active)?.[
@@ -1262,121 +1279,160 @@ const AppInfoCard: React.FC<ComponentProps> = ({
               <Spinner />
             </div>
           )}
-          <div className="flex gap-3 items-center">
-            <FormControl>
-              <FormLabel id="demo-controlled-radio-buttons-group">
-                Allocation Amount Type
-              </FormLabel>
-              <RadioGroup
-                aria-labelledby="demo-controlled-radio-buttons-group"
-                value={allocationAmountConfig.allocationType}
-                onChange={(e) => {
-                  if (e.target.value !== 'manual') {
-                    setAllocationAmountConfig({
-                      ...allocationAmountConfig,
-                      amount: '',
-                    })
-                  }
-                  setAllocationAmountConfig((prev) => ({
-                    ...prev,
-                    allocationType: (e.target as HTMLInputElement).value,
-                  }))
-                }}
-              >
-                <FormControlLabel
-                  value={
-                    allocation?.allocation_amount_type
-                      ? allocation.allocation_amount_type
-                      : 'fixed'
-                  }
-                  control={<Radio />}
-                  label={
-                    allocation?.allocation_amount_type
-                      ? allocation.allocation_amount_type
-                          .charAt(0)
-                          .toUpperCase() +
-                        allocation.allocation_amount_type.slice(1)
-                      : 'Fixed'
-                  }
-                />
-                <FormControlLabel
-                  value="manual"
-                  control={<Radio />}
-                  label="Manual"
-                />
-              </RadioGroup>
-            </FormControl>
-            <div>
-              {!allocationAmountConfig.allocationType ||
-              allocationAmountConfig.allocationType === 'percentage' ||
-              allocationAmountConfig.allocationType === 'fixed' ? (
-                <Box sx={{ width: 230 }}>
-                  <FormControl fullWidth>
-                    <InputLabel>Amount</InputLabel>
-                    <Select
-                      disabled={!allocationAmountConfig.allocationType}
-                      value={allocationAmountConfig.amount}
-                      label="Allocation Amount"
-                      onChange={(e: SelectChangeEvent) => {
+          <div className="flex gap-3 items-center flex-col">
+            {typeof selectedAllocator === 'object' &&
+              selectedAllocator?.client_contract_address &&
+              selectedAllocator?.client_contract_address !== null && (
+                <div className="flex justify-items-center justify-between content-center items-center	w-full">
+                  <FormControl>
+                    <FormLabel id="demo-controlled-radio-buttons-group">
+                      Deviation type
+                    </FormLabel>
+                    <RadioGroup
+                      aria-labelledby="demo-controlled-radio-buttons-group"
+                      value={allocationAmountConfig.deviationType}
+                      onChange={(e) => {
                         setAllocationAmountConfig((prev) => ({
                           ...prev,
-                          amount: e.target.value,
+                          deviationType: (e.target as HTMLInputElement)
+                            .value as DeviationType,
                         }))
                       }}
                     >
-                      {(allocation?.allocation_amount_type
-                        ? allocation.allocation_amount_quantity_options
-                        : ['1TiB', '5TiB', '50TiB', '100TiB', '1PiB']
-                      ).map((e) => {
-                        return (
-                          <MenuItem
-                            key={e}
-                            value={
-                              allocationAmountConfig.allocationType ===
+                      <FormControlLabel
+                        value="directly"
+                        control={<Radio />}
+                        label="Directly"
+                      />
+                      <FormControlLabel
+                        value={'contract'}
+                        control={<Radio />}
+                        label={'Contract'}
+                      />
+                    </RadioGroup>
+                  </FormControl>
+                </div>
+              )}
+            <div className="flex justify-items-center justify-between content-center items-center	w-full">
+              <FormControl>
+                <FormLabel id="demo-controlled-radio-buttons-group">
+                  Allocation Amount Type
+                </FormLabel>
+                <RadioGroup
+                  aria-labelledby="demo-controlled-radio-buttons-group"
+                  value={allocationAmountConfig.allocationType}
+                  onChange={(e) => {
+                    if (e.target.value !== 'manual') {
+                      setAllocationAmountConfig({
+                        ...allocationAmountConfig,
+                        amount: '',
+                      })
+                    }
+                    setAllocationAmountConfig((prev) => ({
+                      ...prev,
+                      allocationType: (e.target as HTMLInputElement).value,
+                    }))
+                  }}
+                >
+                  <FormControlLabel
+                    value={
+                      allocation?.allocation_amount_type
+                        ? allocation.allocation_amount_type
+                        : 'fixed'
+                    }
+                    control={<Radio />}
+                    label={
+                      allocation?.allocation_amount_type
+                        ? allocation.allocation_amount_type
+                            .charAt(0)
+                            .toUpperCase() +
+                          allocation.allocation_amount_type.slice(1)
+                        : 'Fixed'
+                    }
+                  />
+                  <FormControlLabel
+                    value="manual"
+                    control={<Radio />}
+                    label="Manual"
+                  />
+                </RadioGroup>
+              </FormControl>
+              <div>
+                {!allocationAmountConfig.allocationType ||
+                allocationAmountConfig.allocationType === 'percentage' ||
+                allocationAmountConfig.allocationType === 'fixed' ? (
+                  <Box sx={{ width: 230 }}>
+                    <FormControl fullWidth>
+                      <InputLabel>Amount</InputLabel>
+                      <Select
+                        disabled={!allocationAmountConfig.allocationType}
+                        value={allocationAmountConfig.amount}
+                        label="Allocation Amount"
+                        onChange={(e: SelectChangeEvent) => {
+                          setAllocationAmountConfig((prev) => ({
+                            ...prev,
+                            amount: e.target.value,
+                          }))
+                        }}
+                      >
+                        {(allocation?.allocation_amount_type
+                          ? allocation.allocation_amount_quantity_options
+                          : ['1TiB', '5TiB', '50TiB', '100TiB', '1PiB']
+                        ).map((e) => {
+                          return (
+                            <MenuItem
+                              key={e}
+                              value={
+                                allocationAmountConfig.allocationType ===
+                                'percentage'
+                                  ? calculateDatacap(
+                                      e,
+                                      application.Datacap[
+                                        'Total Requested Amount'
+                                      ],
+                                    )
+                                  : e
+                              }
+                            >
+                              {e}
+                              {allocationAmountConfig.allocationType ===
                               'percentage'
-                                ? calculateDatacap(
+                                ? `% - ${calculateDatacap(
                                     e,
                                     application.Datacap[
                                       'Total Requested Amount'
                                     ],
-                                  )
-                                : e
-                            }
-                          >
-                            {e}
-                            {allocationAmountConfig.allocationType ===
-                            'percentage'
-                              ? `% - ${calculateDatacap(
-                                  e,
-                                  application.Datacap['Total Requested Amount'],
-                                )}`
-                              : ''}
-                          </MenuItem>
-                        )
-                      })}
-                    </Select>
-                  </FormControl>
-                </Box>
-              ) : (
-                <Box
-                  sx={{
-                    width: 230,
-                  }}
-                >
-                  <TextField
-                    id="outlined-controlled"
-                    label="Amount"
-                    disabled={!allocationAmountConfig.allocationType}
-                    value={allocationAmountConfig.amount}
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                      setAllocationAmountConfig((prev) => ({
-                        ...prev,
-                        amount: event.target.value,
-                      }))
+                                  )}`
+                                : ''}
+                            </MenuItem>
+                          )
+                        })}
+                      </Select>
+                    </FormControl>
+                  </Box>
+                ) : (
+                  <Box
+                    sx={{
+                      width: 230,
                     }}
-                  />
-                </Box>
-              )}
+                  >
+                    <TextField
+                      id="outlined-controlled"
+                      label="Amount"
+                      disabled={!allocationAmountConfig.allocationType}
+                      value={allocationAmountConfig.amount}
+                      onChange={(
+                        event: React.ChangeEvent<HTMLInputElement>,
+                      ) => {
+                        setAllocationAmountConfig((prev) => ({
+                          ...prev,
+                          amount: event.target.value,
+                        }))
+                      }}
+                    />
+                  </Box>
+                )}
+              </div>
             </div>
           </div>
         </DialogContent>
