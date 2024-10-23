@@ -632,6 +632,7 @@ const useApplicationActions = (
         signatures,
         maxDeviation,
         allowedSps,
+        disallowedSPs,
       )
     },
     {

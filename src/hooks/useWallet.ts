@@ -290,17 +290,6 @@ const useWallet = (): WalletState => {
       if (wallet == null) throw new Error('No wallet initialized.')
       if (multisigAddress == null) throw new Error('Multisig address not set.')
 
-      let pendingTxs
-
-      try {
-        pendingTxs = await wallet.api.pendingTransactions(multisigAddress)
-      } catch (error) {
-        console.log(error)
-        throw new Error(
-          'An error with the lotus node occurred. Please reload. If the problem persists, contact support.',
-        )
-      }
-
       const searchTransactions: Array<{
         cidName: 'Max Deviation' | 'Allowed Sps' | 'Disallowed Sps'
         abi: any
@@ -338,6 +327,19 @@ const useWallet = (): WalletState => {
           ]),
           args: [evmClientAddress, disallowedSps],
         })
+      }
+
+      if (!searchTransactions.length) return null
+
+      let pendingTxs
+
+      try {
+        pendingTxs = await wallet.api.pendingTransactions(multisigAddress)
+      } catch (error) {
+        console.log(error)
+        throw new Error(
+          'An error with the lotus node occurred. Please reload. If the problem persists, contact support.',
+        )
       }
 
       const results: Array<{
