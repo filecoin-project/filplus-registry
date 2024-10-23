@@ -611,3 +611,49 @@ export const postChangeAllowedSPs = async (
     throw error
   }
 }
+
+export const postChangeAllowedSPsApproval = async (
+  id: string,
+  requestId: string,
+  userName: string,
+  owner: string,
+  repo: string,
+  address: string,
+  signatures: {
+    maxDeviationCid?: string
+    allowedSpCid?: string
+    disallowedSpCid?: string
+  },
+): Promise<Application | undefined> => {
+  try {
+    const { data } = await apiClient.post(
+      `verifier/application/approve_storage_providers`,
+      {
+        request_id: requestId,
+        owner,
+        repo,
+        signer: {
+          signing_address: address,
+          created_at: getCurrentDate(),
+          message_cids: {
+            max_deviation_cid: signatures.maxDeviationCid,
+            allowed_sp_data_cid: signatures.allowedSpCid,
+            disallowed_sp_data_cid: signatures.disallowedSpCid,
+          },
+        },
+      },
+      {
+        params: {
+          repo,
+          owner,
+          id,
+          github_username: userName,
+        },
+      },
+    )
+    return data
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}

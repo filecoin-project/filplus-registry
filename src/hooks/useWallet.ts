@@ -1,5 +1,6 @@
 import {
   getEvmAddressFromFilecoinAddress,
+  getStateWaitMsg,
   makeStaticEthCall,
 } from '@/lib/glifApi'
 import { anyToBytes } from '@/lib/utils'
@@ -78,6 +79,15 @@ interface WalletState {
     clientAddress: string,
     contractAddress: string,
   ) => Promise<string | null>
+  getChangeSpsProposalTxs: (
+    clientAddress: string,
+    maxDeviation?: string,
+    allowedSps?: string[],
+    disallowedSps?: string[],
+  ) => Promise<Array<{
+    cidName: 'Max Deviation' | 'Allowed Sps' | 'Disallowed Sps'
+    tx: any
+  }> | null>
 }
 
 /**
@@ -263,6 +273,115 @@ const useWallet = (): WalletState => {
         })
       }
       return pendingForClient.length > 0 ? pendingForClient.at(-1) : false
+    },
+    [wallet, multisigAddress],
+  )
+
+  const getChangeSpsProposalTxs = useCallback(
+    async (
+      clientAddress: string,
+      maxDeviation?: string,
+      allowedSps?: string[],
+      disallowedSps?: string[],
+    ): Promise<Array<{
+      cidName: 'Max Deviation' | 'Allowed Sps' | 'Disallowed Sps'
+      tx: any
+    }> | null> => {
+      if (wallet == null) throw new Error('No wallet initialized.')
+      if (multisigAddress == null) throw new Error('Multisig address not set.')
+
+      let pendingTxs
+
+      try {
+        pendingTxs = await wallet.api.pendingTransactions(multisigAddress)
+      } catch (error) {
+        console.log(error)
+        throw new Error(
+          'An error with the lotus node occurred. Please reload. If the problem persists, contact support.',
+        )
+      }
+
+      const searchTransactions: Array<{
+        cidName: 'Max Deviation' | 'Allowed Sps' | 'Disallowed Sps'
+        abi: any
+        args: any
+      }> = []
+
+      const evmClientAddress =
+        await getEvmAddressFromFilecoinAddress(clientAddress)
+
+      if (maxDeviation) {
+        searchTransactions.push({
+          cidName: 'Max Deviation',
+          abi: parseAbi([
+            'function setClientMaxDeviationFromFairDistribution(address client, uint256 maxDeviation)',
+          ]),
+          args: [evmClientAddress, BigInt(maxDeviation)],
+        })
+      }
+
+      if (allowedSps?.length) {
+        searchTransactions.push({
+          cidName: 'Allowed Sps',
+          abi: parseAbi([
+            'function addAllowedSPsForClient(address client, uint64[] calldata allowedSPs_)',
+          ]),
+          args: [evmClientAddress, allowedSps],
+        })
+      }
+
+      if (disallowedSps?.length) {
+        searchTransactions.push({
+          cidName: 'Disallowed Sps',
+          abi: parseAbi([
+            'function removeAllowedSPsForClient(address client, uint64[] calldata disallowedSPs_)',
+          ]),
+          args: [evmClientAddress, disallowedSps],
+        })
+      }
+
+      const results: Array<{
+        cidName: 'Max Deviation' | 'Allowed Sps' | 'Disallowed Sps'
+        tx: any
+      }> = []
+
+      for (let i = 0; i < pendingTxs.length; i++) {
+        const transaction = pendingTxs[i]
+
+        for (let i = 0; i < searchTransactions.length; i++) {
+          const item = searchTransactions[i]
+
+          const transactionParamsHex: string =
+            transaction.parsed.params.toString('hex')
+          const transactionDataHex: Hex = `0x${transactionParamsHex}`
+
+          let decodedData
+
+          try {
+            decodedData = decodeFunctionData({
+              abi: item.abi,
+              data: transactionDataHex,
+            })
+          } catch (err) {
+            console.error(err)
+            continue
+          }
+
+          const [evmTransactionClientAddress, data] = decodedData.args
+
+          if (
+            evmTransactionClientAddress === item.args[0] &&
+            data === item.args[1]
+          ) {
+            results.push({
+              tx: transaction,
+              cidName: item.cidName,
+            })
+          }
+        }
+      }
+
+      return results.length ? results : null
     },
     [wallet, multisigAddress],
   )
@@ -502,8 +621,6 @@ const useWallet = (): WalletState => {
     const calldata = Buffer.from(calldataHex.substring(2), 'hex')
 
     return { calldata, abi }
-
-    // return calldata
   }
 
   const prepareClientAddAllowedSps = (
@@ -524,9 +641,6 @@ const useWallet = (): WalletState => {
     const calldata = Buffer.from(calldataHex.substring(2), 'hex')
 
     return { calldata, abi }
-    // const calldata = Buffer.from(calldataHex.substring(2), 'hex')
-
-    // return calldata
   }
 
   const prepareClientRemoveAllowedSps = (
@@ -547,11 +661,29 @@ const useWallet = (): WalletState => {
     const calldata = Buffer.from(calldataHex.substring(2), 'hex')
 
     return { calldata, abi }
+  }
 
-    // return calldataHex
+  const checkTransactionState = async (
+    transactionCid: string,
+    transactionName: string,
+  ): Promise<void> => {
+    if (transactionCid == null) {
+      throw new Error(
+        `Error sending ${transactionName} transaction. Please try again or contact support.`,
+      )
+    }
 
-    // const calldata = Buffer.from(calldataHex.substring(2), 'hex')
-    // return calldata
+    const response = await getStateWaitMsg(transactionCid)
+
+    if (
+      typeof response.data === 'object' &&
+      response.data.ReturnDec.Applied &&
+      response.data.ReturnDec.Code !== 0
+    ) {
+      throw new Error(
+        `Error sending ${transactionName} transaction. Please try again or contact support. Error code: ${response.data.ReturnDec.Code}`,
+      )
+    }
   }
 
   const submitClientAllowedSpsAndMaxDeviation = useCallback(
@@ -598,6 +730,8 @@ const useWallet = (): WalletState => {
           activeAccountIndex,
         )
 
+        await checkTransactionState(maxDeviationTransaction, 'max deviation')
+
         signatures.maxDeviationCid = maxDeviationTransaction
       }
 
@@ -617,6 +751,8 @@ const useWallet = (): WalletState => {
           activeAccountIndex,
         )
 
+        await checkTransactionState(allowedSpsTransaction, 'allowed SPs')
+
         signatures.allowedSpCid = allowedSpsTransaction
       }
 
@@ -635,6 +771,8 @@ const useWallet = (): WalletState => {
           calldata,
           activeAccountIndex,
         )
+
+        await checkTransactionState(disallowedSpsTransaction, 'disallow SPs')
 
         signatures.disallowedSpCid = disallowedSpsTransaction
       }
@@ -663,6 +801,7 @@ const useWallet = (): WalletState => {
     getClientSPs,
     submitClientAllowedSpsAndMaxDeviation,
     getClientConfig,
+    getChangeSpsProposalTxs,
   }
 }
 

@@ -102,6 +102,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
     mutationRequestKyc,
     mutationRemovePendingAllocation,
     mutationChangeAllowedSPs,
+    mutationChangeAllowedSPsApproval,
   } = useApplicationActions(initialApplication, repo, owner)
 
   const [buttonText, setButtonText] = useState('')
@@ -853,6 +854,47 @@ const AppInfoCard: React.FC<ComponentProps> = ({
     }
   }
 
+  const handleApproveAllowedSPs = async (): Promise<void> => {
+    try {
+      setApiCalling(true)
+      const requestId = application['Allocation Requests'].find(
+        (alloc) => alloc.Active,
+      )?.ID
+
+      const userName = session.data?.user?.githubUsername
+
+      if (requestId != null && userName != null) {
+        const res = await mutationChangeAllowedSPsApproval.mutateAsync({
+          requestId,
+          userName,
+        })
+
+        if (res) {
+          const lastDatacapAllocation = getLastDatacapAllocation(res)
+          if (lastDatacapAllocation === undefined) {
+            throw new Error('No datacap allocation found')
+          }
+          const queryParams = [
+            `client=${encodeURIComponent(res?.Client.Name)}`,
+            `messageCID=${encodeURIComponent(
+              lastDatacapAllocation.Signers[1]['Message CID'],
+            )}`,
+            `amount=${encodeURIComponent(
+              lastDatacapAllocation['Allocation Amount'],
+            )}`,
+            `notification=true`,
+          ].join('&')
+
+          router.push(`/?${queryParams}`)
+        }
+      }
+    } catch (error) {
+      handleMutationError(error as Error)
+    } finally {
+      setApiCalling(false)
+    }
+  }
+
   return (
     <>
       <AccountSelectionDialog
@@ -1008,6 +1050,28 @@ const AppInfoCard: React.FC<ComponentProps> = ({
                       }
                       initDeviation="10"
                     />
+                  </div>
+                )}
+
+              {LDNActorType.Verifier === currentActorType &&
+                walletConnected &&
+                session?.data?.user?.name !== undefined &&
+                application?.Lifecycle?.['On Chain Address'] &&
+                application?.['Client Contract Address'] &&
+                ['ChangingSP'].includes(application?.Lifecycle?.State) && (
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => {
+                        void handleApproveAllowedSPs
+                      }}
+                      disabled={isApiCalling}
+                      style={{
+                        width: '250px',
+                      }}
+                      className="bg-green-400 text-black rounded-lg px-4 py-2 hover:bg-green-500"
+                    >
+                      Approve SP Propose
+                    </Button>
                   </div>
                 )}
 

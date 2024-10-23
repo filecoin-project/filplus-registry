@@ -27,4 +27,5 @@ export const stateMapping = {
   StartSignDatacap: 'Start sign datacap',
   Granted: 'Granted',
   KYCRequested: 'KYC requested',
+  ChangingSP: 'Changing SP',
 }

@@ -8,6 +8,7 @@ import {
   postApplicationTrigger,
   postApproveChanges,
   postChangeAllowedSPs,
+  postChangeAllowedSPsApproval,
   postRemoveAlloc,
   postRequestKyc,
   postRevertApplicationToReadyToSign,
@@ -93,6 +94,12 @@ interface ApplicationActions {
     { requestId: string; userName: string },
     unknown
   >
+  mutationChangeAllowedSPsApproval: UseMutationResult<
+    Application | undefined,
+    unknown,
+    { requestId: string; userName: string },
+    unknown
+  >
   mutationProposal: UseMutationResult<
     Application | undefined,
     unknown,
@@ -140,6 +147,8 @@ const useApplicationActions = (
     accounts,
     loadMoreAccounts,
     submitClientAllowedSpsAndMaxDeviation,
+    getChangeSpsProposalTxs,
+    setMessage,
   } = useWallet()
   const { selectedAllocator } = useAllocator()
 
@@ -636,6 +645,86 @@ const useApplicationActions = (
     },
   )
 
+  const mutationChangeAllowedSPsApproval = useMutation<
+    Application | undefined,
+    unknown,
+    { requestId: string; userName: string },
+    unknown
+  >(
+    async ({ requestId, userName }) => {
+      const clientAddress = getClientAddress()
+      const datacap = initialApplication['Allocation Requests'].find(
+        (alloc) => alloc.Active,
+      )?.['Allocation Amount']
+
+      if (datacap == null) throw new Error('No active allocation found')
+
+      const proposalTxs = await getChangeSpsProposalTxs(clientAddress)
+
+      if (!proposalTxs) {
+        throw new Error(
+          'This datacap allocation is not proposed to change allowed SPs yet. You may need to wait some time if the proposal was just sent.',
+        )
+      }
+
+      const signatures: {
+        maxDeviationCid?: string
+        allowedSpCid?: string
+        disallowedSpCid?: string
+      } = {}
+
+      const wait = async (ms: number): Promise<void> => {
+        await new Promise((resolve) => setTimeout(resolve, ms))
+      }
+
+      for (let index = 0; index < proposalTxs.length; index++) {
+        const proposalTx = proposalTxs[index]
+
+        setMessage(`Preparing the ${proposalTx.cidName} transaction...`)
+
+        await wait(3000)
+        const messageCID = await sendApproval(proposalTx.tx)
+
+        if (messageCID == null) {
+          throw new Error(
+            `Error sending ${proposalTx.cidName}. Please try again or contact support.`,
+          )
+        }
+
+        const response = await getStateWaitMsg(messageCID)
+
+        if (
+          typeof response.data === 'object' &&
+          response.data.ReturnDec.Applied &&
+          response.data.ReturnDec.Code !== 0
+        ) {
+          throw new Error(
+            `Change allowed SPs transaction failed on chain. Error code: ${response.data.ReturnDec.Code}`,
+          )
+        }
+      }
+
+      return await postChangeAllowedSPsApproval(
+        initialApplication.ID,
+        requestId,
+        userName,
+        owner,
+        repo,
+        activeAddress,
+        signatures,
+      )
+    },
+    {
+      onSuccess: (data) => {
+        setApiCalling(false)
+        if (data != null) updateCache(data)
+      },
+      onError: () => {
+        setApiCalling(false)
+      },
+    },
+  )
+
   return {
     application,
     mutationRequestKyc,
@@ -657,6 +746,7 @@ const useApplicationActions = (
     mutationTriggerSSA,
     mutationRemovePendingAllocation,
     mutationChangeAllowedSPs,
+    mutationChangeAllowedSPsApproval,
   }
 }
 
