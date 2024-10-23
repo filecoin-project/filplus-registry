@@ -825,19 +825,26 @@ const AppInfoCard: React.FC<ComponentProps> = ({
   ): Promise<void> => {
     try {
       setApiCalling(true)
-      if (application.Lifecycle.State === 'ReadyToSign') {
-        const result = await mutationChangeAllowedSPs.mutateAsync({
+      const requestId = application['Allocation Requests'].find(
+        (alloc) => alloc.Active,
+      )?.ID
+
+      const userName = session.data?.user?.githubUsername
+
+      if (
+        application.Lifecycle.State === 'ReadyToSign' &&
+        requestId &&
+        userName
+      ) {
+        await mutationChangeAllowedSPs.mutateAsync({
+          requestId,
+          userName: 'string',
           clientAddress: client,
           contractAddress: clientContractAddress,
           allowedSps: addedSPs,
           disallowedSPs: removedSPs,
           maxDeviation,
         })
-
-        console.log(result)
-
-        // api post here
-        // postChangeAllowedSPs()
       }
     } catch (error) {
       console.log(error)

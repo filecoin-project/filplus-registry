@@ -7,6 +7,7 @@ import {
   postApplicationProposal,
   postApplicationTrigger,
   postApproveChanges,
+  postChangeAllowedSPs,
   postRemoveAlloc,
   postRequestKyc,
   postRevertApplicationToReadyToSign,
@@ -76,6 +77,8 @@ interface ApplicationActions {
     Application | undefined,
     unknown,
     {
+      requestId: string
+      userName: string
       clientAddress: string
       contractAddress: string
       allowedSps: string[]
@@ -583,6 +586,8 @@ const useApplicationActions = (
     Application | undefined,
     Error,
     {
+      requestId: string
+      userName: string
       clientAddress: string
       contractAddress: string
       maxDeviation?: string
@@ -592,13 +597,15 @@ const useApplicationActions = (
     unknown
   >(
     async ({
+      requestId,
+      userName,
       clientAddress,
       contractAddress,
       maxDeviation,
       allowedSps,
       disallowedSPs,
     }) => {
-      const result = await submitClientAllowedSpsAndMaxDeviation(
+      const signatures = await submitClientAllowedSpsAndMaxDeviation(
         clientAddress,
         contractAddress,
         allowedSps,
@@ -606,49 +613,17 @@ const useApplicationActions = (
         maxDeviation,
       )
 
-      console.log(result)
-
-      return undefined
-
-      // console.log(result)
-      // if (proposalTx !== false) {
-      //   throw new Error('This datacap allocation is already proposed')
-      // }
-      // const messageCID = ''
-      // const messageCID = await sendProposal({
-      //   allocatorType,
-      //   contractAddress:
-      //     typeof selectedAllocator !== 'string'
-      //       ? selectedAllocator?.address ?? ''
-      //       : '',
-      //   clientAddress,
-      //   proposalAllocationAmount,
-      // })
-      // if (messageCID == null) {
-      //   throw new Error(
-      //     'Error sending proposal. Please try again or contact support.',
-      //   )
-      // }
-      // const response = await getStateWaitMsg(messageCID)
-      // if (
-      //   typeof response.data === 'object' &&
-      //   response.data.ReturnDec.Applied &&
-      //   response.data.ReturnDec.Code !== 0
-      // ) {
-      //   throw new Error(
-      //     `Error sending transaction. Please try again or contact support. Error code: ${response.data.ReturnDec.Code}`,
-      //   )
-      // }
-      // await postChangeAllowedSPs(
-      //   initialApplication.ID,
-      //   requestId,
-      //   userName,
-      //   owner,
-      //   repo,
-      //   activeAddress,
-      //   messageCID,
-      //   maxDeviation,
-      // )
+      return await postChangeAllowedSPs(
+        initialApplication.ID,
+        requestId,
+        userName,
+        owner,
+        repo,
+        activeAddress,
+        signatures,
+        maxDeviation,
+        allowedSps,
+      )
     },
     {
       onSuccess: (data) => {

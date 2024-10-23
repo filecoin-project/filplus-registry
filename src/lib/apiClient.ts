@@ -566,33 +566,46 @@ export const postChangeAllowedSPs = async (
   owner: string,
   repo: string,
   address: string,
-  signature: string,
-  allocationAmount?: string,
-): Promise<void> => {
+  signatures: {
+    maxDeviationCid?: string
+    allowedSpCid?: string
+    disallowedSpCid?: string
+  },
+  maxDeviationData?: string,
+  allowedSpsData?: string[],
+): Promise<Application | undefined> => {
   try {
-    // const { data } = await apiClient.post(
-    //   `verifier/application/propose`,
-    //   {
-    //     request_id: requestId,
-    //     new_allocation_amount: allocationAmount,
-    //     owner,
-    //     repo,
-    //     signer: {
-    //       signing_address: address,
-    //       created_at: getCurrentDate(),
-    //       message_cid: signature,
-    //     },
-    //   },
-    //   {
-    //     params: {
-    //       repo,
-    //       owner,
-    //       id,
-    //       github_username: userName,
-    //     },
-    //   },
-    // )
-    // return data
+    const { data } = await apiClient.post(
+      `verifier/application/propose_storage_providers`,
+      {
+        request_id: requestId,
+        max_deviation_data: maxDeviationData
+          ? `${maxDeviationData}%`
+          : undefined,
+        allowed_sp_data: allowedSpsData,
+        owner,
+        repo,
+        signer: {
+          signing_address: address,
+          created_at: getCurrentDate(),
+          message_cids: {
+            max_deviation_cid: signatures.maxDeviationCid,
+            allowed_sp_data_cid: signatures.allowedSpCid,
+            disallowed_sp_data_cid: signatures.disallowedSpCid,
+          },
+        },
+      },
+      {
+        params: {
+          repo,
+          owner,
+          id,
+          github_username: userName,
+        },
+      },
+    )
+
+    return data
   } catch (error) {
     console.error(error)
     throw error

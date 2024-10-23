@@ -69,7 +69,11 @@ interface WalletState {
     allowedSps: string[],
     disallowedSPs: string[],
     maxDeviation?: string,
-  ) => Promise<boolean>
+  ) => Promise<{
+    maxDeviationCid?: string
+    allowedSpCid?: string
+    disallowedSpCid?: string
+  }>
   getClientConfig: (
     clientAddress: string,
     contractAddress: string,
@@ -557,7 +561,11 @@ const useWallet = (): WalletState => {
       allowedSps?: string[],
       disallowedSPs?: string[],
       maxDeviation?: string,
-    ): Promise<boolean> => {
+    ): Promise<{
+      maxDeviationCid?: string
+      allowedSpCid?: string
+      disallowedSpCid?: string
+    }> => {
       if (wallet == null) throw new Error('No wallet initialized.')
       if (multisigAddress == null) throw new Error('Multisig address not set.')
 
@@ -567,6 +575,12 @@ const useWallet = (): WalletState => {
       const wait = async (ms: number): Promise<void> => {
         await new Promise((resolve) => setTimeout(resolve, ms))
       }
+
+      const signatures: {
+        maxDeviationCid?: string
+        allowedSpCid?: string
+        disallowedSpCid?: string
+      } = {}
 
       if (maxDeviation) {
         setMessage('Preparing the max deviation transaction...')
@@ -584,7 +598,7 @@ const useWallet = (): WalletState => {
           activeAccountIndex,
         )
 
-        console.log(maxDeviationTransaction)
+        signatures.maxDeviationCid = maxDeviationTransaction
       }
 
       if (allowedSps?.length) {
@@ -596,12 +610,14 @@ const useWallet = (): WalletState => {
           allowedSps,
         )
 
-        await wallet.api.multisigEvmInvoke(
+        const allowedSpsTransaction = await wallet.api.multisigEvmInvoke(
           multisigAddress,
           contractAddress,
           calldata,
           activeAccountIndex,
         )
+
+        signatures.allowedSpCid = allowedSpsTransaction
       }
 
       if (disallowedSPs?.length) {
@@ -613,15 +629,17 @@ const useWallet = (): WalletState => {
           disallowedSPs,
         )
 
-        await wallet.api.multisigEvmInvoke(
+        const disallowedSpsTransaction = await wallet.api.multisigEvmInvoke(
           multisigAddress,
           contractAddress,
           calldata,
           activeAccountIndex,
         )
+
+        signatures.disallowedSpCid = disallowedSpsTransaction
       }
 
-      return true
+      return signatures
     },
     [wallet, multisigAddress, activeAccountIndex],
   )
