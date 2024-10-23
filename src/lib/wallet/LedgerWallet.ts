@@ -128,6 +128,7 @@ export class LedgerWallet extends BaseWallet {
     indexAccount: number,
   ): Promise<any> => {
     console.log(`Signing with account n.: ${indexAccount}`)
+    debugger
     this.setMessage('Please review and sign the transaction on your Ledger.')
     const serializedMessage = signer.transactionSerialize(filecoinMessage)
     const signedMessage = this.handleErrors(

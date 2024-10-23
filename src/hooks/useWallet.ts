@@ -739,10 +739,33 @@ const useWallet = (): WalletState => {
         setMessage('Preparing the allowed SPs transaction...')
         await wait(3000)
 
-        const { calldata } = prepareClientAddAllowedSps(
-          evmClientAddress.data,
-          allowedSps,
-        )
+        debugger
+        // const { calldata } = prepareClientAddAllowedSps(
+        //   evmClientAddress.data,
+        //   allowedSps,
+        // );
+
+        const abi = parseAbi([
+          'function addAllowedSPsForClient(address client, uint64[] calldata allowedSPs_)',
+        ])
+
+        const parsedSps = allowedSps.map((x) => BigInt(x))
+
+        const calldataHex: Hex = encodeFunctionData({
+          abi,
+          args: [evmClientAddress.data, parsedSps],
+        })
+
+        const abiMulticall = parseAbi([
+          'function multicall(bytes[] memory data) external nonpayable returns (bytes[] memory)',
+        ])
+
+        const calldataMultiHex: Hex = encodeFunctionData({
+          abi: abiMulticall,
+          args: [[calldataHex]],
+        })
+
+        const calldata = Buffer.from(calldataMultiHex.substring(2), 'hex')
 
         const allowedSpsTransaction = await wallet.api.multisigEvmInvoke(
           multisigAddress,
