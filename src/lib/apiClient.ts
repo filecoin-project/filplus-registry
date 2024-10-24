@@ -379,7 +379,10 @@ export const postApplicationProposal = async (
   owner: string,
   repo: string,
   address: string,
-  signature: string,
+  signatures: {
+    messageCID: string
+    increaseAllowanceCID?: string
+  },
   allocationAmount?: string,
 ): Promise<Application | undefined> => {
   try {
@@ -394,7 +397,10 @@ export const postApplicationProposal = async (
           signing_address: address,
           // Datetime in format YYYY-MM-DDTHH:MM:SSZ
           created_at: getCurrentDate(),
-          message_cid: signature,
+          message_cids: {
+            message_cid: signatures.messageCID,
+            increase_allowance_cid: signatures.increaseAllowanceCID,
+          },
         },
       },
       {

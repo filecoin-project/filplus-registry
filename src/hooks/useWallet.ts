@@ -50,6 +50,11 @@ interface WalletState {
     allocatorType: AllocatorTypeEnum,
   ) => Promise<string | boolean>
   sendProposal: (props: SendProposalProps) => Promise<string>
+  sendClientIncreaseAllowance: (props: {
+    contractAddress: string
+    clientAddress: string
+    proposalAllocationAmount: string
+  }) => Promise<string>
   sendApproval: (txHash: string) => Promise<string>
   sign: (message: string) => Promise<string>
   initializeWallet: (multisigAddress?: string) => Promise<string[]>
@@ -435,6 +440,48 @@ const useWallet = (): WalletState => {
     [wallet, multisigAddress, activeAccountIndex],
   )
 
+  const sendClientIncreaseAllowance = useCallback(
+    async (props: {
+      contractAddress: string
+      clientAddress: string
+      proposalAllocationAmount: string
+    }) => {
+      const { clientAddress, contractAddress, proposalAllocationAmount } = props
+
+      if (wallet == null) throw new Error('No wallet initialized.')
+
+      setMessage('Sending transaction to increase allowance...')
+
+      const abi = parseAbi([
+        'function increaseAllowance(address client, uint256 amount)',
+      ])
+
+      const evmClientAddress =
+        await getEvmAddressFromFilecoinAddress(clientAddress)
+
+      const calldataHex: Hex = encodeFunctionData({
+        abi,
+        args: [evmClientAddress.data, BigInt(proposalAllocationAmount)],
+      })
+
+      const calldata = Buffer.from(calldataHex.substring(2), 'hex')
+
+      const increaseTransactionCID = wallet.api.multisigEvmInvoke(
+        multisigAddress,
+        contractAddress,
+        calldata,
+        activeAccountIndex,
+      )
+
+      setMessage(
+        `Increase transaction sent correctly CID: ${increaseTransactionCID as string}`,
+      )
+
+      return increaseTransactionCID
+    },
+    [wallet, multisigAddress, activeAccountIndex],
+  )
+
   const getAllocatorAllowanceFromContract = useCallback(
     async (
       contractAddress: string,
@@ -804,6 +851,7 @@ const useWallet = (): WalletState => {
     submitClientAllowedSpsAndMaxDeviation,
     getClientConfig,
     getChangeSpsProposalTxs,
+    sendClientIncreaseAllowance,
   }
 }
 
