@@ -568,8 +568,8 @@ export const postChangeAllowedSPs = async (
   address: string,
   signatures: {
     maxDeviationCid?: string
-    allowedSpCid?: string
-    disallowedSpCid?: string
+    allowedSpCid?: { [key in string]: string[] }
+    disallowedSpCid?: { [key in string]: string[] }
   },
   maxDeviationData?: string,
   allowedSpsData?: string[],
@@ -592,8 +592,8 @@ export const postChangeAllowedSPs = async (
           created_at: getCurrentDate(),
           message_cids: {
             max_deviation_cid: signatures.maxDeviationCid,
-            allowed_sp_data_cid: signatures.allowedSpCid,
-            disallowed_sp_data_cid: signatures.disallowedSpCid,
+            allowed_sp_data_cids: signatures.allowedSpCid,
+            disallowed_sp_data_cids: signatures.disallowedSpCid,
           },
         },
       },
