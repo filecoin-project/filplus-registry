@@ -56,7 +56,7 @@ interface WalletState {
     clientAddress: string
     proposalAllocationAmount: string
   }) => Promise<string>
-  sendApproval: (txHash: string) => Promise<string>
+  sendApproval: (transaction: any) => Promise<string>
   sign: (message: string) => Promise<string>
   initializeWallet: (multisigAddress?: string) => Promise<string[]>
   message: string | null
@@ -277,20 +277,19 @@ const useWallet = (): WalletState => {
 
           try {
             decodedData = decodeFunctionData({ abi, data: dataHex })
+
+            const [clientAddressData, amount] = decodedData.args
+            const address = newFromString(clientAddress)
+            const addressHex: Hex = `0x${Buffer.from(address.bytes).toString('hex')}`
+
+            if (
+              clientAddressData === addressHex &&
+              amount === BigInt(bytesDatacap)
+            ) {
+              return true
+            }
           } catch (err) {
             console.error(err)
-            return false
-          }
-
-          const [clientAddressData, amount] = decodedData.args
-          const address = newFromString(clientAddress)
-          const addressHex: Hex = `0x${Buffer.from(address.bytes).toString('hex')}`
-
-          if (
-            clientAddressData === addressHex &&
-            amount === BigInt(bytesDatacap)
-          ) {
-            return true
           }
 
           if (isClientContractAddress) {
@@ -307,19 +306,19 @@ const useWallet = (): WalletState => {
                 abi: increaseAbi,
                 data: increaseDataHex,
               })
+
+              const [increaseClientContractAddress, increaseAmount] =
+                increaseDecodedData.args
+
+              if (
+                increaseClientContractAddress.toLocaleLowerCase() ===
+                  evmClientContractAddress &&
+                increaseAmount === BigInt(bytesDatacap)
+              ) {
+                return true
+              }
             } catch (err) {
               console.error(err)
-              return false
-            }
-
-            const [increaseClientContractAddress, increaseAmount] =
-              increaseDecodedData.args
-
-            if (
-              increaseClientContractAddress === evmClientContractAddress &&
-              increaseAmount === BigInt(bytesDatacap)
-            ) {
-              return true
             }
           }
 
@@ -616,7 +615,7 @@ const useWallet = (): WalletState => {
    * @throws {Error} - Throws an error if no wallet is initialized.
    */
   const sendApproval = useCallback(
-    async (txHash: string): Promise<string> => {
+    async (transaction: any): Promise<string> => {
       if (wallet == null) throw new Error('No wallet initialized.')
       if (multisigAddress == null) throw new Error('Multisig address not set.')
 
@@ -624,7 +623,7 @@ const useWallet = (): WalletState => {
 
       const messageCID = await wallet.api.approvePending(
         multisigAddress,
-        txHash,
+        transaction,
         activeAccountIndex,
       )
 
