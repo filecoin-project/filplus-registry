@@ -444,9 +444,11 @@ const useApplicationActions = (
         initialApplication.Lifecycle['On Chain Address'].substring(1)
 
       let proposalAllocationAmount = ''
+      let isClientContractAddress = false
 
       if (initialApplication['Client Contract Address']) {
         clientAddress = initialApplication['Client Contract Address']
+        isClientContractAddress = true
       }
 
       if (allocationAmount) {
@@ -466,6 +468,7 @@ const useApplicationActions = (
         clientAddress,
         proposalAllocationAmount,
         allocatorType,
+        isClientContractAddress,
       )
 
       if (proposalTx !== false) {
@@ -569,12 +572,15 @@ const useApplicationActions = (
   >(
     async ({ requestId, userName }) => {
       let clientAddress = getClientAddress()
+      let isClientContractAddress = false
+
       const datacap = initialApplication['Allocation Requests'].find(
         (alloc) => alloc.Active,
       )?.['Allocation Amount']
 
       if (initialApplication['Client Contract Address']) {
         clientAddress = initialApplication['Client Contract Address']
+        isClientContractAddress = true
       }
 
       if (datacap == null) throw new Error('No active allocation found')
@@ -583,6 +589,7 @@ const useApplicationActions = (
         clientAddress,
         datacap,
         allocatorType,
+        isClientContractAddress,
       )
 
       if (proposalTx === false) {
@@ -615,6 +622,7 @@ const useApplicationActions = (
           `Datacap allocation transaction failed on chain. Application reverted to ReadyToSign. Please try again. Error code: ${response.data.ReturnDec.Code}`,
         )
       }
+
       return await postApplicationApproval(
         initialApplication.ID,
         requestId,
@@ -729,7 +737,7 @@ const useApplicationActions = (
         setMessage(`Preparing the ${proposalTx.cidName} transaction...`)
 
         await wait(3000)
-        const messageCID = await sendApproval(proposalTx.tx)
+        const messageCID = await sendApproval(proposalTx.tx as string)
 
         if (messageCID == null) {
           throw new Error(

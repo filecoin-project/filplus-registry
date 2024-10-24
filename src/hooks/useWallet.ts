@@ -48,6 +48,7 @@ interface WalletState {
     clientAddress: string,
     datacap: string,
     allocatorType: AllocatorTypeEnum,
+    isClientContractAddress?: boolean,
   ) => Promise<string | boolean>
   sendProposal: (props: SendProposalProps) => Promise<string>
   sendClientIncreaseAllowance: (props: {
@@ -233,11 +234,14 @@ const useWallet = (): WalletState => {
       clientAddress: string,
       datacap: string,
       allocatorType: AllocatorTypeEnum,
+      isClientContractAddress?: boolean,
     ): Promise<string | boolean> => {
       if (wallet == null) throw new Error('No wallet initialized.')
       if (multisigAddress == null) throw new Error('Multisig address not set.')
 
       const bytesDatacap = Math.floor(anyToBytes(datacap))
+      let evmClientContractAddress: Hex
+
       let pendingTxs
       try {
         pendingTxs = await wallet.api.pendingTransactions(multisigAddress)
@@ -247,6 +251,13 @@ const useWallet = (): WalletState => {
           'An error with the lotus node occurred. Please reload. If the problem persists, contact support.',
         )
       }
+
+      if (isClientContractAddress) {
+        evmClientContractAddress = (
+          await getEvmAddressFromFilecoinAddress(clientAddress)
+        ).data
+      }
+
       let pendingForClient = null
       if (allocatorType !== AllocatorTypeEnum.CONTRACT) {
         pendingForClient = pendingTxs?.filter(
@@ -263,18 +274,56 @@ const useWallet = (): WalletState => {
           const paramsHex: string = tx.parsed.params.toString('hex')
           const dataHex: Hex = `0x${paramsHex}`
           let decodedData
+
           try {
             decodedData = decodeFunctionData({ abi, data: dataHex })
           } catch (err) {
             console.error(err)
             return false
           }
+
           const [clientAddressData, amount] = decodedData.args
           const address = newFromString(clientAddress)
           const addressHex: Hex = `0x${Buffer.from(address.bytes).toString('hex')}`
-          return (
-            clientAddressData === addressHex && amount === BigInt(bytesDatacap)
-          )
+
+          if (
+            clientAddressData === addressHex &&
+            amount === BigInt(bytesDatacap)
+          ) {
+            return true
+          }
+
+          if (isClientContractAddress) {
+            const increaseAbi = parseAbi([
+              'function increaseAllowance(address client, uint256 amount)',
+            ])
+
+            const paramsHex: string = tx.parsed.params.toString('hex')
+            const increaseDataHex: Hex = `0x${paramsHex}`
+            let increaseDecodedData
+
+            try {
+              increaseDecodedData = decodeFunctionData({
+                abi: increaseAbi,
+                data: increaseDataHex,
+              })
+            } catch (err) {
+              console.error(err)
+              return false
+            }
+
+            const [increaseClientContractAddress, increaseAmount] =
+              increaseDecodedData.args
+
+            if (
+              increaseClientContractAddress === evmClientContractAddress &&
+              increaseAmount === BigInt(bytesDatacap)
+            ) {
+              return true
+            }
+          }
+
+          return false
         })
       }
       return pendingForClient.length > 0 ? pendingForClient.at(-1) : false
