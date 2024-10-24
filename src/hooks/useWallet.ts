@@ -508,14 +508,17 @@ const useWallet = (): WalletState => {
       const evmClientAddress =
         await getEvmAddressFromFilecoinAddress(clientAddress)
 
+      const bytesDatacap = Math.floor(anyToBytes(proposalAllocationAmount))
+      if (bytesDatacap === 0) throw new Error("Can't grant 0 datacap.")
+
       const calldataHex: Hex = encodeFunctionData({
         abi,
-        args: [evmClientAddress.data, BigInt(proposalAllocationAmount)],
+        args: [evmClientAddress.data, BigInt(bytesDatacap)],
       })
 
       const calldata = Buffer.from(calldataHex.substring(2), 'hex')
 
-      const increaseTransactionCID = wallet.api.multisigEvmInvoke(
+      const increaseTransactionCID = await wallet.api.multisigEvmInvoke(
         multisigAddress,
         contractAddress,
         calldata,

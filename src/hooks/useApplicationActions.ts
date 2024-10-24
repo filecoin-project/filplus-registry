@@ -491,6 +491,10 @@ const useApplicationActions = (
         )
       }
 
+      setMessage(
+        'Checking proposal transaction, It may several second, please wait...',
+      )
+
       const response = await getStateWaitMsg(messageCID)
 
       if (
@@ -520,6 +524,10 @@ const useApplicationActions = (
             'Error sending increase allowance transaction. Please try again or contact support.',
           )
         }
+
+        setMessage(
+          'Checking increase allowance transaction, It may several second, please wait...',
+        )
 
         const increaseResponse = await getStateWaitMsg(increaseAllowanceCID)
 
