@@ -471,7 +471,7 @@ const useApplicationActions = (
         isClientContractAddress,
       )
 
-      if (proposalTx !== false) {
+      if (proposalTx?.pendingVerifyClientTransaction) {
         throw new Error('This datacap allocation is already proposed')
       }
 
@@ -600,35 +600,83 @@ const useApplicationActions = (
         isClientContractAddress,
       )
 
-      if (proposalTx === false) {
+      const isPendingTransaction = isClientContractAddress
+        ? proposalTx?.pendingIncreaseAllowanceTransaction &&
+          proposalTx.pendingVerifyClientTransaction
+        : proposalTx?.pendingVerifyClientTransaction
+
+      if (!isPendingTransaction) {
         throw new Error(
           'This datacap allocation is not proposed yet. You may need to wait some time if the proposal was just sent.',
         )
       }
 
-      const messageCID = await sendApproval(proposalTx as string)
-
-      if (messageCID == null) {
-        throw new Error(
-          'Error sending proposal. Please try again or contact support.',
-        )
+      const wait = async (ms: number): Promise<void> => {
+        await new Promise((resolve) => setTimeout(resolve, ms))
       }
-      const response = await getStateWaitMsg(messageCID)
-      if (
-        typeof response.data === 'object' &&
-        response.data.ReturnDec.Applied &&
-        response.data.ReturnDec.Code !== 0
-      ) {
-        await postRevertApplicationToReadyToSign(
-          userName,
-          initialApplication.ID,
-          owner,
-          repo,
+
+      const transactions = [
+        {
+          cidName: 'verify client',
+          transaction: proposalTx?.pendingVerifyClientTransaction,
+        },
+        {
+          cidName: 'increase allowance',
+          transaction: proposalTx?.pendingIncreaseAllowanceTransaction,
+        },
+      ]
+
+      const signatures: {
+        verifyClientCid: string
+        increaseAllowanceCid?: string
+      } = {
+        verifyClientCid: '',
+      }
+
+      for (let index = 0; index < transactions.length; index++) {
+        const proposalTx = transactions[index]
+
+        setMessage(
+          `Preparing the approval of ${proposalTx.cidName} transaction...`,
         )
-        // After changing the error message, please check the handleClose() function and adapt the changes
-        throw new Error(
-          `Datacap allocation transaction failed on chain. Application reverted to ReadyToSign. Please try again. Error code: ${response.data.ReturnDec.Code}`,
+
+        await wait(3000)
+
+        const messageCID = await sendApproval(proposalTx.transaction)
+
+        if (messageCID == null) {
+          throw new Error(
+            `Error sending ${proposalTx.cidName}. Please try again or contact support.`,
+          )
+        }
+
+        if (proposalTx.cidName === 'verify client') {
+          signatures.verifyClientCid = messageCID
+        } else {
+          signatures.increaseAllowanceCid = messageCID
+        }
+
+        setMessage(
+          `Checking ${proposalTx.cidName} transaction, It may several second, please wait...`,
         )
+
+        const response = await getStateWaitMsg(messageCID)
+
+        if (
+          typeof response.data === 'object' &&
+          response.data.ReturnDec.Applied &&
+          response.data.ReturnDec.Code !== 0
+        ) {
+          await postRevertApplicationToReadyToSign(
+            userName,
+            initialApplication.ID,
+            owner,
+            repo,
+          )
+          throw new Error(
+            `Datacap allocation transaction failed on chain. Application reverted to ReadyToSign. Please try again. Error code: ${response.data.ReturnDec.Code}`,
+          )
+        }
       }
 
       return await postApplicationApproval(
@@ -638,7 +686,7 @@ const useApplicationActions = (
         owner,
         repo,
         activeAddress,
-        messageCID,
+        signatures,
       )
     },
     {
@@ -745,13 +793,17 @@ const useApplicationActions = (
         setMessage(`Preparing the ${proposalTx.cidName} transaction...`)
 
         await wait(3000)
-        const messageCID = await sendApproval(proposalTx.tx as string)
+        const messageCID = await sendApproval(proposalTx.tx)
 
         if (messageCID == null) {
           throw new Error(
             `Error sending ${proposalTx.cidName}. Please try again or contact support.`,
           )
         }
+
+        setMessage(
+          `Checking increase ${proposalTx.cidName}, It may several second, please wait...`,
+        )
 
         const response = await getStateWaitMsg(messageCID)
 

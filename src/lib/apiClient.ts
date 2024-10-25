@@ -433,7 +433,10 @@ export const postApplicationApproval = async (
   owner: string,
   repo: string,
   address: string,
-  signature: string,
+  signatures: {
+    verifyClientCid: string
+    increaseAllowanceCid?: string
+  },
 ): Promise<Application | undefined> => {
   try {
     const { data } = await apiClient.post(
@@ -445,7 +448,10 @@ export const postApplicationApproval = async (
         signer: {
           signing_address: address,
           created_at: getCurrentDate(),
-          message_cid: signature,
+          message_cids: {
+            verify_client_cid: signatures.verifyClientCid,
+            increase_allowance_cid: signatures.increaseAllowanceCid,
+          },
         },
       },
       {

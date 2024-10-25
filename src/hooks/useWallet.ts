@@ -49,7 +49,10 @@ interface WalletState {
     datacap: string,
     allocatorType: AllocatorTypeEnum,
     isClientContractAddress?: boolean,
-  ) => Promise<string | boolean>
+  ) => Promise<{
+    pendingVerifyClientTransaction: any
+    pendingIncreaseAllowanceTransaction: any
+  } | null>
   sendProposal: (props: SendProposalProps) => Promise<string>
   sendClientIncreaseAllowance: (props: {
     contractAddress: string
@@ -235,14 +238,17 @@ const useWallet = (): WalletState => {
       datacap: string,
       allocatorType: AllocatorTypeEnum,
       isClientContractAddress?: boolean,
-    ): Promise<string | boolean> => {
+    ): Promise<{
+      pendingVerifyClientTransaction: any
+      pendingIncreaseAllowanceTransaction: any
+    } | null> => {
       if (wallet == null) throw new Error('No wallet initialized.')
       if (multisigAddress == null) throw new Error('Multisig address not set.')
 
       const bytesDatacap = Math.floor(anyToBytes(datacap))
-      let evmClientContractAddress: Hex
-
+      let evmClientContractAddress
       let pendingTxs
+
       try {
         pendingTxs = await wallet.api.pendingTransactions(multisigAddress)
       } catch (error) {
@@ -252,59 +258,69 @@ const useWallet = (): WalletState => {
         )
       }
 
+      let pendingVerifyClientTransaction
+      let pendingIncreaseAllowanceTransaction
+
       if (isClientContractAddress) {
         evmClientContractAddress = (
           await getEvmAddressFromFilecoinAddress(clientAddress)
         ).data
       }
 
-      let pendingForClient = null
+      const verifiedAbi = parseAbi([
+        'function addVerifiedClient(bytes clientAddress, uint256 amount)',
+      ])
+
+      const increaseAllowanceAbi = parseAbi([
+        'function increaseAllowance(address client, uint256 amount)',
+      ])
+
       if (allocatorType !== AllocatorTypeEnum.CONTRACT) {
-        pendingForClient = pendingTxs?.filter(
+        const pendingForClient = pendingTxs?.filter(
           (tx: any) =>
             tx?.parsed?.params?.address === clientAddress &&
             tx?.parsed?.params?.cap === BigInt(bytesDatacap),
         )
+        pendingVerifyClientTransaction = pendingForClient.length
+          ? pendingForClient.at(-1)
+          : undefined
       } else {
-        pendingForClient = pendingTxs?.filter((tx: any) => {
-          const abi = parseAbi([
-            'function addVerifiedClient(bytes clientAddress, uint256 amount)',
-          ])
-
-          const paramsHex: string = tx.parsed.params.toString('hex')
+        for (const transaction of pendingTxs) {
+          const paramsHex: string = transaction.parsed.params.toString('hex')
           const dataHex: Hex = `0x${paramsHex}`
           let decodedData
 
-          try {
-            decodedData = decodeFunctionData({ abi, data: dataHex })
+          if (!pendingVerifyClientTransaction) {
+            try {
+              decodedData = decodeFunctionData({
+                abi: verifiedAbi,
+                data: dataHex,
+              })
 
-            const [clientAddressData, amount] = decodedData.args
-            const address = newFromString(clientAddress)
-            const addressHex: Hex = `0x${Buffer.from(address.bytes).toString('hex')}`
+              const [clientAddressData, amount] = decodedData.args
+              const address = newFromString(clientAddress)
+              const addressHex: Hex = `0x${Buffer.from(address.bytes).toString('hex')}`
 
-            if (
-              clientAddressData === addressHex &&
-              amount === BigInt(bytesDatacap)
-            ) {
-              return true
+              if (
+                clientAddressData === addressHex &&
+                amount === BigInt(bytesDatacap)
+              ) {
+                pendingVerifyClientTransaction = transaction
+              }
+            } catch (err) {
+              console.error(err)
             }
-          } catch (err) {
-            console.error(err)
           }
 
-          if (isClientContractAddress) {
-            const increaseAbi = parseAbi([
-              'function increaseAllowance(address client, uint256 amount)',
-            ])
-
-            const paramsHex: string = tx.parsed.params.toString('hex')
-            const increaseDataHex: Hex = `0x${paramsHex}`
-            let increaseDecodedData
-
-            try {
-              increaseDecodedData = decodeFunctionData({
-                abi: increaseAbi,
-                data: increaseDataHex,
+          try {
+            if (
+              isClientContractAddress &&
+              evmClientContractAddress &&
+              !pendingIncreaseAllowanceTransaction
+            ) {
+              const increaseDecodedData = decodeFunctionData({
+                abi: increaseAllowanceAbi,
+                data: dataHex,
               })
 
               const [increaseClientContractAddress, increaseAmount] =
@@ -315,17 +331,38 @@ const useWallet = (): WalletState => {
                   evmClientContractAddress &&
                 increaseAmount === BigInt(bytesDatacap)
               ) {
-                return true
+                pendingIncreaseAllowanceTransaction = transaction
               }
-            } catch (err) {
-              console.error(err)
             }
+          } catch (err) {
+            console.error(err)
           }
 
-          return false
-        })
+          if (!isClientContractAddress && pendingVerifyClientTransaction) {
+            break
+          }
+
+          if (
+            isClientContractAddress &&
+            pendingVerifyClientTransaction &&
+            pendingIncreaseAllowanceTransaction
+          ) {
+            break
+          }
+        }
       }
-      return pendingForClient.length > 0 ? pendingForClient.at(-1) : false
+
+      if (
+        pendingVerifyClientTransaction ||
+        pendingIncreaseAllowanceTransaction
+      ) {
+        return {
+          pendingVerifyClientTransaction,
+          pendingIncreaseAllowanceTransaction,
+        }
+      } else {
+        return null
+      }
     },
     [wallet, multisigAddress],
   )
