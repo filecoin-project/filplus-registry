@@ -130,6 +130,8 @@ export const AllowedSPs: React.FC<ComponentProps> = ({
     } finally {
       setIsLoading(false)
       setIsDialogOpen(false)
+      setData([''])
+      setInitData([''])
     }
   }
 

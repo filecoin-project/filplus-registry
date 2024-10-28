@@ -642,6 +642,7 @@ const useApplicationActions = (
       },
       onError: () => {
         setApiCalling(false)
+        setMessage(null)
       },
     },
   )
