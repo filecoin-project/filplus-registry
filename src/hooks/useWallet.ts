@@ -768,7 +768,7 @@ const useWallet = (): WalletState => {
       if (maxDeviation) {
         setMessage('Preparing the max deviation transaction...')
 
-        await wait(3000)
+        await wait(2000)
         const { calldata } = prepareClientMaxDeviation(
           evmClientAddress.data,
           maxDeviation,
@@ -793,10 +793,10 @@ const useWallet = (): WalletState => {
           const allowedSpsPart = allowedChunkedArray[i]
 
           setMessage(
-            `Preparing the allowed SPs transactions ${i + 1} / ${allowedChunkedArray.length}`,
+            `Preparing the allowed SPs transactions ${allowedChunkedArray.length === 1 ? '...' : i + 1} / ${allowedChunkedArray.length}`,
           )
 
-          await wait(3000)
+          await wait(2000)
 
           const { calldata } = prepareClientAddAllowedSps(
             evmClientAddress.data,
@@ -808,6 +808,10 @@ const useWallet = (): WalletState => {
             contractAddress,
             calldata,
             activeAccountIndex,
+          )
+
+          setMessage(
+            `Checking allowed SPs transaction, It may several second, please wait...`,
           )
 
           await checkTransactionState(allowedSpsTransaction, 'allowed SPs')
@@ -827,10 +831,10 @@ const useWallet = (): WalletState => {
           const disallowedSpsPart = disallowedChunkedArray[i]
 
           setMessage(
-            `Preparing the disallowed SPs transaction ${i + 1} / ${disallowedChunkedArray.length}`,
+            `Preparing the disallowed SPs transactions ${disallowedChunkedArray.length === 1 ? '...' : i + 1} / ${disallowedChunkedArray.length}`,
           )
 
-          await wait(3000)
+          await wait(2000)
 
           const { calldata } = prepareClientRemoveAllowedSps(
             evmClientAddress.data,
@@ -842,6 +846,10 @@ const useWallet = (): WalletState => {
             contractAddress,
             calldata,
             activeAccountIndex,
+          )
+
+          setMessage(
+            `Checking disallowed SPs transaction, It may several second, please wait...`,
           )
 
           await checkTransactionState(disallowedSpsTransaction, 'disallow SPs')

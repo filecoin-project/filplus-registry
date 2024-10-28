@@ -684,7 +684,7 @@ const useApplicationActions = (
 
         setMessage(`Preparing the ${proposalTx.cidName} transaction...`)
 
-        await wait(3000)
+        await wait(2000)
         const messageCID = await sendApproval(proposalTx.tx)
 
         if (messageCID == null) {
@@ -692,6 +692,10 @@ const useApplicationActions = (
             `Error sending ${proposalTx.cidName}. Please try again or contact support.`,
           )
         }
+
+        setMessage(
+          `Checking ${proposalTx.cidName} transaction, It may several second, please wait...`,
+        )
 
         const response = await getStateWaitMsg(messageCID)
 
