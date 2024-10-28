@@ -166,6 +166,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
     ),
   })
 
+  debugger
   const router = useRouter()
 
   // const allocationRequests = application?.['Allocation Requests'] ?? []
@@ -985,7 +986,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
             </CardContent>
           </div>
         </div>
-        {availableAllowedSPs && (
+        {availableAllowedSPs?.length ? (
           <div>
             <CardHeader className="border-b pb-2 mb-4">
               <h2 className="text-xl font-bold">Additional info</h2>
@@ -1015,7 +1016,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
               )}
             </CardContent>
           </div>
-        )}
+        ) : null}
 
         <CardContent>
           {isProgressBarVisible && (
