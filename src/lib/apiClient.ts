@@ -590,11 +590,9 @@ export const postChangeAllowedSPs = async (
         signer: {
           signing_address: address,
           created_at: getCurrentDate(),
-          message_cids: {
-            max_deviation_cid: signatures.maxDeviationCid,
-            allowed_sp_data_cids: signatures.allowedSpCid,
-            disallowed_sp_data_cids: signatures.disallowedSpCid,
-          },
+          max_deviation_cid: signatures.maxDeviationCid,
+          allowed_sp_data_cids: signatures.allowedSpCid,
+          disallowed_sp_data_cids: signatures.disallowedSpCid,
         },
       },
       {
@@ -637,11 +635,9 @@ export const postChangeAllowedSPsApproval = async (
         signer: {
           signing_address: address,
           created_at: getCurrentDate(),
-          message_cids: {
-            max_deviation_cid: signatures.maxDeviationCid,
-            allowed_sp_data_cid: signatures.allowedSpCid,
-            disallowed_sp_data_cid: signatures.disallowedSpCid,
-          },
+          max_deviation_cid: signatures.maxDeviationCid,
+          allowed_sp_data_cid: signatures.allowedSpCid,
+          disallowed_sp_data_cid: signatures.disallowedSpCid,
         },
       },
       {

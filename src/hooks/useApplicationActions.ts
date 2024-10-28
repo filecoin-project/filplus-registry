@@ -655,13 +655,31 @@ const useApplicationActions = (
   >(
     async ({ requestId, userName }) => {
       const clientAddress = getClientAddress()
-      const datacap = initialApplication['Allocation Requests'].find(
+      const application = initialApplication['Allocation Requests'].find(
         (alloc) => alloc.Active,
-      )?.['Allocation Amount']
+      )
+
+      const storageProviders =
+        initialApplication['Storage Providers Change Requests']
+
+      const datacap = application?.['Allocation Amount']
 
       if (datacap == null) throw new Error('No active allocation found')
 
-      const proposalTxs = await getChangeSpsProposalTxs(clientAddress)
+      const addedProviders = storageProviders?.Signers.find(
+        (x) => x['Add Allowed Storage Providers CID'],
+      )?.['Add Allowed Storage Providers CID']
+
+      const removedProviders = storageProviders?.Signers.find(
+        (x) => x['Add Allowed Storage Providers CID'],
+      )?.['Add Allowed Storage Providers CID']
+
+      const proposalTxs = await getChangeSpsProposalTxs(
+        clientAddress,
+        storageProviders['Max Deviation'],
+        addedProviders,
+        removedProviders,
+      )
 
       if (!proposalTxs) {
         throw new Error(
