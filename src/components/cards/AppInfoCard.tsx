@@ -849,6 +849,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
       }
     } catch (error) {
       console.log(error)
+      handleMutationError(error as Error)
     } finally {
       setApiCalling(false)
     }
