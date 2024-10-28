@@ -769,9 +769,14 @@ const useWallet = (): WalletState => {
         setMessage('Preparing the max deviation transaction...')
 
         await wait(2000)
+
         const { calldata } = prepareClientMaxDeviation(
           evmClientAddress.data,
           maxDeviation,
+        )
+
+        setMessage(
+          `Checking max deviation transaction, It may several second, please wait...`,
         )
 
         const maxDeviationTransaction = await wallet.api.multisigEvmInvoke(
