@@ -15,7 +15,12 @@ import {
   triggerSSA,
 } from '@/lib/apiClient'
 import { getStateWaitMsg } from '@/lib/glifApi'
-import { AllocatorTypeEnum, StorageProvidersChangeRequest, type Application, type RefillUnit } from '@/type'
+import {
+  AllocatorTypeEnum,
+  StorageProvidersChangeRequest,
+  type Application,
+  type RefillUnit,
+} from '@/type'
 import { useMemo, useState } from 'react'
 import {
   useMutation,
@@ -661,10 +666,14 @@ const useApplicationActions = (
       const removedProviders = activeRequest?.Signers.find(
         (x) => x['Add Allowed Storage Providers CID'],
       )?.['Add Allowed Storage Providers CID']
-      debugger
+
+      const maxDeviation = activeRequest['Max Deviation']
+        ? activeRequest['Max Deviation'].split('%')[0]
+        : undefined
+
       const proposalTxs = await getChangeSpsProposalTxs(
         clientAddress,
-        activeRequest['Max Deviation'],
+        maxDeviation,
         addedProviders,
         removedProviders,
       )
