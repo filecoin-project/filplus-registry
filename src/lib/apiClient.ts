@@ -561,15 +561,14 @@ export const cacheRenewal = async (
 
 export const postChangeAllowedSPs = async (
   id: string,
-  requestId: string,
   userName: string,
   owner: string,
   repo: string,
   address: string,
   signatures: {
     maxDeviationCid?: string
-    allowedSpCid?: { [key in string]: string[] }
-    disallowedSpCid?: { [key in string]: string[] }
+    allowedSpsCids?: { [key in string]: string[] }
+    disallowedSpsCid?: { [key in string]: string[] }
   },
   availableAllowedSpsData: string[],
   maxDeviationData?: string,
@@ -578,7 +577,6 @@ export const postChangeAllowedSPs = async (
     const { data } = await apiClient.post(
       `verifier/application/propose_storage_providers`,
       {
-        request_id: requestId,
         max_deviation_data: maxDeviationData
           ? `${maxDeviationData}%`
           : undefined,
@@ -587,10 +585,9 @@ export const postChangeAllowedSPs = async (
         repo,
         signer: {
           signing_address: address,
-          created_at: getCurrentDate(),
           max_deviation_cid: signatures.maxDeviationCid,
-          allowed_sp_data_cids: signatures.allowedSpCid,
-          disallowed_sp_data_cids: signatures.disallowedSpCid,
+          allowed_sps_cids: signatures.allowedSpsCids,
+          removed_allowed_sps_cids: signatures.disallowedSpsCid,
         },
       },
       {

@@ -753,8 +753,8 @@ const useWallet = (): WalletState => {
 
       const signatures: {
         maxDeviationCid?: string
-        allowedSpCids?: { [key in string]: string[] }
-        disallowedSpCids?: { [key in string]: string[] }
+        allowedSpsCids?: { [key in string]: string[] }
+        removedSpsCids?: { [key in string]: string[] }
       } = {}
 
       function chunkArray<T>(array: T[], size: number): T[][] {
@@ -824,11 +824,11 @@ const useWallet = (): WalletState => {
 
           await checkTransactionState(allowedSpsTransaction, 'allowed SPs')
 
-          if (!signatures.allowedSpCids) {
-            signatures.allowedSpCids = {}
+          if (!signatures.allowedSpsCids) {
+            signatures.allowedSpsCids = {}
           }
 
-          signatures.allowedSpCids[allowedSpsTransaction] = allowedSpsPart
+          signatures.allowedSpsCids[allowedSpsTransaction] = allowedSpsPart
         }
       }
 
@@ -867,11 +867,11 @@ const useWallet = (): WalletState => {
 
           await checkTransactionState(disallowedSpsTransaction, 'disallow SPs')
 
-          if (!signatures.disallowedSpCids) {
-            signatures.disallowedSpCids = {}
+          if (!signatures.removedSpsCids) {
+            signatures.removedSpsCids = {}
           }
 
-          signatures.disallowedSpCids[disallowedSpsTransaction] =
+          signatures.removedSpsCids[disallowedSpsTransaction] =
             disallowedSpsPart
         }
       }

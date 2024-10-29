@@ -839,8 +839,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
         userName
       ) {
         await mutationChangeAllowedSPs.mutateAsync({
-          requestId,
-          userName: 'string',
+          userName,
           clientAddress: client,
           contractAddress: clientContractAddress,
           allowedSps: addedSPs,
