@@ -1052,6 +1052,8 @@ const AppInfoCard: React.FC<ComponentProps> = ({
                         application['Client Contract Address']
                       }
                       initDeviation="10"
+                      isApiCalling={isApiCalling}
+                      setApiCalling={setApiCalling}
                     />
                   </div>
                 )}

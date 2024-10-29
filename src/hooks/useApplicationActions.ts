@@ -680,7 +680,7 @@ const useApplicationActions = (
 
       if (!proposalTxs) {
         throw new Error(
-          //TODO:
+          // TODO:
           'This datacap allocation is not proposed to change allowed SPs yet. You may need to wait some time if the proposal was just sent.',
         )
       }
@@ -735,7 +735,10 @@ const useApplicationActions = (
               signatures.allowedSpsCids = {}
             }
 
-            signatures.allowedSpsCids[messageCID] = proposalTx.args[1]
+            signatures.allowedSpsCids[messageCID] = proposalTx.decodedPacked
+              ? proposalTx.decodedPacked
+              : ['']
+
             break
           }
           case 'Disallowed Sps': {
@@ -743,7 +746,10 @@ const useApplicationActions = (
               signatures.removedSpsCids = {}
             }
 
-            signatures.removedSpsCids[messageCID] = proposalTx.args[1]
+            signatures.removedSpsCids[messageCID] = proposalTx.decodedPacked
+              ? proposalTx.decodedPacked
+              : ['']
+
             break
           }
         }

@@ -96,7 +96,8 @@ interface WalletState {
   ) => Promise<Array<{
     cidName: 'Max Deviation' | 'Allowed Sps' | 'Disallowed Sps'
     tx: any
-    args: any
+    args: string[]
+    decodedPacked?: string[]
   }> | null>
 }
 
@@ -300,6 +301,7 @@ const useWallet = (): WalletState => {
     ): Promise<Array<{
       cidName: 'Max Deviation' | 'Allowed Sps' | 'Disallowed Sps'
       tx: any
+      args: any
     }> | null> => {
       if (wallet == null) throw new Error('No wallet initialized.')
       if (multisigAddress == null) throw new Error('Multisig address not set.')
@@ -308,6 +310,7 @@ const useWallet = (): WalletState => {
         cidName: 'Max Deviation' | 'Allowed Sps' | 'Disallowed Sps'
         abi: any
         args: any
+        decodedPacked?: string[]
       }> = []
 
       const evmClientAddress =
@@ -324,10 +327,10 @@ const useWallet = (): WalletState => {
       }
 
       if (allowedSpCids) {
-        for (const sSps of Object.values(allowedSpCids)) {
+        for (const aSps of Object.values(allowedSpCids)) {
           const packed = encodePacked(
-            sSps.map(() => 'uint64'),
-            sSps,
+            aSps.map(() => 'uint64'),
+            aSps,
           )
 
           searchTransactions.push({
@@ -336,6 +339,7 @@ const useWallet = (): WalletState => {
               'function addAllowedSPsForClientPacked(address client, bytes calldata allowedSPs_)',
             ]),
             args: [evmClientAddress, packed],
+            decodedPacked: aSps,
           })
         }
       }
@@ -353,6 +357,7 @@ const useWallet = (): WalletState => {
               'function removeAllowedSPsForClientPacked(address client, bytes calldata disallowedSPs_)',
             ]),
             args: [evmClientAddress, packed],
+            decodedPacked: dSps,
           })
         }
       }

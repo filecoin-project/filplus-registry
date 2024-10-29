@@ -29,6 +29,8 @@ interface ComponentProps {
   initDeviation: string
   client: string
   clientContractAddress: string
+  isApiCalling: boolean
+  setApiCalling: (isApiCalling: boolean) => void
 }
 
 export const AllowedSPs: React.FC<ComponentProps> = ({
@@ -36,11 +38,12 @@ export const AllowedSPs: React.FC<ComponentProps> = ({
   clientContractAddress,
   initDeviation,
   onSubmit,
+  isApiCalling,
+  setApiCalling,
 }) => {
   const [isDirty, setIsDirty] = useState<boolean>(false)
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false)
   const [maxDeviation, setMaxDeviation] = useState<string>(initDeviation ?? '')
-  const [isLoading, setIsLoading] = useState<boolean>(false)
   const [data, setData] = useState<string[]>([''])
   const [initData, setInitData] = useState<string[]>([''])
 
@@ -99,8 +102,7 @@ export const AllowedSPs: React.FC<ComponentProps> = ({
 
   const handleSubmit = async (): Promise<void> => {
     try {
-      setIsLoading(true)
-
+      setApiCalling(true)
       const added = data.filter(
         (item) => !availableAllowedSPs?.includes(item),
       ) ?? ['']
@@ -135,10 +137,10 @@ export const AllowedSPs: React.FC<ComponentProps> = ({
     } catch (error) {
       console.log(error)
     } finally {
-      setIsLoading(false)
       setIsDialogOpen(false)
       setData([''])
       setInitData([''])
+      setApiCalling(false)
     }
   }
 
@@ -148,14 +150,6 @@ export const AllowedSPs: React.FC<ComponentProps> = ({
       setInitData(availableAllowedSPs)
     }
   }, [availableAllowedSPs])
-
-  if (isLoading) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-        <Spinner />
-      </div>
-    )
-  }
 
   return (
     <>
@@ -186,6 +180,11 @@ export const AllowedSPs: React.FC<ComponentProps> = ({
             paddingTop: '8px',
           }}
         >
+          {isApiCalling ? (
+            <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+              <Spinner />
+            </div>
+          ) : null}
           <FormControl fullWidth>
             <InputLabel>Max Deviation</InputLabel>
             <OutlinedInput
@@ -199,7 +198,6 @@ export const AllowedSPs: React.FC<ComponentProps> = ({
               }}
             />
           </FormControl>
-
           <div className="flex flex-col space-y-4 my-8">
             <div>SP count: {data.length}</div>
             {data.map((item, index) => (
@@ -236,7 +234,7 @@ export const AllowedSPs: React.FC<ComponentProps> = ({
           }}
         >
           <Button
-            disabled={isLoading}
+            disabled={isApiCalling}
             onClick={() => {
               setIsDialogOpen(false)
               setData(initData)
@@ -246,7 +244,7 @@ export const AllowedSPs: React.FC<ComponentProps> = ({
           </Button>
 
           <Button
-            disabled={isLoading || !isDirty}
+            disabled={isApiCalling || !isDirty}
             onClick={() => {
               void handleSubmit()
             }}
