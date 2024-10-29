@@ -78,7 +78,6 @@ interface ApplicationActions {
     Application | undefined,
     unknown,
     {
-      requestId: string
       userName: string
       clientAddress: string
       contractAddress: string
@@ -596,7 +595,6 @@ const useApplicationActions = (
     Application | undefined,
     Error,
     {
-      requestId: string
       userName: string
       clientAddress: string
       contractAddress: string
@@ -608,7 +606,6 @@ const useApplicationActions = (
     unknown
   >(
     async ({
-      requestId,
       userName,
       clientAddress,
       contractAddress,
@@ -627,7 +624,6 @@ const useApplicationActions = (
 
       return await postChangeAllowedSPs(
         initialApplication.ID,
-        requestId,
         userName,
         owner,
         repo,
@@ -691,8 +687,8 @@ const useApplicationActions = (
 
       const signatures: {
         maxDeviationCid?: string
-        allowedSpCid?: string
-        disallowedSpCid?: string
+        allowedSpsCids?: string
+        removedSpsCids?: string
       } = {}
 
       const wait = async (ms: number): Promise<void> => {
