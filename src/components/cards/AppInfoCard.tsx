@@ -859,9 +859,10 @@ const AppInfoCard: React.FC<ComponentProps> = ({
   const handleApproveAllowedSPs = async (): Promise<void> => {
     try {
       setApiCalling(true)
-      const activeRequest = application['Storage Providers Change Requests'].find(
-        (requests) => requests.Active,
-      );
+
+      const activeRequest = application[
+        'Storage Providers Change Requests'
+      ].find((requests) => requests.Active)
 
       const userName = session.data?.user?.githubUsername
 
