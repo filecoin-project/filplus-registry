@@ -347,7 +347,9 @@ const useWallet = (): WalletState => {
             )
           : await sendProposalDirect(clientAddress, bytesDatacap)
 
-      setMessage(`Proposal sent correctly. CID: ${messageCID as string}`)
+      setMessage(
+        `Waiting for confirmation. This can take a few minutes, don't close this page. CID: ${messageCID as string}`,
+      )
 
       return messageCID
     },
@@ -375,7 +377,9 @@ const useWallet = (): WalletState => {
         activeAccountIndex,
       )
 
-      setMessage(`Approval sent correctly. CID: ${messageCID as string}`)
+      setMessage(
+        `Waiting for confirmation. This can take a few minutes, don't close this page. CID: ${messageCID as string}`,
+      )
 
       return messageCID
     },
