@@ -687,8 +687,8 @@ const useApplicationActions = (
 
       const signatures: {
         maxDeviationCid?: string
-        allowedSpsCids?: string
-        removedSpsCids?: string
+        allowedSpsCids?: { [key in string]: string[] }
+        removedSpsCids?: { [key in string]: string[] }
       } = {}
 
       const wait = async (ms: number): Promise<void> => {
@@ -710,7 +710,7 @@ const useApplicationActions = (
         }
 
         setMessage(
-          `Checking ${proposalTx.cidName} transaction, It may several second, please wait...`,
+          `Checking ${proposalTx.cidName} transaction, It may take several seconds, please wait...`,
         )
 
         const response = await getStateWaitMsg(messageCID)
@@ -723,6 +723,29 @@ const useApplicationActions = (
           throw new Error(
             `Change allowed SPs transaction failed on chain. Error code: ${response.data.ReturnDec.Code}`,
           )
+        }
+
+        switch (proposalTx.cidName) {
+          case 'Max Deviation':
+            signatures.maxDeviationCid = messageCID
+            break
+
+          case 'Allowed Sps': {
+            if (!signatures.allowedSpsCids) {
+              signatures.allowedSpsCids = {}
+            }
+
+            signatures.allowedSpsCids[messageCID] = proposalTx.args[1]
+            break
+          }
+          case 'Disallowed Sps': {
+            if (!signatures.removedSpsCids) {
+              signatures.removedSpsCids = {}
+            }
+
+            signatures.removedSpsCids[messageCID] = proposalTx.args[1]
+            break
+          }
         }
       }
 

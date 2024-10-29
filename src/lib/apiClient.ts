@@ -577,10 +577,8 @@ export const postChangeAllowedSPs = async (
     const { data } = await apiClient.post(
       `verifier/application/propose_storage_providers`,
       {
-        max_deviation: maxDeviationData
-          ? `${maxDeviationData}%`
-          : undefined,
-          allowed_sps: availableAllowedSpsData.map(x => Number(x)),
+        max_deviation: maxDeviationData ? `${maxDeviationData}%` : undefined,
+        allowed_sps: availableAllowedSpsData.map((x) => Number(x)),
         owner,
         repo,
         signer: {

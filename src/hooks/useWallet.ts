@@ -96,6 +96,7 @@ interface WalletState {
   ) => Promise<Array<{
     cidName: 'Max Deviation' | 'Allowed Sps' | 'Disallowed Sps'
     tx: any
+    args: any
   }> | null>
 }
 
@@ -372,6 +373,7 @@ const useWallet = (): WalletState => {
       const results: Array<{
         cidName: 'Max Deviation' | 'Allowed Sps' | 'Disallowed Sps'
         tx: any
+        args: any[]
       }> = []
 
       for (let i = 0; i < pendingTxs.length; i++) {
@@ -405,6 +407,7 @@ const useWallet = (): WalletState => {
             results.push({
               tx: transaction,
               cidName: item.cidName,
+              args: decodedData.args,
             })
           }
         }
@@ -783,7 +786,7 @@ const useWallet = (): WalletState => {
         )
 
         setMessage(
-          `Checking max deviation transaction, It may several second, please wait...`,
+          `Checking max deviation transaction, It may take several seconds, please wait...`,
         )
 
         await checkTransactionState(maxDeviationTransaction, 'max deviation')
@@ -819,7 +822,7 @@ const useWallet = (): WalletState => {
           )
 
           setMessage(
-            `Checking allowed SPs transaction, It may several second, please wait...`,
+            `Checking allowed SPs transaction, It may take several seconds, please wait...`,
           )
 
           await checkTransactionState(allowedSpsTransaction, 'allowed SPs')
@@ -862,7 +865,7 @@ const useWallet = (): WalletState => {
           )
 
           setMessage(
-            `Checking disallowed SPs transaction, It may several second, please wait...`,
+            `Checking disallowed SPs transaction, It may take several seconds, please wait...`,
           )
 
           await checkTransactionState(disallowedSpsTransaction, 'disallow SPs')
