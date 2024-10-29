@@ -84,6 +84,7 @@ interface ApplicationActions {
       contractAddress: string
       allowedSps: string[]
       disallowedSPs: string[]
+      newAvailableResult: string[]
       maxDeviation?: string
     },
     unknown
@@ -602,6 +603,7 @@ const useApplicationActions = (
       maxDeviation?: string
       allowedSps: string[]
       disallowedSPs: string[]
+      newAvailableResult: string[]
     },
     unknown
   >(
@@ -613,6 +615,7 @@ const useApplicationActions = (
       maxDeviation,
       allowedSps,
       disallowedSPs,
+      newAvailableResult,
     }) => {
       const signatures = await submitClientAllowedSpsAndMaxDeviation(
         clientAddress,
@@ -630,9 +633,8 @@ const useApplicationActions = (
         repo,
         activeAddress,
         signatures,
+        newAvailableResult,
         maxDeviation,
-        allowedSps,
-        disallowedSPs,
       )
     },
     {

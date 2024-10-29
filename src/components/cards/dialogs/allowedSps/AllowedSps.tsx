@@ -23,6 +23,7 @@ interface ComponentProps {
     clientContractAddress: string,
     added: string[],
     removed: string[],
+    newAvailableResult: string[],
     maxDeviation?: string,
   ) => Promise<void>
   initDeviation: string
@@ -108,6 +109,11 @@ export const AllowedSPs: React.FC<ComponentProps> = ({
         (item) => !data.includes(item),
       ) ?? ['']
 
+      const afterAdd = [...(availableAllowedSPs ?? ['']), ...added]
+      const newAvailableResult = afterAdd.filter(
+        (item) => !removed.includes(item),
+      )
+
       let maxDeviationResult: string | undefined
 
       if (clientConfig && clientConfig !== maxDeviation) {
@@ -123,6 +129,7 @@ export const AllowedSPs: React.FC<ComponentProps> = ({
         clientContractAddress,
         added,
         removed,
+        newAvailableResult,
         maxDeviationResult,
       )
     } catch (error) {

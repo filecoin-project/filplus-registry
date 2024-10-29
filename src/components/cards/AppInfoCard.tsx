@@ -822,6 +822,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
     clientContractAddress: string,
     addedSPs: string[],
     removedSPs: string[],
+    newAvailableResult: string[],
     maxDeviation?: string,
   ): Promise<void> => {
     try {
@@ -844,6 +845,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
           contractAddress: clientContractAddress,
           allowedSps: addedSPs,
           disallowedSPs: removedSPs,
+          newAvailableResult,
           maxDeviation,
         })
       }

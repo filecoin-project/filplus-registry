@@ -571,9 +571,8 @@ export const postChangeAllowedSPs = async (
     allowedSpCid?: { [key in string]: string[] }
     disallowedSpCid?: { [key in string]: string[] }
   },
+  availableAllowedSpsData: string[],
   maxDeviationData?: string,
-  allowedSpsData?: string[],
-  disallowedSpsData?: string[],
 ): Promise<Application | undefined> => {
   try {
     const { data } = await apiClient.post(
@@ -583,8 +582,7 @@ export const postChangeAllowedSPs = async (
         max_deviation_data: maxDeviationData
           ? `${maxDeviationData}%`
           : undefined,
-        allowed_sp_data: allowedSpsData,
-        disallowed_spa_data: disallowedSpsData,
+        allowed_sp_data: availableAllowedSpsData,
         owner,
         repo,
         signer: {
