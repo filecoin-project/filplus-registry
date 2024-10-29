@@ -664,8 +664,8 @@ const useApplicationActions = (
       )?.['Add Allowed Storage Providers CID']
 
       const removedProviders = activeRequest?.Signers.find(
-        (x) => x['Add Allowed Storage Providers CID'],
-      )?.['Add Allowed Storage Providers CID']
+        (x) => x['Remove Allowed Storage Providers CID'],
+      )?.['Remove Allowed Storage Providers CID']
 
       const maxDeviation = activeRequest['Max Deviation']
         ? activeRequest['Max Deviation'].split('%')[0]

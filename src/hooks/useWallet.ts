@@ -302,6 +302,7 @@ const useWallet = (): WalletState => {
       cidName: 'Max Deviation' | 'Allowed Sps' | 'Disallowed Sps'
       tx: any
       args: any
+      decodedPacked?: string[]
     }> | null> => {
       if (wallet == null) throw new Error('No wallet initialized.')
       if (multisigAddress == null) throw new Error('Multisig address not set.')
@@ -322,7 +323,7 @@ const useWallet = (): WalletState => {
           abi: parseAbi([
             'function setClientMaxDeviationFromFairDistribution(address client, uint256 maxDeviation)',
           ]),
-          args: [evmClientAddress, BigInt(maxDeviation)],
+          args: [evmClientAddress.data, BigInt(maxDeviation)],
         })
       }
 
@@ -338,7 +339,7 @@ const useWallet = (): WalletState => {
             abi: parseAbi([
               'function addAllowedSPsForClientPacked(address client, bytes calldata allowedSPs_)',
             ]),
-            args: [evmClientAddress, packed],
+            args: [evmClientAddress.data, packed],
             decodedPacked: aSps,
           })
         }
@@ -356,7 +357,7 @@ const useWallet = (): WalletState => {
             abi: parseAbi([
               'function removeAllowedSPsForClientPacked(address client, bytes calldata disallowedSPs_)',
             ]),
-            args: [evmClientAddress, packed],
+            args: [evmClientAddress.data, packed],
             decodedPacked: dSps,
           })
         }
@@ -379,6 +380,7 @@ const useWallet = (): WalletState => {
         cidName: 'Max Deviation' | 'Allowed Sps' | 'Disallowed Sps'
         tx: any
         args: any[]
+        decodedPacked?: string[]
       }> = []
 
       for (let i = 0; i < pendingTxs.length; i++) {
@@ -406,13 +408,14 @@ const useWallet = (): WalletState => {
           const [evmTransactionClientAddress, data] = decodedData.args
 
           if (
-            evmTransactionClientAddress === item.args[0] &&
+            evmTransactionClientAddress.toLowerCase() === item.args[0] &&
             data === item.args[1]
           ) {
             results.push({
               tx: transaction,
               cidName: item.cidName,
               args: decodedData.args,
+              decodedPacked: item.decodedPacked,
             })
           }
         }
