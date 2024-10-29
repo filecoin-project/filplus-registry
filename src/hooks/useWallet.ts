@@ -775,15 +775,15 @@ const useWallet = (): WalletState => {
           maxDeviation,
         )
 
-        setMessage(
-          `Checking max deviation transaction, It may several second, please wait...`,
-        )
-
         const maxDeviationTransaction = await wallet.api.multisigEvmInvoke(
           multisigAddress,
           contractAddress,
           calldata,
           activeAccountIndex,
+        )
+
+        setMessage(
+          `Checking max deviation transaction, It may several second, please wait...`,
         )
 
         await checkTransactionState(maxDeviationTransaction, 'max deviation')
