@@ -797,9 +797,12 @@ const useWallet = (): WalletState => {
         for (let i = 0; i < allowedChunkedArray.length; i++) {
           const allowedSpsPart = allowedChunkedArray[i]
 
-          setMessage(
-            `Preparing the allowed SPs transactions ${allowedChunkedArray.length === 1 ? '...' : i + 1} / ${allowedChunkedArray.length}`,
-          )
+          const countMessage =
+            allowedChunkedArray.length === 1
+              ? '...'
+              : `${i / allowedChunkedArray.length}`
+
+          setMessage(`Preparing the allowed SPs transactions ${countMessage}`)
 
           await wait(2000)
 
@@ -835,8 +838,13 @@ const useWallet = (): WalletState => {
         for (let i = 0; i < disallowedChunkedArray.length; i++) {
           const disallowedSpsPart = disallowedChunkedArray[i]
 
+          const countMessage =
+            disallowedChunkedArray.length === 1
+              ? '...'
+              : `${i / disallowedChunkedArray.length}`
+
           setMessage(
-            `Preparing the disallowed SPs transactions ${disallowedChunkedArray.length === 1 ? '...' : i + 1} / ${disallowedChunkedArray.length}`,
+            `Preparing the disallowed SPs transactions ${countMessage}`,
           )
 
           await wait(2000)
