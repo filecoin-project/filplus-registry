@@ -15,7 +15,7 @@ import {
   triggerSSA,
 } from '@/lib/apiClient'
 import { getStateWaitMsg } from '@/lib/glifApi'
-import { AllocatorTypeEnum, type Application, type RefillUnit } from '@/type'
+import { AllocatorTypeEnum, StorageProvidersChangeRequest, type Application, type RefillUnit } from '@/type'
 import { useMemo, useState } from 'react'
 import {
   useMutation,
@@ -97,7 +97,7 @@ interface ApplicationActions {
   mutationChangeAllowedSPsApproval: UseMutationResult<
     Application | undefined,
     unknown,
-    { requestId: string; userName: string },
+    { activeRequest: StorageProvidersChangeRequest; userName: string },
     unknown
   >
   mutationProposal: UseMutationResult<
@@ -648,39 +648,30 @@ const useApplicationActions = (
   const mutationChangeAllowedSPsApproval = useMutation<
     Application | undefined,
     unknown,
-    { requestId: string; userName: string },
+    { activeRequest: StorageProvidersChangeRequest; userName: string },
     unknown
   >(
-    async ({ requestId, userName }) => {
+    async ({ activeRequest, userName }) => {
       const clientAddress = getClientAddress()
-      const application = initialApplication['Allocation Requests'].find(
-        (alloc) => alloc.Active,
-      )
 
-      const storageProviders =
-        initialApplication['Storage Providers Change Requests']
-
-      const datacap = application?.['Allocation Amount']
-
-      if (datacap == null) throw new Error('No active allocation found')
-
-      const addedProviders = storageProviders?.Signers.find(
+      const addedProviders = activeRequest?.Signers.find(
         (x) => x['Add Allowed Storage Providers CID'],
       )?.['Add Allowed Storage Providers CID']
 
-      const removedProviders = storageProviders?.Signers.find(
+      const removedProviders = activeRequest?.Signers.find(
         (x) => x['Add Allowed Storage Providers CID'],
       )?.['Add Allowed Storage Providers CID']
-
+      debugger
       const proposalTxs = await getChangeSpsProposalTxs(
         clientAddress,
-        storageProviders['Max Deviation'],
+        activeRequest['Max Deviation'],
         addedProviders,
         removedProviders,
       )
 
       if (!proposalTxs) {
         throw new Error(
+          //TODO:
           'This datacap allocation is not proposed to change allowed SPs yet. You may need to wait some time if the proposal was just sent.',
         )
       }
@@ -728,7 +719,7 @@ const useApplicationActions = (
 
       return await postChangeAllowedSPsApproval(
         initialApplication.ID,
-        requestId,
+        activeRequest.ID,
         userName,
         owner,
         repo,

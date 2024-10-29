@@ -859,15 +859,15 @@ const AppInfoCard: React.FC<ComponentProps> = ({
   const handleApproveAllowedSPs = async (): Promise<void> => {
     try {
       setApiCalling(true)
-      const requestId = application['Allocation Requests'].find(
-        (alloc) => alloc.Active,
-      )?.ID
+      const activeRequest = application['Storage Providers Change Requests'].find(
+        (requests) => requests.Active,
+      );
 
       const userName = session.data?.user?.githubUsername
 
-      if (requestId != null && userName != null) {
+      if (activeRequest?.ID != null && userName != null) {
         const res = await mutationChangeAllowedSPsApproval.mutateAsync({
-          requestId,
+          activeRequest,
           userName,
         })
 
@@ -1064,7 +1064,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
                   <div className="flex gap-2">
                     <Button
                       onClick={() => {
-                        void handleApproveAllowedSPs
+                        void handleApproveAllowedSPs()
                       }}
                       disabled={isApiCalling}
                       style={{

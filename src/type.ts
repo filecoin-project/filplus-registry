@@ -24,7 +24,7 @@ export interface Application {
   owner: string
   fullSpan?: boolean
   'Client Contract Address': string | null
-  'Storage Providers Change Requests': StorageProvidersChangeRequest
+  'Storage Providers Change Requests': StorageProvidersChangeRequest[]
 }
 
 export interface Allocation {
