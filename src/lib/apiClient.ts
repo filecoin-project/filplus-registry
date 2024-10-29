@@ -614,8 +614,8 @@ export const postChangeAllowedSPsApproval = async (
   address: string,
   signatures: {
     maxDeviationCid?: string
-    allowedSpCid?: string
-    disallowedSpCid?: string
+    allowedSpsCids?: { [key in string]: string[] }
+    removedSpsCids?: { [key in string]: string[] }
   },
 ): Promise<Application | undefined> => {
   try {
@@ -628,8 +628,8 @@ export const postChangeAllowedSPsApproval = async (
         signer: {
           signing_address: address,
           max_deviation_cid: signatures.maxDeviationCid,
-          allowed_sp_data_cid: signatures.allowedSpCid,
-          disallowed_sp_data_cid: signatures.disallowedSpCid,
+          allowed_sp_data_cid: signatures.allowedSpsCids,
+          disallowed_sp_data_cid: signatures.removedSpsCids,
         },
       },
       {
