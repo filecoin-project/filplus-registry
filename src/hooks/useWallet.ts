@@ -780,6 +780,8 @@ const useWallet = (): WalletState => {
           contractAddress,
           calldata,
           activeAccountIndex,
+          null,
+          { gas: 45000000 },
         )
 
         setMessage(
@@ -816,6 +818,8 @@ const useWallet = (): WalletState => {
             contractAddress,
             calldata,
             activeAccountIndex,
+            null,
+            { gas: 45000000 },
           )
 
           setMessage(
@@ -859,6 +863,8 @@ const useWallet = (): WalletState => {
             contractAddress,
             calldata,
             activeAccountIndex,
+            null,
+            { gas: 45000000 },
           )
 
           setMessage(
