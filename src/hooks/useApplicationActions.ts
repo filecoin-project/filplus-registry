@@ -121,6 +121,7 @@ const useApplicationActions = (
     getProposalTx,
     sendProposal,
     sendApproval,
+    setMessage,
     message,
     accounts,
     loadMoreAccounts,
@@ -465,6 +466,7 @@ const useApplicationActions = (
           `Error sending transaction. Please try again or contact support. Error code: ${response.data.ReturnDec.Code}`,
         )
       }
+      setMessage(`Transaction sent successfully. CID: ${messageCID}`)
       return await postApplicationProposal(
         initialApplication.ID,
         requestId,
