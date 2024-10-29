@@ -800,7 +800,7 @@ const useWallet = (): WalletState => {
           const countMessage =
             allowedChunkedArray.length === 1
               ? '...'
-              : `${i / allowedChunkedArray.length}`
+              : `${i} / ${allowedChunkedArray.length}`
 
           setMessage(`Preparing the allowed SPs transactions ${countMessage}`)
 
@@ -841,7 +841,7 @@ const useWallet = (): WalletState => {
           const countMessage =
             disallowedChunkedArray.length === 1
               ? '...'
-              : `${i / disallowedChunkedArray.length}`
+              : `${i} / ${disallowedChunkedArray.length}`
 
           setMessage(
             `Preparing the disallowed SPs transactions ${countMessage}`,
