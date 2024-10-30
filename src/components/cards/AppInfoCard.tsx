@@ -934,7 +934,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
         />
       )}
       {(isApiCalling || isWalletConnecting) && (
-        <div className="fixed inset-0 flex items-center justify-center z-40 bg-black bg-opacity-50">
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
           <Spinner />
         </div>
       )}
@@ -1247,7 +1247,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
             }}
           >
             {(isApiCalling || isWalletConnecting) && (
-              <div className="fixed inset-0 flex items-center justify-center z-40 bg-black bg-opacity-50">
+              <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
                 <Spinner />
               </div>
             )}
@@ -1337,7 +1337,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
           }}
         >
           {(isApiCalling || isWalletConnecting) && (
-            <div className="fixed inset-0 flex items-center justify-center z-40 bg-black bg-opacity-50">
+            <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
               <Spinner />
             </div>
           )}
@@ -1399,7 +1399,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
           }}
         >
           {(isApiCalling || isWalletConnecting) && (
-            <div className="fixed inset-0 flex items-center justify-center z-40 bg-black bg-opacity-50">
+            <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
               <Spinner />
             </div>
           )}
