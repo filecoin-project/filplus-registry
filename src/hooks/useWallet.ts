@@ -1,5 +1,6 @@
 import {
   getEvmAddressFromFilecoinAddress,
+  getStateWaitMsg,
   makeStaticEthCall,
 } from '@/lib/glifApi'
 import { anyToBytes } from '@/lib/utils'
@@ -8,7 +9,14 @@ import { LedgerWallet } from '@/lib/wallet/LedgerWallet'
 import { AllocatorTypeEnum, type IWallet, type SendProposalProps } from '@/type'
 import { newFromString } from '@glif/filecoin-address'
 import { useCallback, useState } from 'react'
-import { decodeFunctionData, encodeFunctionData, fromHex, parseAbi } from 'viem'
+import {
+  decodeFunctionData,
+  decodeFunctionResult,
+  encodeFunctionData,
+  encodePacked,
+  fromHex,
+  parseAbi,
+} from 'viem'
 import { type Hex } from 'viem/types/misc'
 import { config } from '../config'
 
@@ -53,6 +61,44 @@ interface WalletState {
     contractAddress: string,
     allocatorAddress: string,
   ) => Promise<number>
+  getClientSPs: (
+    clientAddress: string,
+    contractAddress: string,
+  ) => Promise<string[]>
+  submitClientAllowedSpsAndMaxDeviation: (
+    clientAddress: string,
+    contractAddress: string,
+    allowedSps: string[],
+    disallowedSPs: string[],
+    maxDeviation?: string,
+  ) => Promise<{
+    maxDeviationCid?: string
+    allowedSpCids?: {
+      [key in string]: string[]
+    }
+    disallowedSpCids?: {
+      [key in string]: string[]
+    }
+  }>
+  getClientConfig: (
+    clientAddress: string,
+    contractAddress: string,
+  ) => Promise<string | null>
+  getChangeSpsProposalTxs: (
+    clientAddress: string,
+    maxDeviation?: string,
+    allowedSpCids?: {
+      [key in string]: string[]
+    },
+    disallowedSpCids?: {
+      [key in string]: string[]
+    },
+  ) => Promise<Array<{
+    cidName: 'max deviation' | 'add allowed Sps' | 'remove allowed Sps'
+    tx: any
+    args: string[]
+    decodedPacked?: string[]
+  }> | null>
 }
 
 /**
@@ -174,7 +220,6 @@ const useWallet = (): WalletState => {
   const sign = useCallback(
     async (message: string): Promise<string> => {
       if (wallet == null) throw new Error('No wallet initialized.')
-
       return await wallet.sign(message, activeAccountIndex)
     },
     [wallet, activeAccountIndex],
@@ -243,6 +288,144 @@ const useWallet = (): WalletState => {
     [wallet, multisigAddress],
   )
 
+  const getChangeSpsProposalTxs = useCallback(
+    async (
+      clientAddress: string,
+      maxDeviation?: string,
+      allowedSpCids?: {
+        [key in string]: string[]
+      },
+      disallowedSpCids?: {
+        [key in string]: string[]
+      },
+    ): Promise<Array<{
+      cidName: 'max deviation' | 'add allowed Sps' | 'remove allowed Sps'
+      tx: any
+      args: any
+      decodedPacked?: string[]
+    }> | null> => {
+      if (wallet == null) throw new Error('No wallet initialized.')
+      if (multisigAddress == null) throw new Error('Multisig address not set.')
+
+      const searchTransactions: Array<{
+        cidName: 'max deviation' | 'add allowed Sps' | 'remove allowed Sps'
+        abi: any
+        args: any
+        decodedPacked?: string[]
+      }> = []
+
+      const evmClientAddress =
+        await getEvmAddressFromFilecoinAddress(clientAddress)
+
+      if (maxDeviation) {
+        searchTransactions.push({
+          cidName: 'max deviation',
+          abi: parseAbi([
+            'function setClientMaxDeviationFromFairDistribution(address client, uint256 maxDeviation)',
+          ]),
+          args: [evmClientAddress.data, BigInt(maxDeviation)],
+        })
+      }
+
+      if (allowedSpCids) {
+        for (const aSps of Object.values(allowedSpCids)) {
+          const packed = encodePacked(
+            aSps.map(() => 'uint64'),
+            aSps,
+          )
+
+          searchTransactions.push({
+            cidName: 'add allowed Sps',
+            abi: parseAbi([
+              'function addAllowedSPsForClientPacked(address client, bytes calldata allowedSPs_)',
+            ]),
+            args: [evmClientAddress.data, packed],
+            decodedPacked: aSps,
+          })
+        }
+      }
+
+      if (disallowedSpCids) {
+        for (const dSps of Object.values(disallowedSpCids)) {
+          const packed = encodePacked(
+            dSps.map(() => 'uint64'),
+            dSps,
+          )
+
+          searchTransactions.push({
+            cidName: 'remove allowed Sps',
+            abi: parseAbi([
+              'function removeAllowedSPsForClientPacked(address client, bytes calldata disallowedSPs_)',
+            ]),
+            args: [evmClientAddress.data, packed],
+            decodedPacked: dSps,
+          })
+        }
+      }
+
+      if (!searchTransactions.length) return null
+
+      let pendingTxs
+
+      try {
+        pendingTxs = await wallet.api.pendingTransactions(multisigAddress)
+      } catch (error) {
+        console.log(error)
+        throw new Error(
+          'An error with the lotus node occurred. Please reload. If the problem persists, contact support.',
+        )
+      }
+
+      const results: Array<{
+        cidName: 'max deviation' | 'add allowed Sps' | 'remove allowed Sps'
+        tx: any
+        args: any[]
+        decodedPacked?: string[]
+      }> = []
+
+      for (let i = 0; i < pendingTxs.length; i++) {
+        const transaction = pendingTxs[i]
+
+        for (let i = 0; i < searchTransactions.length; i++) {
+          const item = searchTransactions[i]
+
+          const transactionParamsHex: string =
+            transaction.parsed.params.toString('hex')
+          const transactionDataHex: Hex = `0x${transactionParamsHex}`
+
+          let decodedData
+
+          try {
+            decodedData = decodeFunctionData({
+              abi: item.abi,
+              data: transactionDataHex,
+            })
+          } catch (err) {
+            console.error(err)
+            continue
+          }
+
+          const [evmTransactionClientAddress, data] = decodedData.args
+
+          if (
+            evmTransactionClientAddress.toLowerCase() === item.args[0] &&
+            data === item.args[1]
+          ) {
+            results.push({
+              tx: transaction,
+              cidName: item.cidName,
+              args: decodedData.args,
+              decodedPacked: item.decodedPacked,
+            })
+          }
+        }
+      }
+
+      return results.length ? results : null
+    },
+    [wallet, multisigAddress],
+  )
+
   const sendProposalDirect = useCallback(
     async (clientAddress: string, bytesDatacap: number) => {
       if (wallet == null) throw new Error('No wallet initialized.')
@@ -270,12 +453,16 @@ const useWallet = (): WalletState => {
       ])
 
       const address = newFromString(clientAddress)
+
       const addressHex: Hex = `0x${Buffer.from(address.bytes).toString('hex')}`
+
       const calldataHex: Hex = encodeFunctionData({
         abi,
         args: [addressHex, BigInt(bytesDatacap)],
       })
+
       const calldata = Buffer.from(calldataHex.substring(2), 'hex')
+
       return wallet.api.multisigEvmInvoke(
         multisigAddress,
         contractAddress,
@@ -294,6 +481,7 @@ const useWallet = (): WalletState => {
       const abi = parseAbi([
         'function allowance(address allocator) view returns (uint256)',
       ])
+
       const evmAllocatorAddress =
         await getEvmAddressFromFilecoinAddress(allocatorAddress)
 
@@ -390,6 +578,326 @@ const useWallet = (): WalletState => {
     [wallet, multisigAddress, activeAccountIndex],
   )
 
+  const getClientSPs = useCallback(
+    async (client: string, contractAddress: string): Promise<string[]> => {
+      const abi = parseAbi([
+        'function clientSPs(address client) external view returns (uint256[] memory providers)',
+      ])
+
+      const [evmClientAddress, evmContractAddress] = await Promise.all([
+        getEvmAddressFromFilecoinAddress(client),
+        getEvmAddressFromFilecoinAddress(contractAddress),
+      ])
+
+      const calldataHex: Hex = encodeFunctionData({
+        abi,
+        args: [evmClientAddress.data],
+      })
+
+      const response = await makeStaticEthCall(
+        evmContractAddress.data,
+        calldataHex,
+      )
+
+      if (response.error) {
+        return ['']
+      }
+
+      const decodedData = decodeFunctionResult({
+        abi,
+        data: response.data as `0x${string}`,
+      })
+
+      const result: string[] = decodedData.map((x) => x.toString())
+      return result
+    },
+    [],
+  )
+
+  const getClientConfig = useCallback(
+    async (client: string, contractAddress: string): Promise<string | null> => {
+      const abi = parseAbi([
+        'function clientConfigs(address client) external view returns (uint256)',
+      ])
+
+      const [evmClientAddress, evmContractAddress] = await Promise.all([
+        getEvmAddressFromFilecoinAddress(client),
+        getEvmAddressFromFilecoinAddress(contractAddress),
+      ])
+
+      const calldataHex: Hex = encodeFunctionData({
+        abi,
+        args: [evmClientAddress.data],
+      })
+
+      const response = await makeStaticEthCall(
+        evmContractAddress.data,
+        calldataHex,
+      )
+
+      if (response.error) {
+        return null
+      }
+
+      const decodedData = decodeFunctionResult({
+        abi,
+        data: response.data as `0x${string}`,
+      })
+
+      return decodedData.toString()
+    },
+    [],
+  )
+
+  const prepareClientMaxDeviation = (
+    clientAddressHex: Hex,
+    maxDeviation: string,
+  ): { calldata: Buffer; abi: any } => {
+    const abi = parseAbi([
+      'function setClientMaxDeviationFromFairDistribution(address client, uint256 maxDeviation)',
+    ])
+
+    const calldataHex: Hex = encodeFunctionData({
+      abi,
+      args: [clientAddressHex, BigInt(maxDeviation)],
+    })
+
+    const calldata = Buffer.from(calldataHex.substring(2), 'hex')
+
+    return { calldata, abi }
+  }
+
+  const prepareClientAddAllowedSps = (
+    clientAddressHex: Hex,
+    allowedSps: string[],
+  ): { calldata: Buffer; abi: any } => {
+    const abi = parseAbi([
+      'function addAllowedSPsForClientPacked(address client, bytes calldata allowedSPs_)',
+    ])
+
+    const parsedSps = allowedSps.map((x) => BigInt(x))
+
+    const packed = encodePacked(
+      parsedSps.map(() => 'uint64'),
+      parsedSps,
+    )
+
+    const calldataHex: Hex = encodeFunctionData({
+      abi,
+      args: [clientAddressHex, packed],
+    })
+
+    const calldata = Buffer.from(calldataHex.substring(2), 'hex')
+
+    return { calldata, abi }
+  }
+
+  const prepareClientRemoveAllowedSps = (
+    clientAddressHex: Hex,
+    disallowedSPs: string[],
+  ): { calldata: Buffer; abi: any } => {
+    const abi = parseAbi([
+      'function removeAllowedSPsForClientPacked(address client, bytes calldata disallowedSPs_)',
+    ])
+
+    const parsedSps = disallowedSPs.map((x) => BigInt(x))
+
+    const packed = encodePacked(
+      parsedSps.map(() => 'uint64'),
+      parsedSps,
+    )
+
+    const calldataHex: Hex = encodeFunctionData({
+      abi,
+      args: [clientAddressHex, packed],
+    })
+
+    const calldata = Buffer.from(calldataHex.substring(2), 'hex')
+
+    return { calldata, abi }
+  }
+
+  const checkTransactionState = async (
+    transactionCid: string,
+    transactionName: string,
+  ): Promise<void> => {
+    if (transactionCid == null) {
+      throw new Error(
+        `Error sending ${transactionName} transaction. Please try again or contact support.`,
+      )
+    }
+
+    const response = await getStateWaitMsg(transactionCid)
+
+    if (
+      typeof response.data === 'object' &&
+      response.data.ReturnDec.Applied &&
+      response.data.ReturnDec.Code !== 0
+    ) {
+      throw new Error(
+        `Error sending ${transactionName} transaction. Please try again or contact support. Error code: ${response.data.ReturnDec.Code}`,
+      )
+    }
+  }
+
+  const submitClientAllowedSpsAndMaxDeviation = useCallback(
+    async (
+      clientAddress: string,
+      contractAddress: string,
+      allowedSps?: string[],
+      disallowedSPs?: string[],
+      maxDeviation?: string,
+    ): Promise<{
+      maxDeviationCid?: string
+      allowedSpCids?: {
+        [key in string]: string[]
+      }
+      disallowedSpCids?: {
+        [key in string]: string[]
+      }
+    }> => {
+      if (wallet == null) throw new Error('No wallet initialized.')
+      if (multisigAddress == null) throw new Error('Multisig address not set.')
+
+      const evmClientAddress =
+        await getEvmAddressFromFilecoinAddress(clientAddress)
+
+      const wait = async (ms: number): Promise<void> => {
+        await new Promise((resolve) => setTimeout(resolve, ms))
+      }
+
+      const signatures: {
+        maxDeviationCid?: string
+        allowedSpsCids?: { [key in string]: string[] }
+        removedSpsCids?: { [key in string]: string[] }
+      } = {}
+
+      function chunkArray<T>(array: T[], size: number): T[][] {
+        const result: T[][] = []
+        for (let i = 0; i < array.length; i += size) {
+          result.push(array.slice(i, i + size))
+        }
+        return result
+      }
+
+      if (maxDeviation) {
+        setMessage(`Preparing the 'max deviation' transaction...`)
+
+        await wait(2000)
+
+        const { calldata } = prepareClientMaxDeviation(
+          evmClientAddress.data,
+          maxDeviation,
+        )
+
+        const maxDeviationTransaction = await wallet.api.multisigEvmInvoke(
+          multisigAddress,
+          contractAddress,
+          calldata,
+          activeAccountIndex,
+        )
+
+        setMessage(
+          `Checking the 'max deviation' transaction, it may take a few minutes, please wait... Do not close this window.`,
+        )
+
+        await checkTransactionState(maxDeviationTransaction, 'max deviation')
+
+        signatures.maxDeviationCid = maxDeviationTransaction
+      }
+
+      if (allowedSps?.length) {
+        const allowedChunkedArray = chunkArray(allowedSps, 8)
+
+        for (let i = 0; i < allowedChunkedArray.length; i++) {
+          const allowedSpsPart = allowedChunkedArray[i]
+
+          const countMessage =
+            allowedChunkedArray.length === 1
+              ? '...'
+              : `${i} / ${allowedChunkedArray.length}`
+
+          setMessage(
+            `Preparing the 'add allowed SPs' transactions ${countMessage}`,
+          )
+
+          await wait(2000)
+
+          const { calldata } = prepareClientAddAllowedSps(
+            evmClientAddress.data,
+            allowedSpsPart,
+          )
+
+          const allowedSpsTransaction = await wallet.api.multisigEvmInvoke(
+            multisigAddress,
+            contractAddress,
+            calldata,
+            activeAccountIndex,
+          )
+
+          setMessage(
+            `Checking the 'add allowed SPs' transaction, it may take a few minutes, please wait... Do not close this window.`,
+          )
+
+          await checkTransactionState(allowedSpsTransaction, 'add allowed SPs')
+
+          if (!signatures.allowedSpsCids) {
+            signatures.allowedSpsCids = {}
+          }
+
+          signatures.allowedSpsCids[allowedSpsTransaction] = allowedSpsPart
+        }
+      }
+
+      if (disallowedSPs?.length) {
+        const disallowedChunkedArray = chunkArray(disallowedSPs, 8)
+
+        for (let i = 0; i < disallowedChunkedArray.length; i++) {
+          const disallowedSpsPart = disallowedChunkedArray[i]
+
+          const countMessage =
+            disallowedChunkedArray.length === 1
+              ? '...'
+              : `${i} / ${disallowedChunkedArray.length}`
+
+          setMessage(
+            `Preparing the 'remove allowed SPs' transactions ${countMessage}`,
+          )
+
+          await wait(2000)
+
+          const { calldata } = prepareClientRemoveAllowedSps(
+            evmClientAddress.data,
+            disallowedSpsPart,
+          )
+
+          const disallowedSpsTransaction = await wallet.api.multisigEvmInvoke(
+            multisigAddress,
+            contractAddress,
+            calldata,
+            activeAccountIndex,
+          )
+
+          setMessage(
+            `Checking the 'remove allowed SPs' transaction, it may take a few minutes, please wait... Do not close this window.`,
+          )
+
+          await checkTransactionState(disallowedSpsTransaction, 'disallow SPs')
+
+          if (!signatures.removedSpsCids) {
+            signatures.removedSpsCids = {}
+          }
+
+          signatures.removedSpsCids[disallowedSpsTransaction] =
+            disallowedSpsPart
+        }
+      }
+
+      return signatures
+    },
+    [wallet, multisigAddress, activeAccountIndex],
+  )
+
   const activeAddress = accounts[activeAccountIndex] ?? ''
 
   return {
@@ -406,6 +914,10 @@ const useWallet = (): WalletState => {
     accounts,
     loadMoreAccounts,
     getAllocatorAllowanceFromContract,
+    getClientSPs,
+    submitClientAllowedSpsAndMaxDeviation,
+    getClientConfig,
+    getChangeSpsProposalTxs,
   }
 }
 

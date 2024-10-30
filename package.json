@@ -16,6 +16,7 @@
     "@fontsource/roboto": "^5.0.12",
     "@glif/filecoin-address": "^3.0.4",
     "@ledgerhq/hw-transport-webusb": "^6.27.19",
+    "@mui/icons-material": "^5.15.14",
     "@mui/material": "^5.15.14",
     "@radix-ui/react-avatar": "^1.0.3",
     "@radix-ui/react-dialog": "^1.0.5",

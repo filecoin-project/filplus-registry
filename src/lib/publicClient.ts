@@ -45,7 +45,7 @@ type FilecoinRpcSchema = [
   },
   {
     Method: 'Filecoin.FilecoinAddressToEthAddress'
-    Parameters: [string, null]
+    Parameters: [string, string | null]
     ReturnType: string | null
   },
   {

@@ -7,13 +7,20 @@ import {
   postApplicationProposal,
   postApplicationTrigger,
   postApproveChanges,
+  postChangeAllowedSPs,
+  postChangeAllowedSPsApproval,
   postRemoveAlloc,
   postRequestKyc,
   postRevertApplicationToReadyToSign,
   triggerSSA,
 } from '@/lib/apiClient'
 import { getStateWaitMsg } from '@/lib/glifApi'
-import { AllocatorTypeEnum, type Application, type RefillUnit } from '@/type'
+import {
+  AllocatorTypeEnum,
+  type StorageProvidersChangeRequest,
+  type Application,
+  type RefillUnit,
+} from '@/type'
 import { useMemo, useState } from 'react'
 import {
   useMutation,
@@ -72,16 +79,36 @@ interface ApplicationActions {
     { userName: string },
     unknown
   >
-  mutationProposal: UseMutationResult<
+  mutationChangeAllowedSPs: UseMutationResult<
     Application | undefined,
     unknown,
-    { requestId: string; userName: string; allocationAmount?: string },
+    {
+      userName: string
+      clientAddress: string
+      contractAddress: string
+      allowedSps: string[]
+      disallowedSPs: string[]
+      newAvailableResult: string[]
+      maxDeviation?: string
+    },
     unknown
   >
   mutationApproval: UseMutationResult<
     Application | undefined,
     unknown,
     { requestId: string; userName: string },
+    unknown
+  >
+  mutationChangeAllowedSPsApproval: UseMutationResult<
+    Application | undefined,
+    unknown,
+    { activeRequest: StorageProvidersChangeRequest; userName: string },
+    unknown
+  >
+  mutationProposal: UseMutationResult<
+    Application | undefined,
+    unknown,
+    { requestId: string; userName: string; allocationAmount?: string },
     unknown
   >
   walletError: Error | null
@@ -121,10 +148,12 @@ const useApplicationActions = (
     getProposalTx,
     sendProposal,
     sendApproval,
-    setMessage,
     message,
     accounts,
     loadMoreAccounts,
+    submitClientAllowedSpsAndMaxDeviation,
+    getChangeSpsProposalTxs,
+    setMessage,
   } = useWallet()
   const { selectedAllocator } = useAllocator()
 
@@ -568,6 +597,187 @@ const useApplicationActions = (
     },
   )
 
+  const mutationChangeAllowedSPs = useMutation<
+    Application | undefined,
+    Error,
+    {
+      userName: string
+      clientAddress: string
+      contractAddress: string
+      maxDeviation?: string
+      allowedSps: string[]
+      disallowedSPs: string[]
+      newAvailableResult: string[]
+    },
+    unknown
+  >(
+    async ({
+      userName,
+      clientAddress,
+      contractAddress,
+      maxDeviation,
+      allowedSps,
+      disallowedSPs,
+      newAvailableResult,
+    }) => {
+      const signatures = await submitClientAllowedSpsAndMaxDeviation(
+        clientAddress,
+        contractAddress,
+        allowedSps,
+        disallowedSPs,
+        maxDeviation,
+      )
+
+      return await postChangeAllowedSPs(
+        initialApplication.ID,
+        userName,
+        owner,
+        repo,
+        activeAddress,
+        signatures,
+        newAvailableResult,
+        maxDeviation,
+      )
+    },
+    {
+      onSuccess: (data) => {
+        setApiCalling(false)
+        if (data != null) updateCache(data)
+      },
+      onError: () => {
+        setApiCalling(false)
+        setMessage(null)
+      },
+    },
+  )
+
+  const mutationChangeAllowedSPsApproval = useMutation<
+    Application | undefined,
+    unknown,
+    { activeRequest: StorageProvidersChangeRequest; userName: string },
+    unknown
+  >(
+    async ({ activeRequest, userName }) => {
+      setMessage(`Searching the pending transactions...`)
+
+      const clientAddress = getClientAddress()
+
+      const addedProviders = activeRequest?.Signers.find(
+        (x) => x['Add Allowed Storage Providers CID'],
+      )?.['Add Allowed Storage Providers CID']
+
+      const removedProviders = activeRequest?.Signers.find(
+        (x) => x['Remove Allowed Storage Providers CID'],
+      )?.['Remove Allowed Storage Providers CID']
+
+      const maxDeviation = activeRequest['Max Deviation']
+        ? activeRequest['Max Deviation'].split('%')[0]
+        : undefined
+
+      const proposalTxs = await getChangeSpsProposalTxs(
+        clientAddress,
+        maxDeviation,
+        addedProviders,
+        removedProviders,
+      )
+
+      if (!proposalTxs) {
+        throw new Error(
+          'Transactions not found. You may need to wait some time if the proposal was just sent.',
+        )
+      }
+
+      const signatures: {
+        maxDeviationCid?: string
+        allowedSpsCids?: { [key in string]: string[] }
+        removedSpsCids?: { [key in string]: string[] }
+      } = {}
+
+      const wait = async (ms: number): Promise<void> => {
+        await new Promise((resolve) => setTimeout(resolve, ms))
+      }
+
+      for (let index = 0; index < proposalTxs.length; index++) {
+        const proposalTx = proposalTxs[index]
+
+        setMessage(`Preparing the '${proposalTx.cidName}' transaction...`)
+
+        await wait(2000)
+        const messageCID = await sendApproval(proposalTx.tx)
+
+        if (messageCID == null) {
+          throw new Error(
+            `Error sending the '${proposalTx.cidName}' transaction. Please try again or contact support.`,
+          )
+        }
+
+        setMessage(
+          `Checking the '${proposalTx.cidName}' transaction, It may take a few minutes, please wait... Do not close this window.`,
+        )
+
+        const response = await getStateWaitMsg(messageCID)
+
+        if (
+          typeof response.data === 'object' &&
+          response.data.ReturnDec.Applied &&
+          response.data.ReturnDec.Code !== 0
+        ) {
+          throw new Error(
+            `Change allowed SPs transaction failed on chain. Error code: ${response.data.ReturnDec.Code}`,
+          )
+        }
+
+        switch (proposalTx.cidName) {
+          case 'max deviation':
+            signatures.maxDeviationCid = messageCID
+            break
+
+          case 'add allowed Sps': {
+            if (!signatures.allowedSpsCids) {
+              signatures.allowedSpsCids = {}
+            }
+
+            signatures.allowedSpsCids[messageCID] = proposalTx.decodedPacked
+              ? proposalTx.decodedPacked
+              : ['']
+
+            break
+          }
+          case 'remove allowed Sps': {
+            if (!signatures.removedSpsCids) {
+              signatures.removedSpsCids = {}
+            }
+
+            signatures.removedSpsCids[messageCID] = proposalTx.decodedPacked
+              ? proposalTx.decodedPacked
+              : ['']
+
+            break
+          }
+        }
+      }
+
+      return await postChangeAllowedSPsApproval(
+        initialApplication.ID,
+        activeRequest.ID,
+        userName,
+        owner,
+        repo,
+        activeAddress,
+        signatures,
+      )
+    },
+    {
+      onSuccess: (data) => {
+        setApiCalling(false)
+        if (data != null) updateCache(data)
+      },
+      onError: () => {
+        setApiCalling(false)
+      },
+    },
+  )
+
   return {
     application,
     mutationRequestKyc,
@@ -588,6 +798,8 @@ const useApplicationActions = (
     loadMoreAccounts,
     mutationTriggerSSA,
     mutationRemovePendingAllocation,
+    mutationChangeAllowedSPs,
+    mutationChangeAllowedSPsApproval,
   }
 }
 

@@ -166,6 +166,10 @@ export const getStateWaitMsg = async (
     const errMessage = `Error accessing GLIF API Filecoin.StateWaitMsg: ${
       (error as Error).message
     }`
+
+    if (errMessage.includes('too long')) {
+      return await getStateWaitMsg(cid)
+    }
     return {
       data: '',
       error: errMessage,

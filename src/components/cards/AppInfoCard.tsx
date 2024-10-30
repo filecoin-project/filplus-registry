@@ -51,6 +51,7 @@ import {
 } from 'react'
 import { toast } from 'react-toastify'
 import AllocatorBalance from '../AllocatorBalance'
+import AllowedSps from './dialogs/allowedSps'
 
 interface ComponentProps {
   application: Application
@@ -100,7 +101,10 @@ const AppInfoCard: React.FC<ComponentProps> = ({
     loadMoreAccounts,
     mutationRequestKyc,
     mutationRemovePendingAllocation,
+    mutationChangeAllowedSPs,
+    mutationChangeAllowedSPsApproval,
   } = useApplicationActions(initialApplication, repo, owner)
+
   const [buttonText, setButtonText] = useState('')
   const [modalMessage, setModalMessage] = useState<ReactNode | null>(null)
   const [error, setError] = useState<boolean>(false)
@@ -340,7 +344,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
       return
     }
 
-    if (isApiCalling) {
+    if (isApiCalling && application.Lifecycle.State !== 'ChangingSp') {
       setButtonText('Processing...')
       return
     }
@@ -813,6 +817,87 @@ const AppInfoCard: React.FC<ComponentProps> = ({
     setApiCalling(false)
   }
 
+  const handleAllowedSPsSubmit = async (
+    client: string,
+    clientContractAddress: string,
+    addedSPs: string[],
+    removedSPs: string[],
+    newAvailableResult: string[],
+    maxDeviation?: string,
+  ): Promise<void> => {
+    try {
+      setApiCalling(true)
+      const requestId = application['Allocation Requests'].find(
+        (alloc) => alloc.Active,
+      )?.ID
+
+      const userName = session.data?.user?.githubUsername
+
+      if (
+        application.Lifecycle.State === 'ReadyToSign' &&
+        requestId &&
+        userName
+      ) {
+        await mutationChangeAllowedSPs.mutateAsync({
+          userName,
+          clientAddress: client,
+          contractAddress: clientContractAddress,
+          allowedSps: addedSPs,
+          disallowedSPs: removedSPs,
+          newAvailableResult,
+          maxDeviation,
+        })
+      }
+    } catch (error) {
+      console.log(error)
+      handleMutationError(error as Error)
+    } finally {
+      setApiCalling(false)
+    }
+  }
+
+  const handleApproveAllowedSPs = async (): Promise<void> => {
+    try {
+      setApiCalling(true)
+
+      const activeRequest = application[
+        'Storage Providers Change Requests'
+      ].find((requests) => requests.Active)
+
+      const userName = session.data?.user?.githubUsername
+
+      if (activeRequest?.ID != null && userName != null) {
+        const res = await mutationChangeAllowedSPsApproval.mutateAsync({
+          activeRequest,
+          userName,
+        })
+
+        if (res) {
+          const lastDatacapAllocation = getLastDatacapAllocation(res)
+          if (lastDatacapAllocation === undefined) {
+            throw new Error('No datacap allocation found')
+          }
+          const queryParams = [
+            `client=${encodeURIComponent(res?.Client.Name)}`,
+            `messageCID=${encodeURIComponent(
+              lastDatacapAllocation.Signers[1]['Message CID'],
+            )}`,
+            `amount=${encodeURIComponent(
+              lastDatacapAllocation['Allocation Amount'],
+            )}`,
+            `notification=true`,
+          ].join('&')
+
+          router.push(`/?${queryParams}`)
+        }
+      }
+    } catch (error) {
+      handleMutationError(error as Error)
+    } finally {
+      setApiCalling(false)
+    }
+  }
+
   return (
     <>
       <AccountSelectionDialog
@@ -841,7 +926,6 @@ const AppInfoCard: React.FC<ComponentProps> = ({
           </span>
         </a>
       </div>
-
       {modalMessage != null && (
         <Modal
           message={modalMessage}
@@ -849,13 +933,11 @@ const AppInfoCard: React.FC<ComponentProps> = ({
           error={error}
         />
       )}
-
       {(isApiCalling || isWalletConnecting) && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
           <Spinner />
         </div>
       )}
-
       <Card className="bg-gray-50 p-4 rounded-lg shadow-lg">
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="flex-1">
@@ -954,6 +1036,72 @@ const AppInfoCard: React.FC<ComponentProps> = ({
               <AllocatorBalance owner={owner} repo={repo} />
             </div>
             <div className="flex justify-end gap-2 pb-4">
+              {LDNActorType.Verifier === currentActorType &&
+                walletConnected &&
+                session?.data?.user?.name !== undefined &&
+                application?.Lifecycle?.['On Chain Address'] &&
+                application?.['Client Contract Address'] &&
+                ['ReadyToSign', 'Granted'].includes(
+                  application?.Lifecycle?.State,
+                ) && (
+                  <div className="flex gap-2">
+                    <AllowedSps
+                      onSubmit={handleAllowedSPsSubmit}
+                      client={application.Lifecycle['On Chain Address']}
+                      clientContractAddress={
+                        application['Client Contract Address']
+                      }
+                      initDeviation="10"
+                      isApiCalling={isApiCalling}
+                      setApiCalling={setApiCalling}
+                    />
+                  </div>
+                )}
+
+              {!walletConnected &&
+                currentActorType === LDNActorType.Verifier &&
+                ![
+                  'KYCRequested',
+                  'Submitted',
+                  'ChangesRequested',
+                  'AdditionalInfoRequired',
+                  'AdditionalInfoSubmitted',
+                ].includes(application?.Lifecycle?.State) && (
+                  <Button
+                    onClick={() => void handleConnectLedger()}
+                    disabled={
+                      isWalletConnecting ||
+                      isApiCalling ||
+                      ['Submitted'].includes(application.Lifecycle.State)
+                    }
+                    className="bg-blue-500 text-white rounded-lg px-4 py-2 hover:bg-blue-600"
+                  >
+                    Connect Ledger
+                  </Button>
+                )}
+
+              {LDNActorType.Verifier === currentActorType &&
+                walletConnected &&
+                session?.data?.user?.name !== undefined &&
+                application?.Lifecycle?.['On Chain Address'] &&
+                application?.['Client Contract Address'] &&
+                ['ChangingSP'].includes(application?.Lifecycle?.State) && (
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => {
+                        void handleApproveAllowedSPs()
+                      }}
+                      disabled={isApiCalling}
+                      style={{
+                        width: '250px',
+                      }}
+                      className="bg-green-400 text-black rounded-lg px-4 py-2 hover:bg-green-500"
+                    >
+                      Approve SP Propose
+                    </Button>
+                  </div>
+                )}
+
               {LDNActorType.Verifier === currentActorType ? (
                 session?.data?.user?.name !== undefined &&
                 application?.Lifecycle?.State !== 'Granted' ? (
@@ -1047,30 +1195,6 @@ const AppInfoCard: React.FC<ComponentProps> = ({
                             {buttonText}
                           </Button>
                         </>
-                      )}
-
-                    {!walletConnected &&
-                      currentActorType === LDNActorType.Verifier &&
-                      ![
-                        'KYCRequested',
-                        'Submitted',
-                        'ChangesRequested',
-                        'AdditionalInfoRequired',
-                        'AdditionalInfoSubmitted',
-                      ].includes(application?.Lifecycle?.State) && (
-                        <Button
-                          onClick={() => void handleConnectLedger()}
-                          disabled={
-                            isWalletConnecting ||
-                            isApiCalling ||
-                            ['Granted', 'Submitted'].includes(
-                              application.Lifecycle.State,
-                            )
-                          }
-                          className="bg-blue-500 text-white rounded-lg px-4 py-2 hover:bg-blue-600"
-                        >
-                          Connect Ledger
-                        </Button>
                       )}
                   </>
                 ) : (

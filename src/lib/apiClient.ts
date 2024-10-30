@@ -558,3 +558,92 @@ export const cacheRenewal = async (
     throw e
   }
 }
+
+export const postChangeAllowedSPs = async (
+  id: string,
+  userName: string,
+  owner: string,
+  repo: string,
+  address: string,
+  signatures: {
+    maxDeviationCid?: string
+    allowedSpsCids?: { [key in string]: string[] }
+    removedSpsCids?: { [key in string]: string[] }
+  },
+  availableAllowedSpsData: string[],
+  maxDeviationData?: string,
+): Promise<Application | undefined> => {
+  try {
+    const { data } = await apiClient.post(
+      `verifier/application/propose_storage_providers`,
+      {
+        max_deviation: maxDeviationData ? `${maxDeviationData}%` : undefined,
+        allowed_sps: availableAllowedSpsData.map((x) => Number(x)),
+        owner,
+        repo,
+        signer: {
+          signing_address: address,
+          max_deviation_cid: signatures.maxDeviationCid,
+          allowed_sps_cids: signatures.allowedSpsCids,
+          removed_allowed_sps_cids: signatures.removedSpsCids,
+        },
+      },
+      {
+        params: {
+          repo,
+          owner,
+          id,
+          github_username: userName,
+        },
+      },
+    )
+
+    return data
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export const postChangeAllowedSPsApproval = async (
+  id: string,
+  requestId: string,
+  userName: string,
+  owner: string,
+  repo: string,
+  address: string,
+  signatures: {
+    maxDeviationCid?: string
+    allowedSpsCids?: { [key in string]: string[] }
+    removedSpsCids?: { [key in string]: string[] }
+  },
+): Promise<Application | undefined> => {
+  try {
+    const { data } = await apiClient.post(
+      `verifier/application/approve_storage_providers`,
+      {
+        request_id: requestId,
+        owner,
+        repo,
+        signer: {
+          signing_address: address,
+          max_deviation_cid: signatures.maxDeviationCid,
+          allowed_sps_cids: signatures.allowedSpsCids,
+          removed_allowed_sps_cids: signatures.removedSpsCids,
+        },
+      },
+      {
+        params: {
+          repo,
+          owner,
+          id,
+          github_username: userName,
+        },
+      },
+    )
+    return data
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
