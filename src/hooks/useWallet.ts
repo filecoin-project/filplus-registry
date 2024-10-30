@@ -798,7 +798,7 @@ const useWallet = (): WalletState => {
         )
 
         setMessage(
-          `Checking the 'max deviation' transaction, It may take several seconds, please wait...`,
+          `Checking the 'max deviation' transaction, it may take a few minutes, please wait... Do not close this window.`,
         )
 
         await checkTransactionState(maxDeviationTransaction, 'max deviation')
