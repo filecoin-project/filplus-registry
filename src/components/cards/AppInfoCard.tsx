@@ -344,7 +344,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
       return
     }
 
-    if (isApiCalling) {
+    if (isApiCalling && application.Lifecycle.State !== 'ChangingSp') {
       setButtonText('Processing...')
       return
     }

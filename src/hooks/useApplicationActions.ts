@@ -657,6 +657,8 @@ const useApplicationActions = (
     unknown
   >(
     async ({ activeRequest, userName }) => {
+      setMessage(`Searching the pending transaction...`)
+
       const clientAddress = getClientAddress()
 
       const addedProviders = activeRequest?.Signers.find(
