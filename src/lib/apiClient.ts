@@ -449,7 +449,7 @@ export const postApplicationApproval = async (
           signing_address: address,
           created_at: getCurrentDate(),
           message_cids: {
-            verify_client_cid: signatures.verifyClientCid,
+            message_cid: signatures.verifyClientCid,
             increase_allowance_cid: signatures.increaseAllowanceCid,
           },
         },
