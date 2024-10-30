@@ -580,15 +580,15 @@ const AppInfoCard: React.FC<ComponentProps> = ({
       return
     }
 
-    // if (anyToBytes(allocationAmountConfig.amount) > allowance) {
-    //   toast.error('Amount is bigger than the allowance')
-    //   return
-    // }
+    if (anyToBytes(allocationAmountConfig.amount) > allowance) {
+      toast.error('Amount is bigger than the allowance')
+      return
+    }
 
-    // if (anyToBytes(allocationAmountConfig.amount) > remaining) {
-    //   toast.error('Amount is bigger than remaning')
-    //   return
-    // }
+    if (anyToBytes(allocationAmountConfig.amount) > remaining) {
+      toast.error('Amount is bigger than remaning')
+      return
+    }
 
     setApiCalling(true)
     const userName = session.data?.user?.githubUsername
