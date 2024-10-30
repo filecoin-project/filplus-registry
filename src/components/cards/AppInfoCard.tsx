@@ -8,6 +8,7 @@ import calculateAmountToRequest, {
   validateAmount,
 } from '@/helpers/calculateAmountToRefill'
 import useApplicationActions from '@/hooks/useApplicationActions'
+import useWallet from '@/hooks/useWallet'
 import { useAllocator } from '@/lib/AllocatorProvider'
 import { stateColor, stateMapping } from '@/lib/constants'
 import { getAllowanceForClient } from '@/lib/glifApi'
@@ -105,6 +106,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
     mutationChangeAllowedSPsApproval,
   } = useApplicationActions(initialApplication, repo, owner)
 
+  const { getClientAllowance } = useWallet()
   const [buttonText, setButtonText] = useState('')
   const [modalMessage, setModalMessage] = useState<ReactNode | null>(null)
   const [error, setError] = useState<boolean>(false)
@@ -182,10 +184,32 @@ const AppInfoCard: React.FC<ComponentProps> = ({
         unit: amountType,
         isDialogOpen: false,
       })
+
       const address = application.Lifecycle['On Chain Address']
-      const response = await getAllowanceForClient(address)
+
+      let clientAllowance
+
+      const contractAddress = application['Client Contract Address'] ?? address
+
+      const response = await getAllowanceForClient(contractAddress)
+
+      if (application['Client Contract Address']) {
+        clientAllowance = await getClientAllowance(
+          address,
+          application['Client Contract Address'],
+        )
+      }
+
       if (response.success) {
-        const allowance = parseFloat(response.data ?? 0)
+        const allowanceResult = clientAllowance
+          ? Number(clientAllowance) > parseFloat(response.data)
+            ? response.data
+            : clientAllowance.toString()
+          : response.data
+
+        const allowance = parseFloat(
+          allowanceResult.length ? allowanceResult : '0',
+        )
         const lastAllocation = getLastDatacapAllocation(application)
         if (lastAllocation === undefined) return
 
@@ -344,7 +368,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
       return
     }
 
-    if (isApiCalling && application.Lifecycle.State !== 'ChangingSp') {
+    if (isApiCalling) {
       setButtonText('Processing...')
       return
     }

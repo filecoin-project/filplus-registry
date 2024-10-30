@@ -65,6 +65,10 @@ interface WalletState {
     clientAddress: string,
     contractAddress: string,
   ) => Promise<string[]>
+  getClientAllowance: (
+    clientAddress: string,
+    contractAddress: string,
+  ) => Promise<bigint>
   submitClientAllowedSpsAndMaxDeviation: (
     clientAddress: string,
     contractAddress: string,
@@ -610,6 +614,41 @@ const useWallet = (): WalletState => {
     [],
   )
 
+  const getClientAllowance = useCallback(
+    async (client: string, contractAddress: string): Promise<bigint> => {
+      const abi = parseAbi([
+        'function allowances(address client) external view returns (uint256)',
+      ])
+
+      const [evmClientAddress, evmContractAddress] = await Promise.all([
+        getEvmAddressFromFilecoinAddress(client),
+        getEvmAddressFromFilecoinAddress(contractAddress),
+      ])
+
+      const calldataHex: Hex = encodeFunctionData({
+        abi,
+        args: [evmClientAddress.data],
+      })
+
+      const response = await makeStaticEthCall(
+        evmContractAddress.data,
+        calldataHex,
+      )
+
+      if (response.error) {
+        return BigInt(0)
+      }
+
+      const decodedData = decodeFunctionResult({
+        abi,
+        data: response.data as `0x${string}`,
+      })
+
+      return decodedData
+    },
+    [],
+  )
+
   const getClientConfig = useCallback(
     async (client: string, contractAddress: string): Promise<string | null> => {
       const abi = parseAbi([
@@ -912,6 +951,7 @@ const useWallet = (): WalletState => {
     submitClientAllowedSpsAndMaxDeviation,
     getClientConfig,
     getChangeSpsProposalTxs,
+    getClientAllowance,
   }
 }
 
