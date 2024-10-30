@@ -148,7 +148,6 @@ const useApplicationActions = (
     getProposalTx,
     sendProposal,
     sendApproval,
-    setMessage,
     message,
     accounts,
     loadMoreAccounts,
