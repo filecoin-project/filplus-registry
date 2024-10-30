@@ -657,7 +657,7 @@ const useApplicationActions = (
     unknown
   >(
     async ({ activeRequest, userName }) => {
-      setMessage(`Searching the pending transaction...`)
+      setMessage(`Searching the pending transactions...`)
 
       const clientAddress = getClientAddress()
 
@@ -682,7 +682,7 @@ const useApplicationActions = (
 
       if (!proposalTxs) {
         throw new Error(
-          'Transaction not found. You may need to wait some time if the proposal was just sent.',
+          'Transactions not found. You may need to wait some time if the proposal was just sent.',
         )
       }
 
@@ -699,23 +699,23 @@ const useApplicationActions = (
       for (let index = 0; index < proposalTxs.length; index++) {
         const proposalTx = proposalTxs[index]
 
-        setMessage(`Preparing the ${proposalTx.cidName} transaction...`)
+        setMessage(`Preparing the '${proposalTx.cidName}' transaction...`)
 
         await wait(2000)
         const messageCID = await sendApproval(proposalTx.tx)
 
         if (messageCID == null) {
           throw new Error(
-            `Error sending ${proposalTx.cidName}. Please try again or contact support.`,
+            `Error sending the '${proposalTx.cidName}' transaction. Please try again or contact support.`,
           )
         }
 
         setMessage(
-          `Checking ${proposalTx.cidName} transaction, It may take several seconds, please wait...`,
+          `Checking the '${proposalTx.cidName}' transaction, It may take several seconds, please wait...`,
         )
 
-        let response = await getStateWaitMsg(messageCID)        
-        
+        const response = await getStateWaitMsg(messageCID)
+
         if (
           typeof response.data === 'object' &&
           response.data.ReturnDec.Applied &&
@@ -727,11 +727,11 @@ const useApplicationActions = (
         }
 
         switch (proposalTx.cidName) {
-          case 'Max Deviation':
+          case 'max deviation':
             signatures.maxDeviationCid = messageCID
             break
 
-          case 'Allowed Sps': {
+          case 'add allowed Sps': {
             if (!signatures.allowedSpsCids) {
               signatures.allowedSpsCids = {}
             }
@@ -742,7 +742,7 @@ const useApplicationActions = (
 
             break
           }
-          case 'Disallowed Sps': {
+          case 'remove allowed Sps': {
             if (!signatures.removedSpsCids) {
               signatures.removedSpsCids = {}
             }

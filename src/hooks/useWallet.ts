@@ -94,7 +94,7 @@ interface WalletState {
       [key in string]: string[]
     },
   ) => Promise<Array<{
-    cidName: 'Max Deviation' | 'Allowed Sps' | 'Disallowed Sps'
+    cidName: 'max deviation' | 'add allowed Sps' | 'remove allowed Sps'
     tx: any
     args: string[]
     decodedPacked?: string[]
@@ -299,7 +299,7 @@ const useWallet = (): WalletState => {
         [key in string]: string[]
       },
     ): Promise<Array<{
-      cidName: 'Max Deviation' | 'Allowed Sps' | 'Disallowed Sps'
+      cidName: 'max deviation' | 'add allowed Sps' | 'remove allowed Sps'
       tx: any
       args: any
       decodedPacked?: string[]
@@ -308,7 +308,7 @@ const useWallet = (): WalletState => {
       if (multisigAddress == null) throw new Error('Multisig address not set.')
 
       const searchTransactions: Array<{
-        cidName: 'Max Deviation' | 'Allowed Sps' | 'Disallowed Sps'
+        cidName: 'max deviation' | 'add allowed Sps' | 'remove allowed Sps'
         abi: any
         args: any
         decodedPacked?: string[]
@@ -319,7 +319,7 @@ const useWallet = (): WalletState => {
 
       if (maxDeviation) {
         searchTransactions.push({
-          cidName: 'Max Deviation',
+          cidName: 'max deviation',
           abi: parseAbi([
             'function setClientMaxDeviationFromFairDistribution(address client, uint256 maxDeviation)',
           ]),
@@ -335,7 +335,7 @@ const useWallet = (): WalletState => {
           )
 
           searchTransactions.push({
-            cidName: 'Allowed Sps',
+            cidName: 'add allowed Sps',
             abi: parseAbi([
               'function addAllowedSPsForClientPacked(address client, bytes calldata allowedSPs_)',
             ]),
@@ -353,7 +353,7 @@ const useWallet = (): WalletState => {
           )
 
           searchTransactions.push({
-            cidName: 'Disallowed Sps',
+            cidName: 'remove allowed Sps',
             abi: parseAbi([
               'function removeAllowedSPsForClientPacked(address client, bytes calldata disallowedSPs_)',
             ]),
@@ -377,7 +377,7 @@ const useWallet = (): WalletState => {
       }
 
       const results: Array<{
-        cidName: 'Max Deviation' | 'Allowed Sps' | 'Disallowed Sps'
+        cidName: 'max deviation' | 'add allowed Sps' | 'remove allowed Sps'
         tx: any
         args: any[]
         decodedPacked?: string[]
@@ -777,7 +777,7 @@ const useWallet = (): WalletState => {
       }
 
       if (maxDeviation) {
-        setMessage('Preparing the max deviation transaction...')
+        setMessage(`Preparing the 'max deviation' transaction...`)
 
         await wait(2000)
 
@@ -794,7 +794,7 @@ const useWallet = (): WalletState => {
         )
 
         setMessage(
-          `Checking max deviation transaction, It may take several seconds, please wait...`,
+          `Checking the 'max deviation' transaction, It may take several seconds, please wait...`,
         )
 
         await checkTransactionState(maxDeviationTransaction, 'max deviation')
@@ -813,7 +813,9 @@ const useWallet = (): WalletState => {
               ? '...'
               : `${i} / ${allowedChunkedArray.length}`
 
-          setMessage(`Preparing the allowed SPs transactions ${countMessage}`)
+          setMessage(
+            `Preparing the 'add allowed SPs' transactions ${countMessage}`,
+          )
 
           await wait(2000)
 
@@ -830,10 +832,10 @@ const useWallet = (): WalletState => {
           )
 
           setMessage(
-            `Checking allowed SPs transaction, It may take several seconds, please wait...`,
+            `Checking the 'add allowed SPs' transaction, It may take several seconds, please wait...`,
           )
 
-          await checkTransactionState(allowedSpsTransaction, 'allowed SPs')
+          await checkTransactionState(allowedSpsTransaction, 'add allowed SPs')
 
           if (!signatures.allowedSpsCids) {
             signatures.allowedSpsCids = {}
@@ -855,7 +857,7 @@ const useWallet = (): WalletState => {
               : `${i} / ${disallowedChunkedArray.length}`
 
           setMessage(
-            `Preparing the disallowed SPs transactions ${countMessage}`,
+            `Preparing the 'remove allowed SPs' transactions ${countMessage}`,
           )
 
           await wait(2000)
@@ -873,7 +875,7 @@ const useWallet = (): WalletState => {
           )
 
           setMessage(
-            `Checking disallowed SPs transaction, It may take several seconds, please wait...`,
+            `Checking the 'remove allowed SPs' transaction, It may take several seconds, please wait...`,
           )
 
           await checkTransactionState(disallowedSpsTransaction, 'disallow SPs')
