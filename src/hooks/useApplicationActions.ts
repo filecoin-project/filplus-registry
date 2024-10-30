@@ -712,7 +712,7 @@ const useApplicationActions = (
         }
 
         setMessage(
-          `Checking the '${proposalTx.cidName}' transaction, It may take several seconds, please wait...`,
+          `Checking the '${proposalTx.cidName}' transaction, It may take a few minutes, please wait... Do not close this window.`,
         )
 
         const response = await getStateWaitMsg(messageCID)
