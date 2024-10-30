@@ -259,7 +259,11 @@ const AppInfoCard: React.FC<ComponentProps> = ({
         }
       }
     })()
-  }, [application, isApplicationUpdatedLessThanOneMinuteAgo])
+  }, [
+    application,
+    isApplicationUpdatedLessThanOneMinuteAgo,
+    getClientAllowance,
+  ])
 
   useEffect(() => {
     if (

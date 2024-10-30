@@ -17,7 +17,7 @@ import {
 import { getStateWaitMsg } from '@/lib/glifApi'
 import {
   AllocatorTypeEnum,
-  StorageProvidersChangeRequest,
+  type StorageProvidersChangeRequest,
   type Application,
   type RefillUnit,
 } from '@/type'
