@@ -49,9 +49,18 @@ interface WalletState {
     clientAddress: string,
     datacap: string,
     allocatorType: AllocatorTypeEnum,
-  ) => Promise<string | boolean>
+    isClientContractAddress?: boolean,
+  ) => Promise<{
+    pendingVerifyClientTransaction: any
+    pendingIncreaseAllowanceTransaction: any
+  } | null>
   sendProposal: (props: SendProposalProps) => Promise<string>
-  sendApproval: (txHash: string) => Promise<string>
+  sendClientIncreaseAllowance: (props: {
+    contractAddress: string
+    clientAddress: string
+    proposalAllocationAmount: string
+  }) => Promise<string>
+  sendApproval: (transaction: any) => Promise<string>
   sign: (message: string) => Promise<string>
   initializeWallet: (multisigAddress?: string) => Promise<string[]>
   message: string | null
@@ -239,12 +248,18 @@ const useWallet = (): WalletState => {
       clientAddress: string,
       datacap: string,
       allocatorType: AllocatorTypeEnum,
-    ): Promise<string | boolean> => {
+      isClientContractAddress?: boolean,
+    ): Promise<{
+      pendingVerifyClientTransaction: any
+      pendingIncreaseAllowanceTransaction: any
+    } | null> => {
       if (wallet == null) throw new Error('No wallet initialized.')
       if (multisigAddress == null) throw new Error('Multisig address not set.')
 
       const bytesDatacap = Math.floor(anyToBytes(datacap))
+      let evmClientContractAddress
       let pendingTxs
+
       try {
         pendingTxs = await wallet.api.pendingTransactions(multisigAddress)
       } catch (error) {
@@ -253,37 +268,112 @@ const useWallet = (): WalletState => {
           'An error with the lotus node occurred. Please reload. If the problem persists, contact support.',
         )
       }
-      let pendingForClient = null
+
+      let pendingVerifyClientTransaction
+      let pendingIncreaseAllowanceTransaction
+
+      if (isClientContractAddress) {
+        evmClientContractAddress = (
+          await getEvmAddressFromFilecoinAddress(clientAddress)
+        ).data
+      }
+
+      const verifiedAbi = parseAbi([
+        'function addVerifiedClient(bytes clientAddress, uint256 amount)',
+      ])
+
+      const increaseAllowanceAbi = parseAbi([
+        'function increaseAllowance(address client, uint256 amount)',
+      ])
+
       if (allocatorType !== AllocatorTypeEnum.CONTRACT) {
-        pendingForClient = pendingTxs?.filter(
+        const pendingForClient = pendingTxs?.filter(
           (tx: any) =>
             tx?.parsed?.params?.address === clientAddress &&
             tx?.parsed?.params?.cap === BigInt(bytesDatacap),
         )
+        pendingVerifyClientTransaction = pendingForClient.length
+          ? pendingForClient.at(-1)
+          : undefined
       } else {
-        pendingForClient = pendingTxs?.filter((tx: any) => {
-          const abi = parseAbi([
-            'function addVerifiedClient(bytes clientAddress, uint256 amount)',
-          ])
-
-          const paramsHex: string = tx.parsed.params.toString('hex')
+        for (const transaction of pendingTxs) {
+          const paramsHex: string = transaction.parsed.params.toString('hex')
           const dataHex: Hex = `0x${paramsHex}`
           let decodedData
+
+          if (!pendingVerifyClientTransaction) {
+            try {
+              decodedData = decodeFunctionData({
+                abi: verifiedAbi,
+                data: dataHex,
+              })
+
+              const [clientAddressData, amount] = decodedData.args
+              const address = newFromString(clientAddress)
+              const addressHex: Hex = `0x${Buffer.from(address.bytes).toString('hex')}`
+
+              if (
+                clientAddressData === addressHex &&
+                amount === BigInt(bytesDatacap)
+              ) {
+                pendingVerifyClientTransaction = transaction
+              }
+            } catch (err) {
+              console.error(err)
+            }
+          }
+
           try {
-            decodedData = decodeFunctionData({ abi, data: dataHex })
+            if (
+              isClientContractAddress &&
+              evmClientContractAddress &&
+              !pendingIncreaseAllowanceTransaction
+            ) {
+              const increaseDecodedData = decodeFunctionData({
+                abi: increaseAllowanceAbi,
+                data: dataHex,
+              })
+
+              const [increaseClientContractAddress, increaseAmount] =
+                increaseDecodedData.args
+
+              if (
+                increaseClientContractAddress.toLocaleLowerCase() ===
+                  evmClientContractAddress &&
+                increaseAmount === BigInt(bytesDatacap)
+              ) {
+                pendingIncreaseAllowanceTransaction = transaction
+              }
+            }
           } catch (err) {
             console.error(err)
-            return false
           }
-          const [clientAddressData, amount] = decodedData.args
-          const address = newFromString(clientAddress)
-          const addressHex: Hex = `0x${Buffer.from(address.bytes).toString('hex')}`
-          return (
-            clientAddressData === addressHex && amount === BigInt(bytesDatacap)
-          )
-        })
+
+          if (!isClientContractAddress && pendingVerifyClientTransaction) {
+            break
+          }
+
+          if (
+            isClientContractAddress &&
+            pendingVerifyClientTransaction &&
+            pendingIncreaseAllowanceTransaction
+          ) {
+            break
+          }
+        }
       }
-      return pendingForClient.length > 0 ? pendingForClient.at(-1) : false
+
+      if (
+        pendingVerifyClientTransaction ||
+        pendingIncreaseAllowanceTransaction
+      ) {
+        return {
+          pendingVerifyClientTransaction,
+          pendingIncreaseAllowanceTransaction,
+        }
+      } else {
+        return null
+      }
     },
     [wallet, multisigAddress],
   )
@@ -473,6 +563,51 @@ const useWallet = (): WalletState => {
     [wallet, multisigAddress, activeAccountIndex],
   )
 
+  const sendClientIncreaseAllowance = useCallback(
+    async (props: {
+      contractAddress: string
+      clientAddress: string
+      proposalAllocationAmount: string
+    }) => {
+      const { clientAddress, contractAddress, proposalAllocationAmount } = props
+
+      if (wallet == null) throw new Error('No wallet initialized.')
+
+      setMessage('Sending transaction to increase allowance...')
+
+      const abi = parseAbi([
+        'function increaseAllowance(address client, uint256 amount)',
+      ])
+
+      const evmClientAddress =
+        await getEvmAddressFromFilecoinAddress(clientAddress)
+
+      const bytesDatacap = Math.floor(anyToBytes(proposalAllocationAmount))
+      if (bytesDatacap === 0) throw new Error("Can't grant 0 datacap.")
+
+      const calldataHex: Hex = encodeFunctionData({
+        abi,
+        args: [evmClientAddress.data, BigInt(bytesDatacap)],
+      })
+
+      const calldata = Buffer.from(calldataHex.substring(2), 'hex')
+
+      const increaseTransactionCID = await wallet.api.multisigEvmInvoke(
+        multisigAddress,
+        contractAddress,
+        calldata,
+        activeAccountIndex,
+      )
+
+      setMessage(
+        `The 'increase allowance' transaction sent correctly CID: ${increaseTransactionCID as string}`,
+      )
+
+      return increaseTransactionCID
+    },
+    [wallet, multisigAddress, activeAccountIndex],
+  )
+
   const getAllocatorAllowanceFromContract = useCallback(
     async (
       contractAddress: string,
@@ -557,7 +692,7 @@ const useWallet = (): WalletState => {
    * @throws {Error} - Throws an error if no wallet is initialized.
    */
   const sendApproval = useCallback(
-    async (txHash: string): Promise<string> => {
+    async (transaction: any): Promise<string> => {
       if (wallet == null) throw new Error('No wallet initialized.')
       if (multisigAddress == null) throw new Error('Multisig address not set.')
 
@@ -565,7 +700,7 @@ const useWallet = (): WalletState => {
 
       const messageCID = await wallet.api.approvePending(
         multisigAddress,
-        txHash,
+        transaction,
         activeAccountIndex,
       )
 
@@ -918,6 +1053,7 @@ const useWallet = (): WalletState => {
     submitClientAllowedSpsAndMaxDeviation,
     getClientConfig,
     getChangeSpsProposalTxs,
+    sendClientIncreaseAllowance,
   }
 }
 

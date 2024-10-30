@@ -379,7 +379,10 @@ export const postApplicationProposal = async (
   owner: string,
   repo: string,
   address: string,
-  signature: string,
+  signatures: {
+    messageCID: string
+    increaseAllowanceCID?: string
+  },
   allocationAmount?: string,
 ): Promise<Application | undefined> => {
   try {
@@ -394,7 +397,10 @@ export const postApplicationProposal = async (
           signing_address: address,
           // Datetime in format YYYY-MM-DDTHH:MM:SSZ
           created_at: getCurrentDate(),
-          message_cid: signature,
+          message_cids: {
+            message_cid: signatures.messageCID,
+            increase_allowance_cid: signatures.increaseAllowanceCID,
+          },
         },
       },
       {
@@ -427,7 +433,10 @@ export const postApplicationApproval = async (
   owner: string,
   repo: string,
   address: string,
-  signature: string,
+  signatures: {
+    verifyClientCid: string
+    increaseAllowanceCid?: string
+  },
 ): Promise<Application | undefined> => {
   try {
     const { data } = await apiClient.post(
@@ -439,7 +448,10 @@ export const postApplicationApproval = async (
         signer: {
           signing_address: address,
           created_at: getCurrentDate(),
-          message_cid: signature,
+          message_cids: {
+            message_cid: signatures.verifyClientCid,
+            increase_allowance_cid: signatures.increaseAllowanceCid,
+          },
         },
       },
       {

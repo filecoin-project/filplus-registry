@@ -8,6 +8,7 @@ import calculateAmountToRequest, {
   validateAmount,
 } from '@/helpers/calculateAmountToRefill'
 import useApplicationActions from '@/hooks/useApplicationActions'
+import useWallet from '@/hooks/useWallet'
 import { useAllocator } from '@/lib/AllocatorProvider'
 import { stateColor, stateMapping } from '@/lib/constants'
 import { getAllowanceForClient } from '@/lib/glifApi'
@@ -49,6 +50,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
+import { useQuery } from 'react-query'
 import { toast } from 'react-toastify'
 import AllocatorBalance from '../AllocatorBalance'
 import AllowedSps from './dialogs/allowedSps'
@@ -148,6 +150,21 @@ const AppInfoCard: React.FC<ComponentProps> = ({
     allocationType: 'fixed',
     deviationType: 'directly',
     isDialogOpen: false,
+  })
+
+  const { getClientSPs } = useWallet()
+
+  const { data: availableAllowedSPs } = useQuery({
+    queryKey: ['allowedSps', application.Lifecycle['On Chain Address']],
+    queryFn: async () =>
+      await getClientSPs(
+        application?.Lifecycle?.['On Chain Address'],
+        application?.['Client Contract Address'] ?? '',
+      ),
+    enabled: !!(
+      application.Lifecycle['On Chain Address'] &&
+      application['Client Contract Address']
+    ),
   })
 
   const router = useRouter()
@@ -1020,6 +1037,37 @@ const AppInfoCard: React.FC<ComponentProps> = ({
             </CardContent>
           </div>
         </div>
+        {availableAllowedSPs?.length ? (
+          <div>
+            <CardHeader className="border-b pb-2 mb-4">
+              <h2 className="text-xl font-bold">Additional info</h2>
+            </CardHeader>
+            <CardContent className="grid text-sm">
+              {[['SPs', availableAllowedSPs.join(',')]].map(
+                ([label, value], idx) => {
+                  const rowStyles = getRowStyles(idx)
+                  return (
+                    <div
+                      key={idx}
+                      className={`flex items-center p-2 justify-between ${rowStyles}`}
+                    >
+                      <p className="text-gray-600">{label}</p>
+                      {label === 'Status' ? (
+                        <span
+                          className={`ml-2 px-2 py-1 rounded text-xs ${stateClass}`}
+                        >
+                          {value}
+                        </span>
+                      ) : (
+                        <p className="font-medium text-gray-800">{value}</p>
+                      )}
+                    </div>
+                  )
+                },
+              )}
+            </CardContent>
+          </div>
+        ) : null}
 
         <CardContent>
           {isProgressBarVisible && (

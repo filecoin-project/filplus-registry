@@ -154,6 +154,7 @@ const useApplicationActions = (
     submitClientAllowedSpsAndMaxDeviation,
     getChangeSpsProposalTxs,
     setMessage,
+    sendClientIncreaseAllowance,
   } = useWallet()
   const { selectedAllocator } = useAllocator()
 
@@ -443,10 +444,17 @@ const useApplicationActions = (
     unknown
   >(
     async ({ requestId, userName, allocationAmount }) => {
-      const clientAddress =
+      setMessage(`Searching the pending transactions...`)
+
+      let clientAddress =
         (process.env.NEXT_PUBLIC_MODE === 'development' ? 't' : 'f') +
         initialApplication.Lifecycle['On Chain Address'].substring(1)
+
       let proposalAllocationAmount = ''
+
+      if (initialApplication['Client Contract Address']) {
+        clientAddress = initialApplication['Client Contract Address']
+      }
 
       if (allocationAmount) {
         proposalAllocationAmount = allocationAmount
@@ -465,8 +473,10 @@ const useApplicationActions = (
         clientAddress,
         proposalAllocationAmount,
         allocatorType,
+        !!initialApplication['Client Contract Address'],
       )
-      if (proposalTx !== false) {
+
+      if (proposalTx?.pendingVerifyClientTransaction) {
         throw new Error('This datacap allocation is already proposed')
       }
 
@@ -485,7 +495,13 @@ const useApplicationActions = (
           'Error sending proposal. Please try again or contact support.',
         )
       }
+
+      setMessage(
+        `Checking the 'verify client' transaction, it may take a few minutes, please wait... Do not close this window.`,
+      )
+
       const response = await getStateWaitMsg(messageCID)
+
       if (
         typeof response.data === 'object' &&
         response.data.ReturnDec.Applied &&
@@ -495,7 +511,42 @@ const useApplicationActions = (
           `Error sending transaction. Please try again or contact support. Error code: ${response.data.ReturnDec.Code}`,
         )
       }
-      setMessage(`Transaction sent successfully. CID: ${messageCID}`)
+
+      let increaseAllowanceCID
+
+      if (initialApplication['Client Contract Address']) {
+        increaseAllowanceCID = await sendClientIncreaseAllowance({
+          contractAddress:
+            typeof selectedAllocator !== 'string'
+              ? selectedAllocator?.address ?? ''
+              : '',
+          clientAddress,
+          proposalAllocationAmount,
+        })
+
+        if (increaseAllowanceCID == null) {
+          throw new Error(
+            'Error sending increase allowance transaction. Please try again or contact support.',
+          )
+        }
+
+        setMessage(
+          `Checking the 'increase allowance' transaction, it may take a few minutes, please wait... Do not close this window.`,
+        )
+
+        const increaseResponse = await getStateWaitMsg(increaseAllowanceCID)
+
+        if (
+          typeof increaseResponse.data === 'object' &&
+          increaseResponse.data.ReturnDec.Applied &&
+          increaseResponse.data.ReturnDec.Code !== 0
+        ) {
+          throw new Error(
+            `Error sending transaction. Please try again or contact support. Error code: ${increaseResponse.data.ReturnDec.Code}`,
+          )
+        }
+      }
+
       return await postApplicationProposal(
         initialApplication.ID,
         requestId,
@@ -503,7 +554,7 @@ const useApplicationActions = (
         owner,
         repo,
         activeAddress,
-        messageCID,
+        { messageCID, increaseAllowanceCID },
         allocationAmount,
       )
     },
@@ -533,10 +584,19 @@ const useApplicationActions = (
     unknown
   >(
     async ({ requestId, userName }) => {
-      const clientAddress = getClientAddress()
-      const datacap = initialApplication['Allocation Requests'].find(
+      setMessage(`Searching the pending transactions...`)
+
+      let clientAddress = getClientAddress()
+
+      if (initialApplication['Client Contract Address']) {
+        clientAddress = initialApplication['Client Contract Address']
+      }
+
+      const activeRequest = initialApplication['Allocation Requests'].find(
         (alloc) => alloc.Active,
-      )?.['Allocation Amount']
+      )
+
+      const datacap = activeRequest?.['Allocation Amount']
 
       if (datacap == null) throw new Error('No active allocation found')
 
@@ -544,22 +604,38 @@ const useApplicationActions = (
         clientAddress,
         datacap,
         allocatorType,
+        !!initialApplication['Client Contract Address'],
       )
 
-      if (proposalTx === false) {
+      if (!proposalTx?.pendingVerifyClientTransaction) {
         throw new Error(
           'This datacap allocation is not proposed yet. You may need to wait some time if the proposal was just sent.',
         )
       }
 
-      const messageCID = await sendApproval(proposalTx as string)
+      const signatures: {
+        verifyClientCid: string
+        increaseAllowanceCid?: string
+      } = {
+        verifyClientCid: '',
+      }
+
+      const messageCID = await sendApproval(
+        proposalTx?.pendingVerifyClientTransaction,
+      )
 
       if (messageCID == null) {
         throw new Error(
           'Error sending proposal. Please try again or contact support.',
         )
       }
+
+      setMessage(
+        `Checking the 'verify client' transaction, it may take a few minutes, please wait... Do not close this window.`,
+      )
+
       const response = await getStateWaitMsg(messageCID)
+
       if (
         typeof response.data === 'object' &&
         response.data.ReturnDec.Applied &&
@@ -576,6 +652,46 @@ const useApplicationActions = (
           `Datacap allocation transaction failed on chain. Application reverted to ReadyToSign. Please try again. Error code: ${response.data.ReturnDec.Code}`,
         )
       }
+
+      signatures.verifyClientCid = messageCID
+
+      if (
+        !proposalTx?.pendingIncreaseAllowanceTransaction &&
+        initialApplication['Client Contract Address']
+      ) {
+        throw new Error(
+          'This increase allowance is not proposed yet. You may need to wait some time if the proposal was just sent.',
+        )
+      } else {
+        const increaseMessageCID = await sendApproval(
+          proposalTx?.pendingIncreaseAllowanceTransaction,
+        )
+
+        if (messageCID == null) {
+          throw new Error(
+            'Error sending proposal. Please try again or contact support.',
+          )
+        }
+
+        setMessage(
+          `Checking the 'verify client' transaction, it may take a few minutes, please wait... Do not close this window.`,
+        )
+
+        const response = await getStateWaitMsg(messageCID)
+
+        if (
+          typeof response.data === 'object' &&
+          response.data.ReturnDec.Applied &&
+          response.data.ReturnDec.Code !== 0
+        ) {
+          throw new Error(
+            `Datacap increase allowance transaction failed on chain. Application reverted to ReadyToSign. Please try again. Error code: ${response.data.ReturnDec.Code}`,
+          )
+        }
+
+        signatures.increaseAllowanceCid = increaseMessageCID
+      }
+
       return await postApplicationApproval(
         initialApplication.ID,
         requestId,
@@ -583,7 +699,7 @@ const useApplicationActions = (
         owner,
         repo,
         activeAddress,
-        messageCID,
+        signatures,
       )
     },
     {
@@ -712,7 +828,7 @@ const useApplicationActions = (
         }
 
         setMessage(
-          `Checking the '${proposalTx.cidName}' transaction, It may take a few minutes, please wait... Do not close this window.`,
+          `Checking the '${proposalTx.cidName}' transaction, It may take several seconds, please wait...`,
         )
 
         const response = await getStateWaitMsg(messageCID)
