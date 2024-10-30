@@ -166,7 +166,6 @@ const AppInfoCard: React.FC<ComponentProps> = ({
     ),
   })
 
-  debugger
   const router = useRouter()
 
   // const allocationRequests = application?.['Allocation Requests'] ?? []
