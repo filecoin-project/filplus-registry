@@ -573,40 +573,31 @@ export const cacheRenewal = async (
 
 export const postChangeAllowedSPs = async (
   id: string,
-  requestId: string,
   userName: string,
   owner: string,
   repo: string,
   address: string,
   signatures: {
     maxDeviationCid?: string
-    allowedSpCid?: string
-    disallowedSpCid?: string
+    allowedSpsCids?: { [key in string]: string[] }
+    removedSpsCids?: { [key in string]: string[] }
   },
+  availableAllowedSpsData: string[],
   maxDeviationData?: string,
-  allowedSpsData?: string[],
-  disallowedSpsData?: string[],
 ): Promise<Application | undefined> => {
   try {
     const { data } = await apiClient.post(
       `verifier/application/propose_storage_providers`,
       {
-        request_id: requestId,
-        max_deviation_data: maxDeviationData
-          ? `${maxDeviationData}%`
-          : undefined,
-        allowed_sp_data: allowedSpsData,
-        disallowed_spa_data: disallowedSpsData,
+        max_deviation: maxDeviationData ? `${maxDeviationData}%` : undefined,
+        allowed_sps: availableAllowedSpsData.map((x) => Number(x)),
         owner,
         repo,
         signer: {
           signing_address: address,
-          created_at: getCurrentDate(),
-          message_cids: {
-            max_deviation_cid: signatures.maxDeviationCid,
-            allowed_sp_data_cid: signatures.allowedSpCid,
-            disallowed_sp_data_cid: signatures.disallowedSpCid,
-          },
+          max_deviation_cid: signatures.maxDeviationCid,
+          allowed_sps_cids: signatures.allowedSpsCids,
+          removed_allowed_sps_cids: signatures.removedSpsCids,
         },
       },
       {
@@ -635,8 +626,8 @@ export const postChangeAllowedSPsApproval = async (
   address: string,
   signatures: {
     maxDeviationCid?: string
-    allowedSpCid?: string
-    disallowedSpCid?: string
+    allowedSpsCids?: { [key in string]: string[] }
+    removedSpsCids?: { [key in string]: string[] }
   },
 ): Promise<Application | undefined> => {
   try {
@@ -648,12 +639,9 @@ export const postChangeAllowedSPsApproval = async (
         repo,
         signer: {
           signing_address: address,
-          created_at: getCurrentDate(),
-          message_cids: {
-            max_deviation_cid: signatures.maxDeviationCid,
-            allowed_sp_data_cid: signatures.allowedSpCid,
-            disallowed_sp_data_cid: signatures.disallowedSpCid,
-          },
+          max_deviation_cid: signatures.maxDeviationCid,
+          allowed_sps_cids: signatures.allowedSpsCids,
+          removed_allowed_sps_cids: signatures.removedSpsCids,
         },
       },
       {

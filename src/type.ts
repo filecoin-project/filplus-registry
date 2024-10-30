@@ -24,6 +24,7 @@ export interface Application {
   owner: string
   fullSpan?: boolean
   'Client Contract Address': string | null
+  'Storage Providers Change Requests': StorageProvidersChangeRequest[]
 }
 
 export interface Allocation {
@@ -62,6 +63,7 @@ export interface Lifecycle {
     | 'Granted'
     | 'TotalDatacapReached'
     | 'Error'
+    | 'ChangingSp'
   'Validated At': string
   'Validated By': string
   Active: boolean
@@ -86,6 +88,22 @@ export interface Signer {
   'Signing Address': string
   'Created At': string
   'Github Username': string
+  'Set Max Deviation CID': string | undefined
+  'Add Allowed Storage Providers CID': { [key in string]: string[] } | undefined
+  'Remove Allowed Storage Providers CID':
+    | { [key in string]: string[] }
+    | undefined
+}
+
+export interface StorageProvidersChangeRequest {
+  ID: string
+  'Created At': string
+  'Updated At': string
+  Active: boolean
+  Signers: Signer[]
+  'Allowed Storage Providers': string[]
+  'Removed Storage Providers': string[]
+  'Max Deviation': string
 }
 
 export interface IWallet {

@@ -344,7 +344,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
       return
     }
 
-    if (isApiCalling) {
+    if (isApiCalling && application.Lifecycle.State !== 'ChangingSp') {
       setButtonText('Processing...')
       return
     }
@@ -822,6 +822,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
     clientContractAddress: string,
     addedSPs: string[],
     removedSPs: string[],
+    newAvailableResult: string[],
     maxDeviation?: string,
   ): Promise<void> => {
     try {
@@ -838,17 +839,18 @@ const AppInfoCard: React.FC<ComponentProps> = ({
         userName
       ) {
         await mutationChangeAllowedSPs.mutateAsync({
-          requestId,
-          userName: 'string',
+          userName,
           clientAddress: client,
           contractAddress: clientContractAddress,
           allowedSps: addedSPs,
           disallowedSPs: removedSPs,
+          newAvailableResult,
           maxDeviation,
         })
       }
     } catch (error) {
       console.log(error)
+      handleMutationError(error as Error)
     } finally {
       setApiCalling(false)
     }
@@ -857,15 +859,16 @@ const AppInfoCard: React.FC<ComponentProps> = ({
   const handleApproveAllowedSPs = async (): Promise<void> => {
     try {
       setApiCalling(true)
-      const requestId = application['Allocation Requests'].find(
-        (alloc) => alloc.Active,
-      )?.ID
+
+      const activeRequest = application[
+        'Storage Providers Change Requests'
+      ].find((requests) => requests.Active)
 
       const userName = session.data?.user?.githubUsername
 
-      if (requestId != null && userName != null) {
+      if (activeRequest?.ID != null && userName != null) {
         const res = await mutationChangeAllowedSPsApproval.mutateAsync({
-          requestId,
+          activeRequest,
           userName,
         })
 
@@ -1049,8 +1052,32 @@ const AppInfoCard: React.FC<ComponentProps> = ({
                         application['Client Contract Address']
                       }
                       initDeviation="10"
+                      isApiCalling={isApiCalling}
+                      setApiCalling={setApiCalling}
                     />
                   </div>
+                )}
+
+              {!walletConnected &&
+                currentActorType === LDNActorType.Verifier &&
+                ![
+                  'KYCRequested',
+                  'Submitted',
+                  'ChangesRequested',
+                  'AdditionalInfoRequired',
+                  'AdditionalInfoSubmitted',
+                ].includes(application?.Lifecycle?.State) && (
+                  <Button
+                    onClick={() => void handleConnectLedger()}
+                    disabled={
+                      isWalletConnecting ||
+                      isApiCalling ||
+                      ['Submitted'].includes(application.Lifecycle.State)
+                    }
+                    className="bg-blue-500 text-white rounded-lg px-4 py-2 hover:bg-blue-600"
+                  >
+                    Connect Ledger
+                  </Button>
                 )}
 
               {LDNActorType.Verifier === currentActorType &&
@@ -1062,7 +1089,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
                   <div className="flex gap-2">
                     <Button
                       onClick={() => {
-                        void handleApproveAllowedSPs
+                        void handleApproveAllowedSPs()
                       }}
                       disabled={isApiCalling}
                       style={{
@@ -1168,28 +1195,6 @@ const AppInfoCard: React.FC<ComponentProps> = ({
                             {buttonText}
                           </Button>
                         </>
-                      )}
-
-                    {!walletConnected &&
-                      currentActorType === LDNActorType.Verifier &&
-                      ![
-                        'KYCRequested',
-                        'Submitted',
-                        'ChangesRequested',
-                        'AdditionalInfoRequired',
-                        'AdditionalInfoSubmitted',
-                      ].includes(application?.Lifecycle?.State) && (
-                        <Button
-                          onClick={() => void handleConnectLedger()}
-                          disabled={
-                            isWalletConnecting ||
-                            isApiCalling ||
-                            ['Submitted'].includes(application.Lifecycle.State)
-                          }
-                          className="bg-blue-500 text-white rounded-lg px-4 py-2 hover:bg-blue-600"
-                        >
-                          Connect Ledger
-                        </Button>
                       )}
                   </>
                 ) : (

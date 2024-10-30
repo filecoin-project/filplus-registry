@@ -15,7 +15,12 @@ import {
   triggerSSA,
 } from '@/lib/apiClient'
 import { getStateWaitMsg } from '@/lib/glifApi'
-import { AllocatorTypeEnum, type Application, type RefillUnit } from '@/type'
+import {
+  AllocatorTypeEnum,
+  type StorageProvidersChangeRequest,
+  type Application,
+  type RefillUnit,
+} from '@/type'
 import { useMemo, useState } from 'react'
 import {
   useMutation,
@@ -78,12 +83,12 @@ interface ApplicationActions {
     Application | undefined,
     unknown,
     {
-      requestId: string
       userName: string
       clientAddress: string
       contractAddress: string
       allowedSps: string[]
       disallowedSPs: string[]
+      newAvailableResult: string[]
       maxDeviation?: string
     },
     unknown
@@ -97,7 +102,7 @@ interface ApplicationActions {
   mutationChangeAllowedSPsApproval: UseMutationResult<
     Application | undefined,
     unknown,
-    { requestId: string; userName: string },
+    { activeRequest: StorageProvidersChangeRequest; userName: string },
     unknown
   >
   mutationProposal: UseMutationResult<
@@ -439,16 +444,16 @@ const useApplicationActions = (
     unknown
   >(
     async ({ requestId, userName, allocationAmount }) => {
+      setMessage(`Searching the pending transactions...`)
+
       let clientAddress =
         (process.env.NEXT_PUBLIC_MODE === 'development' ? 't' : 'f') +
         initialApplication.Lifecycle['On Chain Address'].substring(1)
 
       let proposalAllocationAmount = ''
-      let isClientContractAddress = false
 
       if (initialApplication['Client Contract Address']) {
         clientAddress = initialApplication['Client Contract Address']
-        isClientContractAddress = true
       }
 
       if (allocationAmount) {
@@ -468,7 +473,7 @@ const useApplicationActions = (
         clientAddress,
         proposalAllocationAmount,
         allocatorType,
-        isClientContractAddress,
+        !!initialApplication['Client Contract Address'],
       )
 
       if (proposalTx?.pendingVerifyClientTransaction) {
@@ -492,7 +497,7 @@ const useApplicationActions = (
       }
 
       setMessage(
-        'Checking proposal transaction, It may take several seconds, please wait...',
+        `Checking the 'verify client' transaction, it may take a few minutes, please wait... Do not close this window.`,
       )
 
       const response = await getStateWaitMsg(messageCID)
@@ -526,7 +531,7 @@ const useApplicationActions = (
         }
 
         setMessage(
-          'Checking increase allowance transaction, It may take several seconds, please wait...',
+          `Checking the 'increase allowance' transaction, it may take a few minutes, please wait... Do not close this window.`,
         )
 
         const increaseResponse = await getStateWaitMsg(increaseAllowanceCID)
@@ -541,8 +546,6 @@ const useApplicationActions = (
           )
         }
       }
-
-      setMessage(`Transaction sent successfully. CID: ${messageCID}`)
 
       return await postApplicationProposal(
         initialApplication.ID,
@@ -581,17 +584,15 @@ const useApplicationActions = (
     unknown
   >(
     async ({ requestId, userName }) => {
-      let clientAddress = getClientAddress()
-      let isClientContractAddress = false
+      setMessage(`Searching the pending transactions...`)
 
-      const datacap = initialApplication['Allocation Requests'].find(
+      const clientAddress = getClientAddress()
+
+      const activeRequest = initialApplication['Allocation Requests'].find(
         (alloc) => alloc.Active,
-      )?.['Allocation Amount']
+      )
 
-      if (initialApplication['Client Contract Address']) {
-        clientAddress = initialApplication['Client Contract Address']
-        isClientContractAddress = true
-      }
+      const datacap = activeRequest?.['Allocation Amount']
 
       if (datacap == null) throw new Error('No active allocation found')
 
@@ -599,34 +600,13 @@ const useApplicationActions = (
         clientAddress,
         datacap,
         allocatorType,
-        isClientContractAddress,
       )
 
-      const isPendingTransaction = isClientContractAddress
-        ? proposalTx?.pendingIncreaseAllowanceTransaction &&
-          proposalTx.pendingVerifyClientTransaction
-        : proposalTx?.pendingVerifyClientTransaction
-
-      if (!isPendingTransaction) {
+      if (!proposalTx?.pendingVerifyClientTransaction) {
         throw new Error(
           'This datacap allocation is not proposed yet. You may need to wait some time if the proposal was just sent.',
         )
       }
-
-      const wait = async (ms: number): Promise<void> => {
-        await new Promise((resolve) => setTimeout(resolve, ms))
-      }
-
-      const transactions = [
-        {
-          cidName: 'verify client',
-          transaction: proposalTx?.pendingVerifyClientTransaction,
-        },
-        {
-          cidName: 'increase allowance',
-          transaction: proposalTx?.pendingIncreaseAllowanceTransaction,
-        },
-      ]
 
       const signatures: {
         verifyClientCid: string
@@ -635,31 +615,61 @@ const useApplicationActions = (
         verifyClientCid: '',
       }
 
-      for (let index = 0; index < transactions.length; index++) {
-        const proposalTx = transactions[index]
+      const messageCID = await sendApproval(
+        proposalTx?.pendingVerifyClientTransaction,
+      )
 
-        setMessage(
-          `Preparing the approval of ${proposalTx.cidName} transaction...`,
+      if (messageCID == null) {
+        throw new Error(
+          'Error sending proposal. Please try again or contact support.',
         )
+      }
 
-        await wait(3000)
+      setMessage(
+        `Checking the 'verify client' transaction, it may take a few minutes, please wait... Do not close this window.`,
+      )
 
-        const messageCID = await sendApproval(proposalTx.transaction)
+      const response = await getStateWaitMsg(messageCID)
+
+      if (
+        typeof response.data === 'object' &&
+        response.data.ReturnDec.Applied &&
+        response.data.ReturnDec.Code !== 0
+      ) {
+        await postRevertApplicationToReadyToSign(
+          userName,
+          initialApplication.ID,
+          owner,
+          repo,
+        )
+        // After changing the error message, please check the handleClose() function and adapt the changes
+        throw new Error(
+          `Datacap allocation transaction failed on chain. Application reverted to ReadyToSign. Please try again. Error code: ${response.data.ReturnDec.Code}`,
+        )
+      }
+
+      signatures.verifyClientCid = messageCID
+
+      if (
+        !proposalTx?.pendingIncreaseAllowanceTransaction &&
+        initialApplication['Client Contract Address']
+      ) {
+        throw new Error(
+          'This increase allowance is not proposed yet. You may need to wait some time if the proposal was just sent.',
+        )
+      } else {
+        const increaseMessageCID = await sendApproval(
+          proposalTx?.pendingIncreaseAllowanceTransaction,
+        )
 
         if (messageCID == null) {
           throw new Error(
-            `Error sending ${proposalTx.cidName}. Please try again or contact support.`,
+            'Error sending proposal. Please try again or contact support.',
           )
         }
 
-        if (proposalTx.cidName === 'verify client') {
-          signatures.verifyClientCid = messageCID
-        } else {
-          signatures.increaseAllowanceCid = messageCID
-        }
-
         setMessage(
-          `Checking ${proposalTx.cidName} transaction, It may several second, please wait...`,
+          `Checking the 'verify client' transaction, it may take a few minutes, please wait... Do not close this window.`,
         )
 
         const response = await getStateWaitMsg(messageCID)
@@ -669,16 +679,12 @@ const useApplicationActions = (
           response.data.ReturnDec.Applied &&
           response.data.ReturnDec.Code !== 0
         ) {
-          await postRevertApplicationToReadyToSign(
-            userName,
-            initialApplication.ID,
-            owner,
-            repo,
-          )
           throw new Error(
-            `Datacap allocation transaction failed on chain. Application reverted to ReadyToSign. Please try again. Error code: ${response.data.ReturnDec.Code}`,
+            `Datacap increase allowance transaction failed on chain. Application reverted to ReadyToSign. Please try again. Error code: ${response.data.ReturnDec.Code}`,
           )
         }
+
+        signatures.increaseAllowanceCid = increaseMessageCID
       }
 
       return await postApplicationApproval(
@@ -706,24 +712,24 @@ const useApplicationActions = (
     Application | undefined,
     Error,
     {
-      requestId: string
       userName: string
       clientAddress: string
       contractAddress: string
       maxDeviation?: string
       allowedSps: string[]
       disallowedSPs: string[]
+      newAvailableResult: string[]
     },
     unknown
   >(
     async ({
-      requestId,
       userName,
       clientAddress,
       contractAddress,
       maxDeviation,
       allowedSps,
       disallowedSPs,
+      newAvailableResult,
     }) => {
       const signatures = await submitClientAllowedSpsAndMaxDeviation(
         clientAddress,
@@ -735,15 +741,13 @@ const useApplicationActions = (
 
       return await postChangeAllowedSPs(
         initialApplication.ID,
-        requestId,
         userName,
         owner,
         repo,
         activeAddress,
         signatures,
+        newAvailableResult,
         maxDeviation,
-        allowedSps,
-        disallowedSPs,
       )
     },
     {
@@ -753,6 +757,7 @@ const useApplicationActions = (
       },
       onError: () => {
         setApiCalling(false)
+        setMessage(null)
       },
     },
   )
@@ -760,29 +765,43 @@ const useApplicationActions = (
   const mutationChangeAllowedSPsApproval = useMutation<
     Application | undefined,
     unknown,
-    { requestId: string; userName: string },
+    { activeRequest: StorageProvidersChangeRequest; userName: string },
     unknown
   >(
-    async ({ requestId, userName }) => {
+    async ({ activeRequest, userName }) => {
+      setMessage(`Searching the pending transactions...`)
+
       const clientAddress = getClientAddress()
-      const datacap = initialApplication['Allocation Requests'].find(
-        (alloc) => alloc.Active,
-      )?.['Allocation Amount']
 
-      if (datacap == null) throw new Error('No active allocation found')
+      const addedProviders = activeRequest?.Signers.find(
+        (x) => x['Add Allowed Storage Providers CID'],
+      )?.['Add Allowed Storage Providers CID']
 
-      const proposalTxs = await getChangeSpsProposalTxs(clientAddress)
+      const removedProviders = activeRequest?.Signers.find(
+        (x) => x['Remove Allowed Storage Providers CID'],
+      )?.['Remove Allowed Storage Providers CID']
+
+      const maxDeviation = activeRequest['Max Deviation']
+        ? activeRequest['Max Deviation'].split('%')[0]
+        : undefined
+
+      const proposalTxs = await getChangeSpsProposalTxs(
+        clientAddress,
+        maxDeviation,
+        addedProviders,
+        removedProviders,
+      )
 
       if (!proposalTxs) {
         throw new Error(
-          'This datacap allocation is not proposed to change allowed SPs yet. You may need to wait some time if the proposal was just sent.',
+          'Transactions not found. You may need to wait some time if the proposal was just sent.',
         )
       }
 
       const signatures: {
         maxDeviationCid?: string
-        allowedSpCid?: string
-        disallowedSpCid?: string
+        allowedSpsCids?: { [key in string]: string[] }
+        removedSpsCids?: { [key in string]: string[] }
       } = {}
 
       const wait = async (ms: number): Promise<void> => {
@@ -792,19 +811,19 @@ const useApplicationActions = (
       for (let index = 0; index < proposalTxs.length; index++) {
         const proposalTx = proposalTxs[index]
 
-        setMessage(`Preparing the ${proposalTx.cidName} transaction...`)
+        setMessage(`Preparing the '${proposalTx.cidName}' transaction...`)
 
-        await wait(3000)
+        await wait(2000)
         const messageCID = await sendApproval(proposalTx.tx)
 
         if (messageCID == null) {
           throw new Error(
-            `Error sending ${proposalTx.cidName}. Please try again or contact support.`,
+            `Error sending the'${proposalTx.cidName}' transaction. Please try again or contact support.`,
           )
         }
 
         setMessage(
-          `Checking increase ${proposalTx.cidName}, It may several second, please wait...`,
+          `Checking the '${proposalTx.cidName}' transaction, It may take several seconds, please wait...`,
         )
 
         const response = await getStateWaitMsg(messageCID)
@@ -818,11 +837,40 @@ const useApplicationActions = (
             `Change allowed SPs transaction failed on chain. Error code: ${response.data.ReturnDec.Code}`,
           )
         }
+
+        switch (proposalTx.cidName) {
+          case 'max deviation':
+            signatures.maxDeviationCid = messageCID
+            break
+
+          case 'add allowed Sps': {
+            if (!signatures.allowedSpsCids) {
+              signatures.allowedSpsCids = {}
+            }
+
+            signatures.allowedSpsCids[messageCID] = proposalTx.decodedPacked
+              ? proposalTx.decodedPacked
+              : ['']
+
+            break
+          }
+          case 'remove allowed Sps': {
+            if (!signatures.removedSpsCids) {
+              signatures.removedSpsCids = {}
+            }
+
+            signatures.removedSpsCids[messageCID] = proposalTx.decodedPacked
+              ? proposalTx.decodedPacked
+              : ['']
+
+            break
+          }
+        }
       }
 
       return await postChangeAllowedSPsApproval(
         initialApplication.ID,
-        requestId,
+        activeRequest.ID,
         userName,
         owner,
         repo,
