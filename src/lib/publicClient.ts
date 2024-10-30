@@ -124,7 +124,7 @@ export class FilecoinClient implements IFilecoinClient {
   ): Promise<Address | null> {
     const status: Address = await this.client.request({
       method: 'Filecoin.FilecoinAddressToEthAddress',
-      params: [address, 'latest'],
+      params: [address, null],
     })
 
     return status
