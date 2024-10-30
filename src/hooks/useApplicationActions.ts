@@ -586,7 +586,11 @@ const useApplicationActions = (
     async ({ requestId, userName }) => {
       setMessage(`Searching the pending transactions...`)
 
-      const clientAddress = getClientAddress()
+      let clientAddress = getClientAddress()
+
+      if (initialApplication['Client Contract Address']) {
+        clientAddress = initialApplication['Client Contract Address']
+      }
 
       const activeRequest = initialApplication['Allocation Requests'].find(
         (alloc) => alloc.Active,
@@ -600,6 +604,7 @@ const useApplicationActions = (
         clientAddress,
         datacap,
         allocatorType,
+        !!initialApplication['Client Contract Address'],
       )
 
       if (!proposalTx?.pendingVerifyClientTransaction) {
@@ -818,7 +823,7 @@ const useApplicationActions = (
 
         if (messageCID == null) {
           throw new Error(
-            `Error sending the'${proposalTx.cidName}' transaction. Please try again or contact support.`,
+            `Error sending the '${proposalTx.cidName}' transaction. Please try again or contact support.`,
           )
         }
 
