@@ -836,7 +836,7 @@ const useWallet = (): WalletState => {
           )
 
           setMessage(
-            `Checking the 'add allowed SPs' transaction, It may take several seconds, please wait...`,
+            `Checking the 'add allowed SPs' transaction, it may take a few minutes, please wait... Do not close this window.`,
           )
 
           await checkTransactionState(allowedSpsTransaction, 'add allowed SPs')
