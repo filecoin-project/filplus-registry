@@ -682,8 +682,7 @@ const useApplicationActions = (
 
       if (!proposalTxs) {
         throw new Error(
-          // TODO:
-          'This datacap allocation is not proposed to change allowed SPs yet. You may need to wait some time if the proposal was just sent.',
+          'Transaction not found. You may need to wait some time if the proposal was just sent.',
         )
       }
 
@@ -715,8 +714,8 @@ const useApplicationActions = (
           `Checking ${proposalTx.cidName} transaction, It may take several seconds, please wait...`,
         )
 
-        const response = await getStateWaitMsg(messageCID)
-
+        let response = await getStateWaitMsg(messageCID)        
+        
         if (
           typeof response.data === 'object' &&
           response.data.ReturnDec.Applied &&

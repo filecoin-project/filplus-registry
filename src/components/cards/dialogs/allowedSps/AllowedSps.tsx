@@ -125,7 +125,7 @@ export const AllowedSPs: React.FC<ComponentProps> = ({
       if (!clientConfig) {
         maxDeviationResult = maxDeviation
       }
-
+      setIsDialogOpen(false)
       await onSubmit(
         client,
         clientContractAddress,
@@ -137,7 +137,6 @@ export const AllowedSPs: React.FC<ComponentProps> = ({
     } catch (error) {
       console.log(error)
     } finally {
-      setIsDialogOpen(false)
       setData([''])
       setInitData([''])
       setApiCalling(false)

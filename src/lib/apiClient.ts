@@ -568,7 +568,7 @@ export const postChangeAllowedSPs = async (
   signatures: {
     maxDeviationCid?: string
     allowedSpsCids?: { [key in string]: string[] }
-    disallowedSpsCid?: { [key in string]: string[] }
+    removedSpsCids?: { [key in string]: string[] }
   },
   availableAllowedSpsData: string[],
   maxDeviationData?: string,
@@ -585,7 +585,7 @@ export const postChangeAllowedSPs = async (
           signing_address: address,
           max_deviation_cid: signatures.maxDeviationCid,
           allowed_sps_cids: signatures.allowedSpsCids,
-          removed_allowed_sps_cids: signatures.disallowedSpsCid,
+          removed_allowed_sps_cids: signatures.removedSpsCids,
         },
       },
       {
@@ -619,6 +619,7 @@ export const postChangeAllowedSPsApproval = async (
   },
 ): Promise<Application | undefined> => {
   try {
+    debugger
     const { data } = await apiClient.post(
       `verifier/application/approve_storage_providers`,
       {
@@ -628,8 +629,8 @@ export const postChangeAllowedSPsApproval = async (
         signer: {
           signing_address: address,
           max_deviation_cid: signatures.maxDeviationCid,
-          allowed_sp_data_cid: signatures.allowedSpsCids,
-          disallowed_sp_data_cid: signatures.removedSpsCids,
+          allowed_sps_cids: signatures.allowedSpsCids,
+          removed_allowed_sps_cids: signatures.removedSpsCids,
         },
       },
       {
