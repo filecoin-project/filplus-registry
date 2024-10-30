@@ -152,12 +152,12 @@ const AppInfoCard: React.FC<ComponentProps> = ({
 
   const router = useRouter()
 
-  // const allocationRequests = application?.['Allocation Requests'] ?? []
+  const allocationRequests = application?.['Allocation Requests'] ?? []
 
-  // const lastAllocationAmount =
-  //   allocationRequests?.[allocationRequests.length - 1]?.[
-  //     'Allocation Amount'
-  //   ] ?? 0
+  const lastAllocationAmount =
+    allocationRequests?.[allocationRequests.length - 1]?.[
+      'Allocation Amount'
+    ] ?? 0
 
   const isApplicationUpdatedLessThanOneMinuteAgo = useCallback((): boolean => {
     const currentTime = new Date(Date.now()).getTime()
@@ -445,13 +445,13 @@ const AppInfoCard: React.FC<ComponentProps> = ({
             } else {
               // check the balance here
 
-              // if (
-              //   lastAllocationAmount &&
-              //   anyToBytes(lastAllocationAmount) > allowance
-              // ) {
-              //   toast.error('Amount is bigger than the allowance')
-              //   return
-              // }
+              if (
+                lastAllocationAmount &&
+                anyToBytes(lastAllocationAmount) > allowance
+              ) {
+                toast.error('Amount is bigger than the allowance')
+                return
+              }
 
               await mutationProposal.mutateAsync({
                 requestId,
@@ -464,13 +464,13 @@ const AppInfoCard: React.FC<ComponentProps> = ({
           if (requestId != null && userName != null) {
             // check the balance here
 
-            // if (
-            //   lastAllocationAmount &&
-            //   anyToBytes(lastAllocationAmount) > allowance
-            // ) {
-            //   toast.error('Amount is bigger than the allowance')
-            //   return
-            // }
+            if (
+              lastAllocationAmount &&
+              anyToBytes(lastAllocationAmount) > allowance
+            ) {
+              toast.error('Amount is bigger than the allowance')
+              return
+            }
 
             const res = await mutationApproval.mutateAsync({
               requestId,
@@ -580,15 +580,15 @@ const AppInfoCard: React.FC<ComponentProps> = ({
       return
     }
 
-    // if (anyToBytes(allocationAmountConfig.amount) > allowance) {
-    //   toast.error('Amount is bigger than the allowance')
-    //   return
-    // }
+    if (anyToBytes(allocationAmountConfig.amount) > allowance) {
+      toast.error('Amount is bigger than the allowance')
+      return
+    }
 
-    // if (anyToBytes(allocationAmountConfig.amount) > remaining) {
-    //   toast.error('Amount is bigger than remaning')
-    //   return
-    // }
+    if (anyToBytes(allocationAmountConfig.amount) > remaining) {
+      toast.error('Amount is bigger than remaning')
+      return
+    }
 
     setApiCalling(true)
     const userName = session.data?.user?.githubUsername
