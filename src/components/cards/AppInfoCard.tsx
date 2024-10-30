@@ -1058,6 +1058,28 @@ const AppInfoCard: React.FC<ComponentProps> = ({
                   </div>
                 )}
 
+              {!walletConnected &&
+                currentActorType === LDNActorType.Verifier &&
+                ![
+                  'KYCRequested',
+                  'Submitted',
+                  'ChangesRequested',
+                  'AdditionalInfoRequired',
+                  'AdditionalInfoSubmitted',
+                ].includes(application?.Lifecycle?.State) && (
+                  <Button
+                    onClick={() => void handleConnectLedger()}
+                    disabled={
+                      isWalletConnecting ||
+                      isApiCalling ||
+                      ['Submitted'].includes(application.Lifecycle.State)
+                    }
+                    className="bg-blue-500 text-white rounded-lg px-4 py-2 hover:bg-blue-600"
+                  >
+                    Connect Ledger
+                  </Button>
+                )}
+
               {LDNActorType.Verifier === currentActorType &&
                 walletConnected &&
                 session?.data?.user?.name !== undefined &&
@@ -1173,28 +1195,6 @@ const AppInfoCard: React.FC<ComponentProps> = ({
                             {buttonText}
                           </Button>
                         </>
-                      )}
-
-                    {!walletConnected &&
-                      currentActorType === LDNActorType.Verifier &&
-                      ![
-                        'KYCRequested',
-                        'Submitted',
-                        'ChangesRequested',
-                        'AdditionalInfoRequired',
-                        'AdditionalInfoSubmitted',
-                      ].includes(application?.Lifecycle?.State) && (
-                        <Button
-                          onClick={() => void handleConnectLedger()}
-                          disabled={
-                            isWalletConnecting ||
-                            isApiCalling ||
-                            ['Submitted'].includes(application.Lifecycle.State)
-                          }
-                          className="bg-blue-500 text-white rounded-lg px-4 py-2 hover:bg-blue-600"
-                        >
-                          Connect Ledger
-                        </Button>
                       )}
                   </>
                 ) : (
