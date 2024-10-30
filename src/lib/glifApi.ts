@@ -167,9 +167,9 @@ export const getStateWaitMsg = async (
       (error as Error).message
     }`
 
-    if (errMessage.includes("too long")) {
-      return getStateWaitMsg(cid)
-    } 
+    if (errMessage.includes('too long')) {
+      return await getStateWaitMsg(cid)
+    }
     return {
       data: '',
       error: errMessage,

@@ -619,7 +619,6 @@ export const postChangeAllowedSPsApproval = async (
   },
 ): Promise<Application | undefined> => {
   try {
-    debugger
     const { data } = await apiClient.post(
       `verifier/application/approve_storage_providers`,
       {
