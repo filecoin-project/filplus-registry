@@ -492,7 +492,7 @@ const useApplicationActions = (
       }
 
       setMessage(
-        'Checking proposal transaction, It may several second, please wait...',
+        'Checking proposal transaction, It may take several seconds, please wait...',
       )
 
       const response = await getStateWaitMsg(messageCID)
@@ -526,7 +526,7 @@ const useApplicationActions = (
         }
 
         setMessage(
-          'Checking increase allowance transaction, It may several second, please wait...',
+          'Checking increase allowance transaction, It may take several seconds, please wait...',
         )
 
         const increaseResponse = await getStateWaitMsg(increaseAllowanceCID)
@@ -541,6 +541,8 @@ const useApplicationActions = (
           )
         }
       }
+
+      setMessage(`Transaction sent successfully. CID: ${messageCID}`)
 
       return await postApplicationProposal(
         initialApplication.ID,
