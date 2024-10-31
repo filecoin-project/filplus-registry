@@ -95,7 +95,7 @@ const ApplicationDetailPage: React.FC<ComponentProps> = ({
       <div className="p-10">
         <div className="mb-10">
           <AppInfoCard
-            application={data.application_file}
+            initialApplication={data.application_file}
             allocation={data.allocation}
             repo={repo}
             owner={owner}

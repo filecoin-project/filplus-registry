@@ -56,7 +56,7 @@ import AllocatorBalance from '../AllocatorBalance'
 import AllowedSps from './dialogs/allowedSps'
 
 interface ComponentProps {
-  application: Application
+  initialApplication: Application
   repo: string
   owner: string
   allocation?: Allocation
@@ -76,7 +76,7 @@ type DeviationType = 'contract' | 'directly'
  * @prop {UseSession} session - User session data.
  */
 const AppInfoCard: React.FC<ComponentProps> = ({
-  application: initialApplication,
+  initialApplication,
   repo,
   owner,
   allocation,
@@ -862,6 +862,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
   }
 
   const handleAllowedSPsSubmit = async (
+    application: Application,
     client: string,
     clientContractAddress: string,
     addedSPs: string[],
@@ -871,15 +872,11 @@ const AppInfoCard: React.FC<ComponentProps> = ({
   ): Promise<void> => {
     try {
       setApiCalling(true)
-      const requestId = application['Allocation Requests'].find(
-        (alloc) => alloc.Active,
-      )?.ID
 
       const userName = session.data?.user?.githubUsername
 
       if (
-        application.Lifecycle.State === 'ReadyToSign' &&
-        requestId &&
+        ['ReadyToSign', 'Granted'].includes(application.Lifecycle.State) &&
         userName
       ) {
         await mutationChangeAllowedSPs.mutateAsync({
@@ -891,6 +888,8 @@ const AppInfoCard: React.FC<ComponentProps> = ({
           newAvailableResult,
           maxDeviation,
         })
+      } else {
+        throw new Error('Application is incorrect state.')
       }
     } catch (error) {
       console.log(error)
@@ -1070,7 +1069,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
               <h2 className="text-xl font-bold">Additional info</h2>
             </CardHeader>
             <CardContent className="grid text-sm">
-              {[['SPs', availableAllowedSPs.join(',')]].map(
+              {[['Available allowed SPs', availableAllowedSPs.join(', ')]].map(
                 ([label, value], idx) => {
                   const rowStyles = getRowStyles(idx)
                   return (
@@ -1121,6 +1120,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
                 ) && (
                   <div className="flex gap-2">
                     <AllowedSps
+                      application={application}
                       onSubmit={handleAllowedSPsSubmit}
                       client={application.Lifecycle['On Chain Address']}
                       clientContractAddress={

@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import useWallet from '@/hooks/useWallet'
+import { type Application } from '@/type'
 import { Add, Delete } from '@mui/icons-material'
 import {
   Dialog,
@@ -18,7 +19,9 @@ import { useEffect, useState } from 'react'
 import { useQuery } from 'react-query'
 
 interface ComponentProps {
+  application: Application
   onSubmit: (
+    application: Application,
     client: string,
     clientContractAddress: string,
     added: string[],
@@ -34,6 +37,7 @@ interface ComponentProps {
 }
 
 export const AllowedSPs: React.FC<ComponentProps> = ({
+  application,
   client,
   clientContractAddress,
   initDeviation,
@@ -129,6 +133,7 @@ export const AllowedSPs: React.FC<ComponentProps> = ({
       setIsDialogOpen(false)
 
       await onSubmit(
+        application,
         client,
         clientContractAddress,
         added,
@@ -139,8 +144,8 @@ export const AllowedSPs: React.FC<ComponentProps> = ({
     } catch (error) {
       console.log(error)
     } finally {
-      setData([''])
-      setInitData([''])
+      setData(availableAllowedSPs ?? [''])
+      setInitData(availableAllowedSPs ?? [''])
       setApiCalling(false)
     }
   }
