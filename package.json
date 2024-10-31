@@ -1,6 +1,6 @@
 {
   "name": "filecoin-registry",
-  "version": "1.2.6-staging-fidl",
+  "version": "1.2.7",
   "private": true,
   "scripts": {
     "dev": "next dev",
