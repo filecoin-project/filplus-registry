@@ -144,13 +144,14 @@ export const AllowedSPs: React.FC<ComponentProps> = ({
     } catch (error) {
       console.log(error)
     } finally {
-      setData([''])
-      setInitData([''])
+      setData(availableAllowedSPs ?? [''])
+      setInitData(availableAllowedSPs ?? [''])
       setApiCalling(false)
     }
   }
 
   useEffect(() => {
+    debugger
     if (availableAllowedSPs?.length) {
       setData(availableAllowedSPs)
       setInitData(availableAllowedSPs)
