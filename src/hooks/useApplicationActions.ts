@@ -14,12 +14,15 @@ import {
   postRevertApplicationToReadyToSign,
   triggerSSA,
 } from '@/lib/apiClient'
-import { getStateWaitMsg } from '@/lib/glifApi'
+import {
+  getEvmAddressFromFilecoinAddress,
+  getStateWaitMsg,
+} from '@/lib/glifApi'
 import {
   AllocatorTypeEnum,
-  type StorageProvidersChangeRequest,
   type Application,
   type RefillUnit,
+  type StorageProvidersChangeRequest,
 } from '@/type'
 import { useMemo, useState } from 'react'
 import {
@@ -450,11 +453,23 @@ const useApplicationActions = (
         (process.env.NEXT_PUBLIC_MODE === 'development' ? 't' : 'f') +
         initialApplication.Lifecycle['On Chain Address'].substring(1)
 
+      const clientContractAddress =
+        initialApplication?.['Client Contract Address']
+
+      let evmClientAddress
+
+      if (clientContractAddress) {
+        const evmClientAddressResult =
+          await getEvmAddressFromFilecoinAddress(clientAddress)
+
+        evmClientAddress = evmClientAddressResult.data
+      }
+
       let proposalAllocationAmount = ''
 
-      if (initialApplication['Client Contract Address']) {
-        clientAddress = initialApplication['Client Contract Address']
-      }
+      let addressToGrantDataCap = clientContractAddress
+        ? clientContractAddress
+        : clientAddress
 
       if (allocationAmount) {
         proposalAllocationAmount = allocationAmount
@@ -470,10 +485,10 @@ const useApplicationActions = (
       }
 
       const proposalTx = await getProposalTx(
-        clientAddress,
+        addressToGrantDataCap,
         proposalAllocationAmount,
         allocatorType,
-        !!initialApplication['Client Contract Address'],
+        !!clientContractAddress,
       )
 
       if (proposalTx?.pendingVerifyClientTransaction) {
@@ -486,7 +501,7 @@ const useApplicationActions = (
           typeof selectedAllocator !== 'string'
             ? selectedAllocator?.address ?? ''
             : '',
-        clientAddress,
+        clientAddress: addressToGrantDataCap,
         proposalAllocationAmount,
       })
 
@@ -514,13 +529,10 @@ const useApplicationActions = (
 
       let increaseAllowanceCID
 
-      if (initialApplication['Client Contract Address']) {
+      if (clientContractAddress && evmClientAddress) {
         increaseAllowanceCID = await sendClientIncreaseAllowance({
-          contractAddress:
-            typeof selectedAllocator !== 'string'
-              ? selectedAllocator?.address ?? ''
-              : '',
-          clientAddress,
+          contractAddress: clientContractAddress,
+          clientAddress: evmClientAddress,
           proposalAllocationAmount,
         })
 

@@ -583,15 +583,12 @@ const useWallet = (): WalletState => {
         'function increaseAllowance(address client, uint256 amount)',
       ])
 
-      const evmClientAddress =
-        await getEvmAddressFromFilecoinAddress(clientAddress)
-
       const bytesDatacap = Math.floor(anyToBytes(proposalAllocationAmount))
       if (bytesDatacap === 0) throw new Error("Can't grant 0 datacap.")
 
       const calldataHex: Hex = encodeFunctionData({
         abi,
-        args: [evmClientAddress.data, BigInt(bytesDatacap)],
+        args: [clientAddress as `0x${string}`, BigInt(bytesDatacap)],
       })
 
       const calldata = Buffer.from(calldataHex.substring(2), 'hex')
@@ -989,7 +986,7 @@ const useWallet = (): WalletState => {
           const countMessage =
             allowedChunkedArray.length === 1
               ? '...'
-              : `${i} / ${allowedChunkedArray.length}`
+              : `${i + 1} / ${allowedChunkedArray.length}`
 
           setMessage(
             `Preparing the 'add allowed SPs' transactions ${countMessage}`,
@@ -1032,7 +1029,7 @@ const useWallet = (): WalletState => {
           const countMessage =
             disallowedChunkedArray.length === 1
               ? '...'
-              : `${i} / ${disallowedChunkedArray.length}`
+              : `${i + 1} / ${disallowedChunkedArray.length}`
 
           setMessage(
             `Preparing the 'remove allowed SPs' transactions ${countMessage}`,
