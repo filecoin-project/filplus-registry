@@ -448,8 +448,8 @@ const useApplicationActions = (
   >(
     async ({ requestId, userName, allocationAmount }) => {
       setMessage(`Searching the pending transactions...`)
-
-      let clientAddress =
+      debugger
+      const clientAddress =
         (process.env.NEXT_PUBLIC_MODE === 'development' ? 't' : 'f') +
         initialApplication.Lifecycle['On Chain Address'].substring(1)
 
@@ -467,9 +467,7 @@ const useApplicationActions = (
 
       let proposalAllocationAmount = ''
 
-      let addressToGrantDataCap = clientContractAddress
-        ? clientContractAddress
-        : clientAddress
+      const addressToGrantDataCap = clientContractAddress ?? clientAddress
 
       if (allocationAmount) {
         proposalAllocationAmount = allocationAmount
