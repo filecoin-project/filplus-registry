@@ -1069,28 +1069,28 @@ const AppInfoCard: React.FC<ComponentProps> = ({
               <h2 className="text-xl font-bold">Additional info</h2>
             </CardHeader>
             <CardContent className="grid text-sm">
-              {[['Available allowed SPs', availableAllowedSPs.join(', ')]].map(
-                ([label, value], idx) => {
-                  const rowStyles = getRowStyles(idx)
-                  return (
-                    <div
-                      key={idx}
-                      className={`flex items-center p-2 justify-between ${rowStyles}`}
-                    >
-                      <p className="text-gray-600">{label}</p>
-                      {label === 'Status' ? (
-                        <span
-                          className={`ml-2 px-2 py-1 rounded text-xs ${stateClass}`}
-                        >
-                          {value}
-                        </span>
-                      ) : (
-                        <p className="font-medium text-gray-800">{value}</p>
-                      )}
-                    </div>
-                  )
-                },
-              )}
+              {[
+                ['Approved storage providers', availableAllowedSPs.join(', ')],
+              ].map(([label, value], idx) => {
+                const rowStyles = getRowStyles(idx)
+                return (
+                  <div
+                    key={idx}
+                    className={`flex items-center p-2 justify-between ${rowStyles}`}
+                  >
+                    <p className="text-gray-600">{label}</p>
+                    {label === 'Status' ? (
+                      <span
+                        className={`ml-2 px-2 py-1 rounded text-xs ${stateClass}`}
+                      >
+                        {value}
+                      </span>
+                    ) : (
+                      <p className="font-medium text-gray-800">{value}</p>
+                    )}
+                  </div>
+                )
+              })}
             </CardContent>
           </div>
         ) : null}
