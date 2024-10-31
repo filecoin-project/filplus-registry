@@ -74,7 +74,7 @@ interface WalletState {
     clientAddress: string,
     contractAddress: string,
   ) => Promise<string[]>
-  getClientAllowance: (
+  getAllowanceFromClientContract: (
     clientAddress: string,
     contractAddress: string,
   ) => Promise<bigint>
@@ -753,7 +753,7 @@ const useWallet = (): WalletState => {
     [],
   )
 
-  const getClientAllowance = useCallback(
+  const getAllowanceFromClientContract = useCallback(
     async (client: string, contractAddress: string): Promise<bigint> => {
       const abi = parseAbi([
         'function allowances(address client) external view returns (uint256)',
@@ -1093,7 +1093,7 @@ const useWallet = (): WalletState => {
     getClientConfig,
     getChangeSpsProposalTxs,
     sendClientIncreaseAllowance,
-    getClientAllowance,
+    getAllowanceFromClientContract,
   }
 }
 

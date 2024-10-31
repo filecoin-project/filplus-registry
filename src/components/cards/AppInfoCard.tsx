@@ -107,7 +107,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
     mutationChangeAllowedSPsApproval,
   } = useApplicationActions(initialApplication, repo, owner)
 
-  const { getClientAllowance } = useWallet()
+  const { getAllowanceFromClientContract } = useWallet()
   const [buttonText, setButtonText] = useState('')
   const [modalMessage, setModalMessage] = useState<ReactNode | null>(null)
   const [error, setError] = useState<boolean>(false)
@@ -210,7 +210,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
       const response = await getAllowanceForClient(contractAddress)
 
       if (application['Client Contract Address']) {
-        clientAllowance = await getClientAllowance(
+        clientAllowance = await getAllowanceFromClientContract(
           address,
           application['Client Contract Address'],
         )
@@ -278,7 +278,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
   }, [
     application,
     isApplicationUpdatedLessThanOneMinuteAgo,
-    getClientAllowance,
+    getAllowanceFromClientContract,
   ])
 
   useEffect(() => {
