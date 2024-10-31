@@ -1069,7 +1069,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
               <h2 className="text-xl font-bold">Additional info</h2>
             </CardHeader>
             <CardContent className="grid text-sm">
-              {[['SPs', availableAllowedSPs.join(',')]].map(
+              {[['Available allowed SPs', availableAllowedSPs.join(', ')]].map(
                 ([label, value], idx) => {
                   const rowStyles = getRowStyles(idx)
                   return (

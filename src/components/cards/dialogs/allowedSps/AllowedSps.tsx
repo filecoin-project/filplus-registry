@@ -151,7 +151,6 @@ export const AllowedSPs: React.FC<ComponentProps> = ({
   }
 
   useEffect(() => {
-    debugger
     if (availableAllowedSPs?.length) {
       setData(availableAllowedSPs)
       setInitData(availableAllowedSPs)
