@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import useWallet from '@/hooks/useWallet'
-import { Application } from '@/type'
+import { type Application } from '@/type'
 import { Add, Delete } from '@mui/icons-material'
 import {
   Dialog,
