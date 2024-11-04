@@ -1481,7 +1481,13 @@ const AppInfoCard: React.FC<ComponentProps> = ({
           <div className="flex gap-3 items-center flex-col">
             {typeof selectedAllocator === 'object' &&
               selectedAllocator?.client_contract_address &&
-              selectedAllocator?.client_contract_address !== null && (
+              selectedAllocator?.client_contract_address !== null &&
+              [
+                'KYCRequested',
+                'Submitted',
+                'AdditionalInfoRequired',
+                'AdditionalInfoSubmitted',
+              ].includes(application?.Lifecycle?.State) && (
                 <div className="flex justify-items-center justify-between content-center items-center	w-full">
                   <FormControl>
                     <FormLabel id="demo-controlled-radio-buttons-group">
