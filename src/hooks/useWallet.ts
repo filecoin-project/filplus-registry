@@ -301,6 +301,9 @@ const useWallet = (): WalletState => {
           : undefined
       } else {
         for (const transaction of pendingTxs) {
+          if (!transaction.parsed?.params) {
+            continue
+          }
           const paramsHex: string = transaction.parsed.params.toString('hex')
           const dataHex: Hex = `0x${paramsHex}`
           let decodedData
