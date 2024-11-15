@@ -467,8 +467,6 @@ const useApplicationActions = (
 
       let proposalAllocationAmount = ''
 
-      const addressToGrantDataCap = clientContractAddress ?? clientAddress
-
       if (allocationAmount) {
         proposalAllocationAmount = allocationAmount
       } else {
@@ -483,15 +481,17 @@ const useApplicationActions = (
       }
 
       const proposalTx = await getProposalTx(
-        addressToGrantDataCap,
+        clientAddress,
         proposalAllocationAmount,
         allocatorType,
-        !!clientContractAddress,
+        clientContractAddress,
       )
 
       if (proposalTx?.pendingVerifyClientTransaction) {
         throw new Error('This datacap allocation is already proposed')
       }
+
+      const addressToGrantDataCap = clientContractAddress ?? clientAddress
 
       const messageCID = await sendProposal({
         allocatorType,
@@ -596,10 +596,11 @@ const useApplicationActions = (
     async ({ requestId, userName }) => {
       setMessage(`Searching the pending transactions...`)
 
-      let clientAddress = getClientAddress()
+      const clientAddress = getClientAddress()
 
+      let clientAddressAddress
       if (initialApplication['Client Contract Address']) {
-        clientAddress = initialApplication['Client Contract Address']
+        clientAddressAddress = initialApplication['Client Contract Address']
       }
 
       const activeRequest = initialApplication['Allocation Requests'].find(
@@ -614,7 +615,7 @@ const useApplicationActions = (
         clientAddress,
         datacap,
         allocatorType,
-        !!initialApplication['Client Contract Address'],
+        clientAddressAddress,
       )
 
       if (!proposalTx?.pendingVerifyClientTransaction) {
@@ -667,17 +668,17 @@ const useApplicationActions = (
 
       if (
         !proposalTx?.pendingIncreaseAllowanceTransaction &&
-        initialApplication['Client Contract Address']
+        clientAddressAddress
       ) {
         throw new Error(
           'This increase allowance is not proposed yet. You may need to wait some time if the proposal was just sent.',
         )
-      } else {
+      } else if (clientAddressAddress) {
         const increaseMessageCID = await sendApproval(
           proposalTx?.pendingIncreaseAllowanceTransaction,
         )
 
-        if (messageCID == null) {
+        if (increaseMessageCID == null) {
           throw new Error(
             'Error sending proposal. Please try again or contact support.',
           )
@@ -687,7 +688,7 @@ const useApplicationActions = (
           `Checking the 'verify client' transaction, it may take a few minutes, please wait... Do not close this window.`,
         )
 
-        const response = await getStateWaitMsg(messageCID)
+        const response = await getStateWaitMsg(increaseMessageCID)
 
         if (
           typeof response.data === 'object' &&
