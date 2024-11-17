@@ -12,7 +12,7 @@ interface ComponentProps {
 const AllocatorBalance: React.FC<ComponentProps> = ({ owner, repo }) => {
   const { allocators } = useAllocator()
   const { getAllocatorAllowanceFromContract } = useWallet()
-  const [balance, setBalance] = useState<number>(0)
+  const [balance, setBalance] = useState<number | null>(null)
   const [loading, setLoading] = useState<boolean>(false)
   const allocator = useMemo(
     () => allocators.find((a) => a.owner === owner && a.repo === repo),
