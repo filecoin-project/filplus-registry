@@ -49,7 +49,7 @@ interface WalletState {
     clientAddress: string,
     datacap: string,
     allocatorType: AllocatorTypeEnum,
-    isClientContractAddress?: boolean,
+    clientContractAddress?: string | null,
   ) => Promise<{
     pendingVerifyClientTransaction: any
     pendingIncreaseAllowanceTransaction: any
@@ -252,7 +252,7 @@ const useWallet = (): WalletState => {
       clientAddress: string,
       datacap: string,
       allocatorType: AllocatorTypeEnum,
-      isClientContractAddress?: boolean,
+      clientContractAddress?: string | null,
     ): Promise<{
       pendingVerifyClientTransaction: any
       pendingIncreaseAllowanceTransaction: any
@@ -261,9 +261,7 @@ const useWallet = (): WalletState => {
       if (multisigAddress == null) throw new Error('Multisig address not set.')
 
       const bytesDatacap = Math.floor(anyToBytes(datacap))
-      let evmClientContractAddress
       let pendingTxs
-
       try {
         pendingTxs = await wallet.api.pendingTransactions(multisigAddress)
       } catch (error) {
@@ -271,15 +269,6 @@ const useWallet = (): WalletState => {
         throw new Error(
           'An error with the lotus node occurred. Please reload. If the problem persists, contact support.',
         )
-      }
-
-      let pendingVerifyClientTransaction
-      let pendingIncreaseAllowanceTransaction
-
-      if (isClientContractAddress) {
-        evmClientContractAddress = (
-          await getEvmAddressFromFilecoinAddress(clientAddress)
-        ).data
       }
 
       const verifiedAbi = parseAbi([
@@ -290,33 +279,68 @@ const useWallet = (): WalletState => {
         'function increaseAllowance(address client, uint256 amount)',
       ])
 
-      if (allocatorType !== AllocatorTypeEnum.CONTRACT) {
-        const pendingForClient = pendingTxs?.filter(
-          (tx: any) =>
-            tx?.parsed?.params?.address === clientAddress &&
-            tx?.parsed?.params?.cap === BigInt(bytesDatacap),
-        )
-        pendingVerifyClientTransaction = pendingForClient.length
-          ? pendingForClient.at(-1)
-          : undefined
-      } else {
-        for (const transaction of pendingTxs) {
-          if (!transaction.parsed?.params) {
-            continue
-          }
-          const paramsHex: string = transaction.parsed.params.toString('hex')
-          const dataHex: Hex = `0x${paramsHex}`
-          let decodedData
+      let pendingVerifyClientTransaction
+      let pendingIncreaseAllowanceTransaction
 
-          if (!pendingVerifyClientTransaction) {
+      for (const transaction of pendingTxs) {
+        if (!transaction.parsed?.params) {
+          continue
+        }
+
+        let paramsHex: string
+        let dataHex: Hex
+        if (clientContractAddress && !pendingIncreaseAllowanceTransaction) {
+          paramsHex = transaction.parsed.params.toString('hex')
+          dataHex = `0x${paramsHex}`
+          try {
+            const increaseDecodedData = decodeFunctionData({
+              abi: increaseAllowanceAbi,
+              data: dataHex,
+            })
+
+            const [increaseClientAddress, increaseAmount] =
+              increaseDecodedData.args
+
+            const evmClientAddress = (
+              await getEvmAddressFromFilecoinAddress(clientAddress)
+            ).data
+
+            if (
+              increaseClientAddress.toLocaleLowerCase() === evmClientAddress &&
+              increaseAmount === BigInt(bytesDatacap)
+            ) {
+              pendingIncreaseAllowanceTransaction = transaction
+              continue
+            }
+          } catch (err) {
+            console.error(err)
+          }
+        }
+
+        if (!pendingVerifyClientTransaction) {
+          if (allocatorType !== AllocatorTypeEnum.CONTRACT) {
+            const addressToGrantDataCap = clientContractAddress ?? clientAddress
+
+            if (
+              transaction?.parsed?.params?.address === addressToGrantDataCap &&
+              transaction?.parsed?.params?.cap === BigInt(bytesDatacap)
+            ) {
+              pendingVerifyClientTransaction = transaction
+              continue
+            }
+          } else {
+            paramsHex = transaction.parsed.params.toString('hex')
+            dataHex = `0x${paramsHex}`
             try {
-              decodedData = decodeFunctionData({
+              const decodedData = decodeFunctionData({
                 abi: verifiedAbi,
                 data: dataHex,
               })
 
               const [clientAddressData, amount] = decodedData.args
-              const address = newFromString(clientAddress)
+              const address = newFromString(
+                clientContractAddress ?? clientAddress,
+              )
               const addressHex: Hex = `0x${Buffer.from(address.bytes).toString('hex')}`
 
               if (
@@ -324,49 +348,20 @@ const useWallet = (): WalletState => {
                 amount === BigInt(bytesDatacap)
               ) {
                 pendingVerifyClientTransaction = transaction
+                continue
               }
             } catch (err) {
               console.error(err)
             }
           }
+        }
 
-          try {
-            if (
-              isClientContractAddress &&
-              evmClientContractAddress &&
-              !pendingIncreaseAllowanceTransaction
-            ) {
-              const increaseDecodedData = decodeFunctionData({
-                abi: increaseAllowanceAbi,
-                data: dataHex,
-              })
-
-              const [increaseClientContractAddress, increaseAmount] =
-                increaseDecodedData.args
-
-              if (
-                increaseClientContractAddress.toLocaleLowerCase() ===
-                  evmClientContractAddress &&
-                increaseAmount === BigInt(bytesDatacap)
-              ) {
-                pendingIncreaseAllowanceTransaction = transaction
-              }
-            }
-          } catch (err) {
-            console.error(err)
-          }
-
-          if (!isClientContractAddress && pendingVerifyClientTransaction) {
-            break
-          }
-
-          if (
-            isClientContractAddress &&
-            pendingVerifyClientTransaction &&
-            pendingIncreaseAllowanceTransaction
-          ) {
-            break
-          }
+        if (
+          (!clientContractAddress && pendingVerifyClientTransaction) ||
+          (pendingVerifyClientTransaction &&
+            pendingIncreaseAllowanceTransaction)
+        ) {
+          break
         }
       }
 
