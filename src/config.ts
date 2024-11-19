@@ -24,6 +24,7 @@ const localConfig = {
   dmobApiKey: process.env.NEXT_PUBLIC_DMOB_API_KEY ?? '',
   glifNodeUrl:
     process.env.NEXT_PUBLIC_GLIF_URL ?? 'https://api.node.glif.io/rpc/v1',
+  isTestnet: process.env.NEXT_PUBLIC_IS_TESTNET ?? 'true',
 }
 
 const prodConfig = {
@@ -49,6 +50,7 @@ const prodConfig = {
   dmobApiUrl: process.env.NEXT_PUBLIC_DMOB_API_URL ?? '',
   dmobApiKey: process.env.NEXT_PUBLIC_DMOB_API_KEY ?? '',
   glifNodeUrl: process.env.NEXT_PUBLIC_GLIF_URL ?? '',
+  isTestnet: process.env.NEXT_PUBLIC_IS_TESTNET ?? 'false',
 }
 
 export const config =

@@ -37,11 +37,11 @@ export class BurnerWallet extends BaseWallet {
           : {
               token: async () => this.lotusNode?.token,
             }
-
+      const isTestnet = process.env.NEXT_PUBLIC_IS_TESTNET === 'true'
       this.api = new VerifyAPI(
         VerifyAPI.browserProvider(this.lotusNode.url, tokenProvider),
         { sign: this.sign, getAccounts: this.getAccounts },
-        this.lotusNode.name !== 'Mainnet',
+        isTestnet,
       )
     } catch (error) {
       console.error('Error loading wallet:', error)

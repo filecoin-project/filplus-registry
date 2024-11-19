@@ -65,6 +65,7 @@ To get started with the Fil+ Registry Frontend, you can visit the live applicati
    GITHUB_ID
    GITHUB_SECRET
    NEXT_PUBLIC_MODE=development
+   NEXT_PUBLIC_IS_TESTNET
    ```
 
 ## Support and Community
