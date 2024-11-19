@@ -38,6 +38,7 @@ export class LedgerWallet extends BaseWallet {
    * @private
    */
   private async initializeApi(): Promise<void> {
+    const isTestnet = config.isTestnet === 'true'
     this.api = new VerifyAPI(
       VerifyAPI.browserProvider(this.lotusNode.url, {
         token: async () => this.lotusNode?.token,
@@ -46,7 +47,7 @@ export class LedgerWallet extends BaseWallet {
         sign: this.sign,
         getAccounts: () => this.loadedAccounts,
       },
-      process.env.NEXT_PUBLIC_MODE !== 'production',
+      isTestnet,
     )
   }
 
