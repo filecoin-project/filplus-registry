@@ -11,6 +11,7 @@ import '@fontsource/roboto/300.css'
 import '@fontsource/roboto/400.css'
 import '@fontsource/roboto/500.css'
 import '@fontsource/roboto/700.css'
+import { CookieBanner } from '@/components/CookieBanner'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -27,16 +28,18 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className + ' h-screen'}>
-        <ReactQueryProvider>
-          <ToastContainer position="top-right" autoClose={10000} />
+        <CookieBanner>
+          <ReactQueryProvider>
+            <ToastContainer position="top-right" autoClose={10000} />
 
-          <AuthProvider>
-            <AllocatorProvider>
-              <Navbar />
-              {children}
-            </AllocatorProvider>
-          </AuthProvider>
-        </ReactQueryProvider>
+            <AuthProvider>
+              <AllocatorProvider>
+                <Navbar />
+                {children}
+              </AllocatorProvider>
+            </AuthProvider>
+          </ReactQueryProvider>
+        </CookieBanner>
       </body>
     </html>
   )

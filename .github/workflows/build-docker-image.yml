@@ -65,6 +65,7 @@ jobs:
           echo "NEXT_PUBLIC_DMOB_API_URL='${{ vars.NEXT_PUBLIC_DMOB_API_URL }}'" >> .env
           echo "NEXT_PUBLIC_GLIF_URL='${{ vars.NEXT_PUBLIC_GLIF_URL }}'" >> .env
           echo "NEXT_PUBLIC_IS_TESTNET='${{ vars.NEXT_PUBLIC_IS_TESTNET }}'" >> .env
+          echo "NEXT_PUBLIC_GOOGLE_ANALYTICS_TRACKING_ID='${{ vars.NEXT_PUBLIC_GOOGLE_ANALYTICS_TRACKING_ID }}'" >> .env
           echo "NEXTAUTH_URL='${{ vars.NEXTAUTH_URL }}'" >> .env
           echo "NEXTAUTH_SECRET='placeholder'" >> .env
           echo "GITHUB_ID='placeholder'" >> .env
