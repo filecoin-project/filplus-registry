@@ -241,23 +241,19 @@ const AppInfoCard: React.FC<ComponentProps> = ({
         if (allocationAmount === 0) {
           setIsProgressBarVisible(true)
           setProgress(100)
-          setAllocationProgressDesc(
-            `${bytesToiB(0, true)} / ${lastAllocationUnit}`,
-          )
+          setAllocationProgressDesc(`${bytesToiB(0)} / ${lastAllocationUnit}`)
           return
         }
 
         if (allocationAmount < allowance) {
           setIsProgressBarVisible(true)
           setProgress(0)
-          setAllocationProgressDesc(
-            `${bytesToiB(0, true)} / ${lastAllocationUnit}`,
-          )
+          setAllocationProgressDesc(`${bytesToiB(0)} / ${lastAllocationUnit}`)
           return
         }
 
         const usedDatacap = allocationAmount - allowance
-        const usedDatacapUnit = bytesToiB(usedDatacap, true)
+        const usedDatacapUnit = bytesToiB(usedDatacap)
 
         const progressPercentage = (usedDatacap / allocationAmount) * 100
         setIsProgressBarVisible(true)
@@ -827,8 +823,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
       return
     }
 
-    const isBinary = datacapWithoutS.toLowerCase().includes('ib')
-    const againToText = bytesToiB(bytes, isBinary)
+    const againToText = bytesToiB(bytes)
 
     return againToText
   }

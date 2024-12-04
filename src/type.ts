@@ -207,19 +207,6 @@ export interface Allocator {
   client_contract_address: string | null
 }
 
-export interface ByteConverterAutoscaleOptions {
-  preferByte: boolean
-  preferBit: boolean
-  preferBinary: boolean
-  preferDecimal: boolean
-  preferSameBase: boolean
-  preferOppositeBase: boolean
-  preferSameUnit: boolean
-  preferOppositeUnit: boolean
-  // eslint-disable-next-line @typescript-eslint/ban-types
-  handler: (curDataFormat: string, isUppingDataFormat: boolean) => {}
-}
-
 export enum AllocatorTypeEnum {
   DIRECT = 'direct',
   CONTRACT = 'contract',

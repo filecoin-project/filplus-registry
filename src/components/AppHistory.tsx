@@ -27,7 +27,7 @@ const AppHistory: React.FC<ComponentProps> = ({
     0,
   )
 
-  const totalAllocationFormatted = bytesToiB(totalAllocation, true)
+  const totalAllocationFormatted = bytesToiB(totalAllocation)
 
   return (
     <>

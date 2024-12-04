@@ -64,9 +64,7 @@ export default function calculateAmountToRequest(
       return retObj
     }
 
-    const [amount, amountType] = splitString(
-      bytesToiB(Math.floor(nextRequest), true),
-    )
+    const [amount, amountType] = splitString(bytesToiB(Math.floor(nextRequest)))
     const matchedAvailableType = Object.values(RefillUnit).find(
       (type) => type === amountType,
     )
