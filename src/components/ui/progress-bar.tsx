@@ -49,7 +49,6 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
                 )
               `,
             transition: 'width 1s ease-in-out',
-            width: `${progress}%`,
           }}
           className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center w-full"
         ></div>
