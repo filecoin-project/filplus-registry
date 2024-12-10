@@ -50,6 +50,8 @@ export const AllowedSPs: React.FC<ComponentProps> = ({
   const [maxDeviation, setMaxDeviation] = useState<string>(initDeviation ?? '')
   const [data, setData] = useState<string[]>([''])
   const [initData, setInitData] = useState<string[]>([''])
+  const [errors, setErrors] = useState([''])
+  const [debounceTimer, setDebounceTimer] = useState<number>(0)
 
   const { getClientSPs, getClientConfig } = useWallet()
 
@@ -83,13 +85,39 @@ export const AllowedSPs: React.FC<ComponentProps> = ({
     })
   }
 
+  const isValidInput = (input: string): boolean => {
+    const regex = /^(f0)?\d+$/
+    return regex.test(input)
+  }
+
   const handleInputChange = (index: number, value: string): void => {
     const newData = [...data]
+    const updatedErrors = [...errors]
     newData[index] = value
+    value = value.trim()
+    clearTimeout(debounceTimer)
+    const timer = window.setTimeout(() => {
+      value = value.trim()
+      console.log(value)
+      if (!value) {
+        updatedErrors[index] = 'Value cannot be empty'
+        setErrors([...updatedErrors])
+        return
+      } else if (!isValidInput(value)) {
+        updatedErrors[index] = 'Invalid storage provider id'
+        setErrors([...updatedErrors])
+        return
+      }
+      updatedErrors[index] = ''
+      setErrors(updatedErrors)
+    }, 200)
 
     setData(newData)
     checkIsDirty(newData)
+    setDebounceTimer(timer)
   }
+
+  const hasErrors = errors.some((error) => error)
 
   const handleAddItem = (): void => {
     const newData = [...data, '']
@@ -99,7 +127,10 @@ export const AllowedSPs: React.FC<ComponentProps> = ({
   }
 
   const handleRemoveItem = (index: number): void => {
+    const updatedErrors = [...errors]
     const newData = data.filter((_, i) => i !== index)
+    updatedErrors.splice(index, 1)
+    setErrors(updatedErrors)
     setData(newData)
     checkIsDirty(newData)
   }
@@ -107,12 +138,13 @@ export const AllowedSPs: React.FC<ComponentProps> = ({
   const handleSubmit = async (): Promise<void> => {
     try {
       setApiCalling(true)
-      const added = data.filter(
-        (item) => !availableAllowedSPs?.includes(item),
+      const cleanedData = data.map((item) => item.replace('f0', ''))
+      const added = cleanedData.filter(
+        (item) => !availableAllowedSPs?.includes(item) && item.length,
       ) ?? ['']
 
       const removed: string[] = availableAllowedSPs?.filter(
-        (item) => !data.includes(item),
+        (item) => !cleanedData.includes(item),
       ) ?? ['']
 
       const afterAdd = [...(availableAllowedSPs ?? ['']), ...added]
@@ -216,6 +248,8 @@ export const AllowedSPs: React.FC<ComponentProps> = ({
                     handleInputChange(index, e.target.value)
                   }}
                   className="flex-1"
+                  error={!!errors[index]}
+                  helperText={errors[index]}
                 />
                 <IconButton
                   onClick={() => {
@@ -250,7 +284,7 @@ export const AllowedSPs: React.FC<ComponentProps> = ({
           </Button>
 
           <Button
-            disabled={isApiCalling || !isDirty}
+            disabled={isApiCalling || !isDirty || hasErrors}
             onClick={() => {
               void handleSubmit()
             }}
