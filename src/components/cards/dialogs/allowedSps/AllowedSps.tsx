@@ -98,7 +98,6 @@ export const AllowedSPs: React.FC<ComponentProps> = ({
     clearTimeout(debounceTimer)
     const timer = window.setTimeout(() => {
       value = value.trim()
-      console.log(value)
       if (!value) {
         updatedErrors[index] = 'Value cannot be empty'
         setErrors([...updatedErrors])
