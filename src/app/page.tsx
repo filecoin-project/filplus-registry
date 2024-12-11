@@ -42,7 +42,12 @@ export default function Home(): JSX.Element {
   const { allocators, selectedAllocator, setSelectedAllocator } = useAllocator()
   const session = useSession()
 
-  const { data, isLoading, error } = useQuery({
+  const {
+    data,
+    isLoading: isDataLoading,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ['application', selectedAllocator, session.status],
     queryFn: async () => {
       if (
@@ -84,6 +89,8 @@ export default function Home(): JSX.Element {
   const [searchResults, setSearchResults] = useState<Application[]>([])
 
   const [openDialog, setOpenDialog] = useState(false)
+  const [isModalLoading, setIsModalLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
   const searchParams = useSearchParams()
   const notification = searchParams.get('notification')
@@ -123,7 +130,7 @@ export default function Home(): JSX.Element {
   }, [notification, router, searchParams, pathName])
 
   useEffect(() => {
-    if (isLoading || data == null) return
+    if (isDataLoading || data == null) return
 
     const debounceTimeout = setTimeout(() => {
       const filteredData = data?.filter(
@@ -150,17 +157,22 @@ export default function Home(): JSX.Element {
     return () => {
       clearTimeout(debounceTimeout)
     }
-  }, [searchTerm, filter, data, isLoading])
+  }, [searchTerm, filter, data, isDataLoading])
 
   const handleRenewal = async (): Promise<void> => {
     try {
       if (selectedAllocator && selectedAllocator !== 'all') {
+        setIsModalLoading(true)
         const { owner, repo } = selectedAllocator
         const data = await cacheRenewal(owner, repo)
 
         if (data) {
           toast.success('Renewal successful')
+          setIsModalLoading(false)
           setOpenDialog(false)
+          setIsLoading(true)
+          await refetch()
+          setIsLoading(false)
         }
       }
     } catch (error) {
@@ -169,7 +181,7 @@ export default function Home(): JSX.Element {
     }
   }
 
-  if (isLoading)
+  if (isDataLoading || isLoading)
     return (
       <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-20">
         <Spinner />
@@ -317,7 +329,12 @@ export default function Home(): JSX.Element {
                     <DialogTrigger asChild>
                       <Button variant="default">Renew cache</Button>
                     </DialogTrigger>
-                    <DialogContent className="sm:max-w-[500px]">
+                    <DialogContent className="sm:max-w-[500px] border-none">
+                      {isModalLoading && (
+                        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+                          <Spinner />
+                        </div>
+                      )}
                       <DialogHeader>
                         <DialogTitle>Renew cache</DialogTitle>
                         <DialogDescription>
