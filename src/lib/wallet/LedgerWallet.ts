@@ -72,8 +72,9 @@ export class LedgerWallet extends BaseWallet {
       const version = await this.ledgerApp.getVersion()
 
       if (
-        version.return_code === 65535 &&
-        version.error_message.includes('LockedDeviceError') === true
+        (version.return_code === 65535 &&
+          version.error_message.includes('LockedDeviceError') === true) ||
+        version.return_code === 21781
       ) {
         throw new Error('Ledger locked. Please, unlock it.')
       }
@@ -83,7 +84,6 @@ export class LedgerWallet extends BaseWallet {
           'Filecoin application is not open in Ledger. Please, open it.',
         )
       }
-
       if (version.test_mode === true)
         throw new Error('Filecoin app in test mode.')
 
