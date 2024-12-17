@@ -1266,19 +1266,20 @@ const AppInfoCard: React.FC<ComponentProps> = ({
                   </>
                 ) : (
                   progress > 75 &&
-                  remaining > 0 &&
-                  <Button
-                    disabled={isApiCalling}
-                    onClick={() => {
-                      setRefillInfoParams((prev) => ({
-                        amount: prev.amount || '1',
-                        unit: prev.unit || AllocationUnit.GIB,
-                        isDialogOpen: true,
-                      }))
-                    }}
-                  >
-                    Trigger Refill
-                  </Button>
+                  remaining > 0 && (
+                    <Button
+                      disabled={isApiCalling}
+                      onClick={() => {
+                        setRefillInfoParams((prev) => ({
+                          amount: prev.amount || '1',
+                          unit: prev.unit || AllocationUnit.GIB,
+                          isDialogOpen: true,
+                        }))
+                      }}
+                    >
+                      Trigger Refill
+                    </Button>
+                  )
                 )
               ) : (
                 <CardFooter className="px-6 flex justify-end items-center w-full font-semibold text-xl italic">
