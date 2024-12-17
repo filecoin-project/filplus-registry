@@ -3,7 +3,7 @@ import {
   type Allocator,
   type Application,
   type LDNActorsResponse,
-  type RefillUnit,
+  type AllocationUnit,
 } from '@/type'
 import axios from 'axios'
 import { getAccessToken } from './session'
@@ -218,7 +218,7 @@ export const postAdditionalInfoRequest = async (
 
 export const triggerSSA = async (
   amount: string,
-  unit: RefillUnit,
+  unit: AllocationUnit,
   id: string,
   repo: string,
   owner: string,

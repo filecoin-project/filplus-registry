@@ -1,6 +1,6 @@
 import type { Address } from 'viem'
 
-export enum RefillUnit {
+export enum AllocationUnit {
   PIB = 'PiB',
   TIB = 'TiB',
   GIB = 'GiB',
@@ -8,7 +8,7 @@ export enum RefillUnit {
 
 export interface RequestAmount {
   amount: string
-  amountType: RefillUnit
+  amountType: AllocationUnit
 }
 
 export interface Application {

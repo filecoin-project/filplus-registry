@@ -21,7 +21,7 @@ import {
 import {
   AllocatorTypeEnum,
   type Application,
-  type RefillUnit,
+  type AllocationUnit,
   type StorageProvidersChangeRequest,
 } from '@/type'
 import { useMemo, useState } from 'react'
@@ -39,7 +39,7 @@ interface ApplicationActions {
   mutationTriggerSSA: UseMutationResult<
     Application | undefined,
     unknown,
-    { userName: string; amount: string; unit: RefillUnit },
+    { userName: string; amount: string; unit: AllocationUnit },
     unknown
   >
   mutationRequestInfo: UseMutationResult<
@@ -374,7 +374,7 @@ const useApplicationActions = (
   const mutationTriggerSSA = useMutation<
     Application | undefined,
     Error,
-    { userName: string; amount: string; unit: RefillUnit }
+    { userName: string; amount: string; unit: AllocationUnit }
   >(
     async ({ userName, amount, unit }) => {
       return await triggerSSA(
