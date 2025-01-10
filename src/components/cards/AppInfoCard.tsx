@@ -51,7 +51,7 @@ interface ComponentProps {
   allowance: any
 }
 
-type DeviationType = 'contract' | 'directly'
+type AllocationType = 'contract' | 'directly'
 
 /**
  * Represents the information for a specific application.
@@ -131,12 +131,12 @@ const AppInfoCard: React.FC<ComponentProps> = ({
 
   const [allocationAmountConfig, setAllocationAmountConfig] = useState<{
     amount: string
-    deviationType: DeviationType
+    allocationType: AllocationType
     unit: AllocationUnit
     isDialogOpen: boolean
   }>({
     amount: '',
-    deviationType: 'directly',
+    allocationType: 'directly',
     unit: AllocationUnit.GIB,
     isDialogOpen: false,
   })
@@ -603,7 +603,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
         isDialogOpen: false,
         amount: prev.amount || '0',
         unit: prev.unit || AllocationUnit.GIB,
-        deviationType: 'directly',
+        allocationType: 'directly',
       }))
       return
     }
@@ -662,7 +662,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
           userName,
           allocationAmount: validatedAllocationAmount,
           clientContractAddress:
-            allocationAmountConfig.deviationType === 'contract' &&
+            allocationAmountConfig.allocationType === 'contract' &&
             clientContractAddress
               ? clientContractAddress
               : undefined,
@@ -740,7 +740,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
       }
 
       setAllocationAmountConfig(() => ({
-        deviationType: 'directly',
+        allocationType: 'directly',
         amount,
         isDialogOpen: false,
         unit: unit as AllocationUnit,

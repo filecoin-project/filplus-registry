@@ -19,13 +19,13 @@ import { Button } from '@/components/ui/button'
 import { AllocationUnit, type Allocation, type Application } from '@/type'
 import { type ReactNode } from 'react'
 
-type DeviationType = 'contract' | 'directly'
+type AllocationType = 'contract' | 'directly'
 
 interface AllocationConfig {
   isDialogOpen: boolean
   amount: string
   unit: AllocationUnit
-  deviationType?: DeviationType
+  allocationType?: AllocationType
 }
 
 interface DatacapAmountModalProps {
@@ -80,16 +80,16 @@ const DatacapAmountModal = ({
               <div className="flex justify-items-center justify-between content-center items-center	w-full">
                 <FormControl>
                   <FormLabel id="demo-controlled-radio-buttons-group">
-                    Deviation type
+                    Allocation type
                   </FormLabel>
                   <RadioGroup
                     aria-labelledby="demo-controlled-radio-buttons-group"
-                    value={allocationConfig.deviationType}
+                    value={allocationConfig.allocationType}
                     onChange={(e) => {
                       setAllocationConfig({
                         ...allocationConfig,
-                        deviationType: (e.target as HTMLInputElement)
-                          .value as DeviationType,
+                        allocationType: (e.target as HTMLInputElement)
+                          .value as AllocationType,
                       })
                     }}
                   >
