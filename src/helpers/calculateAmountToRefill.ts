@@ -1,5 +1,5 @@
 import { anyToBytes, bytesToiB } from '@/lib/utils'
-import { type Application, type RequestAmount, RefillUnit } from '@/type'
+import { type Application, type RequestAmount, AllocationUnit } from '@/type'
 
 export default function calculateAmountToRequest(
   application: Application,
@@ -50,7 +50,7 @@ export default function calculateAmountToRequest(
 
     let retObj: RequestAmount = {
       amount: '0',
-      amountType: RefillUnit.GIB,
+      amountType: AllocationUnit.GIB,
     }
     if (sumTotalAmountWithNextRequest > totaldDcRequestedByClient) {
       nextRequest = totaldDcRequestedByClient - totalDcGrantedForClientSoFar
@@ -59,13 +59,13 @@ export default function calculateAmountToRequest(
     if (nextRequest <= 0) {
       retObj = {
         amount: '0',
-        amountType: RefillUnit.GIB,
+        amountType: AllocationUnit.GIB,
       }
       return retObj
     }
 
     const [amount, amountType] = splitString(bytesToiB(Math.floor(nextRequest)))
-    const matchedAvailableType = Object.values(RefillUnit).find(
+    const matchedAvailableType = Object.values(AllocationUnit).find(
       (type) => type === amountType,
     )
     if (matchedAvailableType) {
@@ -99,7 +99,7 @@ export default function calculateAmountToRequest(
     weeklyDcAllocationBytes,
   )
 }
-const splitString = (input: string): [string, string] => {
+export const splitString = (input: string): [string, string] => {
   // Regex to match expressions like "100PiB" or "0.5TiB"
   const regex = /^(\d+(\.\d+)?)([A-Za-z]iB)$/
 
