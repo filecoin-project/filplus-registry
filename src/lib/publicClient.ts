@@ -1,4 +1,5 @@
 import { config } from '@/config'
+import { type MsigResultItem } from '@/type'
 import { type Address, createPublicClient, http, rpcSchema } from 'viem'
 import { filecoin, filecoinCalibration } from 'viem/chains'
 
@@ -72,6 +73,11 @@ type FilecoinRpcSchema = [
     ]
     ReturnType: StateWaitMsgResponse
   },
+  {
+    Method: 'Filecoin.MsigGetPending'
+    Parameters: [string, null]
+    ReturnType: MsigResultItem[]
+  },
 ]
 
 export interface IFilecoinClient {
@@ -88,6 +94,7 @@ export interface IFilecoinClient {
     params: { from: string | null; to: string; data: Address },
     blockNumber: string | number,
   ) => Promise<string | null>
+  msigGetPending: (msigAddress: string) => Promise<MsigResultItem[]>
 }
 
 export class FilecoinClient implements IFilecoinClient {
@@ -161,5 +168,13 @@ export class FilecoinClient implements IFilecoinClient {
     })
 
     return waitMsg
+  }
+
+  public async msigGetPending(msigAddress: string): Promise<MsigResultItem[]> {
+    const response = await this.client.request({
+      method: 'Filecoin.MsigGetPending',
+      params: [msigAddress, null],
+    })
+    return response
   }
 }

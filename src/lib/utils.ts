@@ -1,7 +1,12 @@
-import { type AllocationRequest, type Application } from '@/type'
+import type { ParsedTransaction, AllocationRequest, Application } from '@/type'
 import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 import bytes from 'bytes-iec'
+import { decode } from 'cbor-x'
+import { bytesToBigInt } from 'viem'
+import { Address, CoinType, encode } from '@glif/filecoin-address'
+import { config } from '@/config'
+import { getMsigPendingTransaction } from './glifApi'
 export function cn(...inputs: ClassValue[]): string {
   return twMerge(clsx(inputs))
 }
@@ -104,4 +109,55 @@ export const calculateDatacap = (
   const totalBytes = anyToBytes(totalDatacap)
   const datacap = totalBytes * (parseFloat(percentage) / 100)
   return bytesToiB(datacap)
+}
+
+export const getParsedMsigPendingTransactionParams = async (
+  msigAddress: string,
+): Promise<ParsedTransaction[] | any> => {
+  const msigTransactions = await getMsigPendingTransaction(msigAddress)
+  try {
+    const parsedTransaction: ParsedTransaction[] = []
+    for (const transaction of msigTransactions) {
+      const transactionParamsToBuffer = Buffer.from(
+        transaction.Params,
+        'base64',
+      )
+      const decodedTransactionParams = decode(transactionParamsToBuffer)
+      const transactionObject: ParsedTransaction = {
+        id: transaction.ID,
+        tx: {
+          from: transaction.Approved[0],
+          to: transaction.To,
+          value: transaction.Value,
+          method: transaction.Method,
+          params: transactionParamsToBuffer,
+        },
+      }
+      if (transaction.Method === 3844450837) {
+        transactionObject.tx.calldata = decodedTransactionParams
+        parsedTransaction.push(transactionObject)
+      } else if (transaction.Method === 4 && transaction.To === 'f06') {
+        const addressBytes = decodedTransactionParams[0]
+        const coinType = config.isTestnet ? CoinType.TEST : CoinType.MAIN
+        const address = new Address(addressBytes)
+        const encodedAddress = encode(coinType, address)
+        const datacapBytes = decodedTransactionParams[1]
+        let cap = bytesToBigInt(datacapBytes.slice(1))
+        // Check if the first byte is 1, indicating a negative value. Multiply by -1 because datacap cannot be negative.
+        if (datacapBytes[0] === 1) {
+          cap = cap * BigInt(-1)
+        }
+        transactionObject.tx.address = encodedAddress
+        transactionObject.tx.cap = cap
+        parsedTransaction.push(transactionObject)
+      }
+    }
+    return parsedTransaction
+  } catch (error: unknown) {
+    const errMessage = `Failed to parse msig transaction: ${
+      (error as Error).message
+    }`
+
+    return { error: { message: errMessage } }
+  }
 }

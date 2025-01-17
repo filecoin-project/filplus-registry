@@ -3,6 +3,7 @@ import type {
   ApiEthCallResponse,
   ApiFilecoinAddressToEthAddressResponse,
   ApiStateWaitMsgResponse,
+  MsigPendingTransactions,
 } from '@/type'
 import type { Address, Hex } from 'viem'
 import { getAddress } from 'viem'
@@ -175,5 +176,26 @@ export const getStateWaitMsg = async (
       error: errMessage,
       success: false,
     }
+  }
+}
+
+/**
+ * Get msig waiting transaction.
+ *
+ * @param {string} msigAddress - Msig address.
+ * @returns {Promise<MsigPendingTransactions>} MsigPendingTransactions - The response from the API.
+ */
+export const getMsigPendingTransaction = async (
+  msigAddress: string,
+): Promise<MsigPendingTransactions[] | any> => {
+  try {
+    const result = await filecoinClient.msigGetPending(msigAddress)
+    return result
+  } catch (error: unknown) {
+    const errMessage = `Error accessing GLIF API Filecoin.MsigGetPending: ${
+      (error as Error).message
+    }`
+
+    return { error: { message: errMessage } }
   }
 }
