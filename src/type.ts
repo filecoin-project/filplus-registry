@@ -218,3 +218,36 @@ export interface SendProposalProps {
   clientAddress: string
   proposalAllocationAmount: string
 }
+
+export interface MsigPendingTransactions {
+  result?: MsigResultItem[]
+  error?: MsigError
+}
+
+interface MsigError {
+  code?: number
+  message: string
+}
+
+export interface MsigResultItem {
+  Approved: string[]
+  ID: number
+  Method: number
+  Params: string
+  To: string
+  Value: string
+}
+
+export interface ParsedTransaction {
+  id: number
+  tx: {
+    from: string
+    to: string
+    value: string
+    method: number
+    params: Buffer
+    calldata?: Buffer
+    address?: string
+    cap?: bigint
+  }
+}

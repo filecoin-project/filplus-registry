@@ -3,10 +3,15 @@ import {
   getStateWaitMsg,
   makeStaticEthCall,
 } from '@/lib/glifApi'
-import { anyToBytes } from '@/lib/utils'
+import { anyToBytes, getParsedMsigPendingTransactionParams } from '@/lib/utils'
 import { BurnerWallet } from '@/lib/wallet/BurnerWallet'
 import { LedgerWallet } from '@/lib/wallet/LedgerWallet'
-import { AllocatorTypeEnum, type IWallet, type SendProposalProps } from '@/type'
+import {
+  AllocatorTypeEnum,
+  type ParsedTransaction,
+  type IWallet,
+  type SendProposalProps,
+} from '@/type'
 import { newFromString } from '@glif/filecoin-address'
 import { useCallback, useState } from 'react'
 import {
@@ -261,15 +266,8 @@ const useWallet = (): WalletState => {
       if (multisigAddress == null) throw new Error('Multisig address not set.')
 
       const bytesDatacap = Math.floor(anyToBytes(datacap))
-      let pendingTxs
-      try {
-        pendingTxs = await wallet.api.pendingTransactions(multisigAddress)
-      } catch (error) {
-        console.log(error)
-        throw new Error(
-          'An error with the lotus node occurred. Please reload. If the problem persists, contact support.',
-        )
-      }
+      const pendingTxs: ParsedTransaction[] =
+        await getParsedMsigPendingTransactionParams(multisigAddress)
 
       const verifiedAbi = parseAbi([
         'function addVerifiedClient(bytes clientAddress, uint256 amount)',
@@ -279,19 +277,16 @@ const useWallet = (): WalletState => {
         'function increaseAllowance(address client, uint256 amount)',
       ])
 
-      let pendingVerifyClientTransaction
-      let pendingIncreaseAllowanceTransaction
+      let pendingVerifyClientTransaction: ParsedTransaction | null = null
+      let pendingIncreaseAllowanceTransaction: ParsedTransaction | null = null
 
       for (const transaction of pendingTxs) {
-        if (!transaction.parsed?.params) {
-          continue
-        }
-
-        let paramsHex: string
-        let dataHex: Hex
         if (clientContractAddress && !pendingIncreaseAllowanceTransaction) {
-          paramsHex = transaction.parsed.params.toString('hex')
-          dataHex = `0x${paramsHex}`
+          if (typeof transaction.tx.calldata === 'undefined') {
+            continue
+          }
+          const paramsHex = transaction.tx.calldata.toString('hex')
+          const dataHex: Hex = `0x${paramsHex}`
           try {
             const increaseDecodedData = decodeFunctionData({
               abi: increaseAllowanceAbi,
@@ -319,18 +314,26 @@ const useWallet = (): WalletState => {
 
         if (!pendingVerifyClientTransaction) {
           if (allocatorType !== AllocatorTypeEnum.CONTRACT) {
-            const addressToGrantDataCap = clientContractAddress ?? clientAddress
-
             if (
-              transaction?.parsed?.params?.address === addressToGrantDataCap &&
-              transaction?.parsed?.params?.cap === BigInt(bytesDatacap)
+              typeof transaction.tx.address === 'undefined' ||
+              typeof transaction.tx.cap === 'undefined'
+            ) {
+              continue
+            }
+            const addressToGrantDataCap = clientContractAddress ?? clientAddress
+            if (
+              transaction.tx.address === addressToGrantDataCap &&
+              transaction.tx.cap === BigInt(bytesDatacap)
             ) {
               pendingVerifyClientTransaction = transaction
               continue
             }
           } else {
-            paramsHex = transaction.parsed.params.toString('hex')
-            dataHex = `0x${paramsHex}`
+            if (typeof transaction.tx.calldata === 'undefined') {
+              continue
+            }
+            const paramsHex = transaction.tx.calldata.toString('hex')
+            const dataHex: Hex = `0x${paramsHex}`
             try {
               const decodedData = decodeFunctionData({
                 abi: verifiedAbi,
@@ -357,17 +360,17 @@ const useWallet = (): WalletState => {
         }
 
         if (
-          (!clientContractAddress && pendingVerifyClientTransaction) ||
-          (pendingVerifyClientTransaction &&
-            pendingIncreaseAllowanceTransaction)
+          (!clientContractAddress && !!pendingVerifyClientTransaction) ||
+          (!!pendingVerifyClientTransaction &&
+            !!pendingIncreaseAllowanceTransaction)
         ) {
           break
         }
       }
 
       if (
-        pendingVerifyClientTransaction ||
-        pendingIncreaseAllowanceTransaction
+        !!pendingVerifyClientTransaction ||
+        !!pendingIncreaseAllowanceTransaction
       ) {
         return {
           pendingVerifyClientTransaction,
@@ -457,34 +460,24 @@ const useWallet = (): WalletState => {
 
       if (!searchTransactions.length) return null
 
-      let pendingTxs
-
-      try {
-        pendingTxs = await wallet.api.pendingTransactions(multisigAddress)
-      } catch (error) {
-        console.log(error)
-        throw new Error(
-          'An error with the lotus node occurred. Please reload. If the problem persists, contact support.',
-        )
-      }
+      const pendingTxs: ParsedTransaction[] =
+        await getParsedMsigPendingTransactionParams(multisigAddress)
 
       const results: Array<{
         cidName: 'max deviation' | 'add allowed Sps' | 'remove allowed Sps'
-        tx: any
+        tx: ParsedTransaction
         args: any[]
         decodedPacked?: string[]
       }> = []
 
-      for (let i = 0; i < pendingTxs.length; i++) {
-        const transaction = pendingTxs[i]
-
+      for (const transaction of pendingTxs) {
+        if (typeof transaction.tx.calldata === 'undefined') {
+          continue
+        }
         for (let i = 0; i < searchTransactions.length; i++) {
           const item = searchTransactions[i]
-
-          const transactionParamsHex: string =
-            transaction.parsed.params.toString('hex')
-          const transactionDataHex: Hex = `0x${transactionParamsHex}`
-
+          const decodedString = transaction.tx.calldata.toString('hex')
+          const transactionDataHex: Hex = `0x${decodedString}`
           let decodedData
 
           try {
