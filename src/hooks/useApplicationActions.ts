@@ -18,6 +18,7 @@ import {
   getEvmAddressFromFilecoinAddress,
   getStateWaitMsg,
 } from '@/lib/glifApi'
+import { config } from '@/config'
 import {
   AllocatorTypeEnum,
   type Application,
@@ -357,7 +358,7 @@ const useApplicationActions = (
 
   const getClientAddress = (): string => {
     return (
-      (process.env.NEXT_PUBLIC_MODE === 'development' ? 't' : 'f') +
+      (config.isTestnet ? 't' : 'f') +
       initialApplication.Lifecycle['On Chain Address'].substring(1)
     )
   }
