@@ -450,9 +450,7 @@ const useApplicationActions = (
     async ({ requestId, userName, allocationAmount }) => {
       setMessage(`Searching the pending transactions...`)
 
-      const clientAddress =
-        (process.env.NEXT_PUBLIC_MODE === 'development' ? 't' : 'f') +
-        initialApplication.Lifecycle['On Chain Address'].substring(1)
+      const clientAddress = getClientAddress()
 
       const clientContractAddress =
         initialApplication?.['Client Contract Address']
