@@ -95,15 +95,8 @@ export const getAllApplications = async (): Promise<
   Application[] | undefined
 > => {
   try {
-    const applications = (await apiClient.get('/applications')).data.map(
-      (e: { 0: Application; 1: string; 2: string }) => ({
-        ...e[0],
-        owner: e[1],
-        repo: e[2],
-      }),
-    )
-
-    return applications
+    const applications = await apiClient.get('/applications')
+    return applications.data
   } catch (error: any) {
     console.error(error)
 
