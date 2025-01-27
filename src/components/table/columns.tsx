@@ -41,9 +41,17 @@ export const generateColumns = (repoConfig?: {
       header: 'Data Owner Region',
     },
     {
-      id: 'Client Industry',
-      accessorKey: 'Client.Industry',
-      header: 'Data Owner Industry',
+      id: 'Data Sample Set',
+      accessorKey:
+        'Project["Please share a sample of the data (a link to a file, an image, a table, etc., are good ways to do this.)"]',
+      header: 'Data Sample Set',
+      cell: ({ row }) => {
+        const value =
+          row.original.Project[
+            'Please share a sample of the data (a link to a file, an image, a table, etc., are good ways to do this.)'
+          ]
+        return value ?? ''
+      },
     },
     {
       id: 'Datacap requested amount',
