@@ -36,9 +36,13 @@ export const generateColumns = (repoConfig?: {
       header: 'Data Owner Name',
     },
     {
-      id: 'Client Region',
-      accessorKey: 'Client.Region',
-      header: 'Data Owner Region',
+      id: 'Issue Reporter Handle',
+      accessorKey: 'Issue Reporter Handle',
+      header: 'Issue Reporter',
+      cell: ({ row }) => {
+        const value = row.original['Issue Reporter Handle']
+        return value ?? ''
+      },
     },
     {
       id: 'Data Sample Set',

@@ -15,6 +15,7 @@ export interface Application {
   Version: number
   ID: string
   'Issue Number': string
+  'Issue Reporter Handle': string
   Client: Client
   Project: Record<string, unknown>
   Datacap: Datacap
