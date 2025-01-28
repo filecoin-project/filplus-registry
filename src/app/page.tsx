@@ -142,12 +142,21 @@ export default function Home(): JSX.Element {
             const clientName = app.Client?.Name?.toLowerCase() || ''
             const owner = app.owner?.toLowerCase() || ''
             const repo = app.repo?.toLowerCase() || ''
+            const issueReporterHandle =
+              app['Issue Reporter Handle']?.toLowerCase() || ''
+            const dataSampleSet =
+              (app.Project[
+                'Please share a sample of the data (a link to a file, an image, a table, etc., are good ways to do this.)'
+              ] as string) || ''
+            const dataSampleSetToLower = dataSampleSet.toLowerCase()
             const searchLower = searchTerm.toLowerCase()
 
             return (
               clientName.includes(searchLower) ||
               owner.includes(searchLower) ||
-              repo.includes(searchLower)
+              repo.includes(searchLower) ||
+              issueReporterHandle.includes(searchLower) ||
+              dataSampleSetToLower.includes(searchLower)
             )
           })
         : filteredData
