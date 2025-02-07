@@ -819,9 +819,8 @@ const AppInfoCard: React.FC<ComponentProps> = ({
       toast.error('Datacap exceeds the total requested amount')
       return
     }
-
-    const againToText = bytesToiB(bytes)
-
+    const unit = letters?.join().replaceAll(',', '')
+    const againToText = bytesToiB(bytes, unit as AllocationUnit)
     return againToText
   }
 

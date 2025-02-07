@@ -1,8 +1,9 @@
 'use client'
-import { type AllocationRequest } from '@/type'
+import type { AllocationUnit, AllocationRequest } from '@/type'
 import AppHistoryCard from './cards/AppHistoryCard'
 import moment from 'moment'
 import { anyToBytes, bytesToiB } from '@/lib/utils'
+import { splitString } from '@/helpers/calculateAmountToRefill'
 
 interface ComponentProps {
   datacapAllocations: AllocationRequest[]
@@ -18,7 +19,6 @@ const AppHistory: React.FC<ComponentProps> = ({
   const sortedAllocations = [...datacapAllocations].sort((a, b) => {
     return moment(b['Created At']).valueOf() - moment(a['Created At']).valueOf()
   })
-
   const totalAllocation = datacapAllocations?.reduce(
     (acc: number, curr: AllocationRequest) => {
       const amount = anyToBytes(curr['Allocation Amount'])
@@ -26,8 +26,11 @@ const AppHistory: React.FC<ComponentProps> = ({
     },
     0,
   )
-
-  const totalAllocationFormatted = bytesToiB(totalAllocation)
+  const [, unit] = splitString(totalRequestedAmount)
+  const totalAllocationFormatted = bytesToiB(
+    totalAllocation,
+    unit as AllocationUnit,
+  )
 
   return (
     <>
