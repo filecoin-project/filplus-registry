@@ -100,8 +100,8 @@ export default function calculateAmountToRequest(
   )
 }
 export const splitString = (input: string): [string, string] => {
-  // Regex to match expressions like "100PiB" or "0.5TiB"
-  const regex = /^(\d+(\.\d+)?)([A-Za-z]iB)$/
+  // Regex to match expressions like "100PiB", "100 PiB", "0.5TiB" or "0.5 TiB"
+  const regex = /^(\d+(\.\d+)?)\s?([A-Za-z]iB)$/
 
   const match = input.match(regex)
   if (match !== null) {
