@@ -1,4 +1,9 @@
-import type { ParsedTransaction, AllocationRequest, Application } from '@/type'
+import type {
+  ParsedTransaction,
+  AllocationRequest,
+  Application,
+  AllocationUnit,
+} from '@/type'
 import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 import bytes from 'bytes-iec'
@@ -87,9 +92,9 @@ export const shortenUrl = (
  * @param inputBytes
  * @returns string
  */
-export function bytesToiB(inputBytes: number): string {
+export function bytesToiB(inputBytes: number, unit?: AllocationUnit): string {
   try {
-    const parsedValue = bytes(inputBytes, { mode: 'binary' })
+    const parsedValue = bytes(inputBytes, { mode: 'binary', unit })
     if (parsedValue) {
       return parsedValue
     } else {
