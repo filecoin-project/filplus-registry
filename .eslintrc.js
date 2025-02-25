@@ -31,5 +31,6 @@ module.exports = {
     'react/react-in-jsx-scope': 'off',
     'no-void': 'off',
     '@typescript-eslint/strict-boolean-expressions': 'off',
+    '@typescript-eslint/no-var-requires': 0,
   },
 }
