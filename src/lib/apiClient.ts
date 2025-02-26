@@ -1,10 +1,11 @@
 import {
   type Allocation,
+  type AllocationUnit,
   type Allocator,
   type Application,
   type LDNActorsResponse,
-  type AllocationUnit,
 } from '@/type'
+import * as Sentry from '@sentry/nextjs'
 import axios from 'axios'
 import { getAccessToken } from './session'
 import { getCurrentDate } from './utils'
@@ -25,6 +26,24 @@ apiClient.interceptors.request.use(
     return config
   },
   async (error) => {
+    return await Promise.reject(error)
+  },
+)
+
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    if (error) {
+      Sentry.addBreadcrumb({
+        category: 'axios',
+        message: `Axios Response Error`,
+        level: 'error',
+        data: error,
+      })
+
+      Sentry.captureException(error)
+    }
+
     return await Promise.reject(error)
   },
 )
@@ -136,6 +155,7 @@ export const getApplicationByParams = async (
     if (Object.keys(data).length > 0) return data
   } catch (error) {
     console.error(error)
+    throw error
   }
 }
 
