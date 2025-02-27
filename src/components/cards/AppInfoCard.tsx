@@ -979,7 +979,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
 
             <CardContent className="grid text-sm mb-4">
               {[
-                ['Name', application.Client.Name],
+                ['Data Owner Name', application.Client.Name],
                 ['Region', application.Client.Region],
                 ['Industry', application.Client.Industry],
                 ['Website', application.Client.Website],
@@ -991,9 +991,9 @@ const AppInfoCard: React.FC<ComponentProps> = ({
                 return (
                   <div
                     key={label}
-                    className={`flex items-center p-2 justify-between ${rowStyles}`}
+                    className={`flex items-center p-2 justify-between gap-2 ${rowStyles}`}
                   >
-                    <p className="text-gray-600">{label}</p>
+                    <p className="text-gray-600 shrink-0">{label}</p>
                     {label === 'Address' ? (
                       <a
                         href={`https://filfox.info/en/address/${value}`}
