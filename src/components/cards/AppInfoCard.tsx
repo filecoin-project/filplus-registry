@@ -15,8 +15,8 @@ import { stateColor, stateMapping } from '@/lib/constants'
 import { getAllowanceForClient } from '@/lib/glifApi'
 import { anyToBytes, bytesToiB, getLastDatacapAllocation } from '@/lib/utils'
 import {
-  LDNActorType,
   AllocationUnit,
+  LDNActorType,
   type Allocation,
   type Application,
 } from '@/type'
@@ -40,8 +40,8 @@ import {
 import { useQuery } from 'react-query'
 import { toast } from 'react-toastify'
 import AllocatorBalance from '../AllocatorBalance'
-import AllowedSps from './dialogs/allowedSps'
 import DatacapAmountModal from '../DatacapAmountModel'
+import AllowedSps from './dialogs/allowedSps'
 
 interface ComponentProps {
   initialApplication: Application
@@ -348,12 +348,12 @@ const AppInfoCard: React.FC<ComponentProps> = ({
         : await initializeWallet()
       if (newAccounts.length) setIsSelectAccountModalOpen(true)
       setIsWalletConnecting(false)
-      return
     } catch (error) {
       console.error('Error initializing ledger:', error)
+      setIsWalletConnecting(false)
+      setWalletConnected(false)
+      throw error
     }
-    setIsWalletConnecting(false)
-    setWalletConnected(false)
   }
 
   /**
