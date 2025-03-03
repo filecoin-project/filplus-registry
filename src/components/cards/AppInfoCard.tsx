@@ -42,7 +42,16 @@ import { toast } from 'react-toastify'
 import AllocatorBalance from '../AllocatorBalance'
 import AllowedSps from './dialogs/allowedSps'
 import DatacapAmountModal from '../DatacapAmountModel'
-
+import {
+  Dialog as DialogPrimitive,
+  DialogClose,
+  DialogContent as DialogContentPrimitive,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle as DialogTitlePrimitive,
+  DialogTrigger,
+} from '@/components/ui/Dialog'
 interface ComponentProps {
   initialApplication: Application
   repo: string
@@ -107,6 +116,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
     '',
   )
 
+  const [openDialog, setOpenDialog] = useState(false)
   const [isProgressBarVisible, setIsProgressBarVisible] = useState(false)
   const [isSelectAccountModalOpen, setIsSelectAccountModalOpen] =
     useState(false)
@@ -536,6 +546,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
   }
 
   const declineApplication = async (): Promise<void> => {
+    setOpenDialog(false)
     setApiCalling(true)
     const userName = session.data?.user?.githubUsername
     if (!userName) return
@@ -546,6 +557,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
     } catch (error) {
       handleMutationError(error as Error)
     }
+    toast.success('Application declined successfully')
     router.push(`/`)
   }
 
@@ -1234,18 +1246,47 @@ const AppInfoCard: React.FC<ComponentProps> = ({
                               >
                                 Request Additional Info
                               </Button>
-                              <Button
-                                onClick={() => {
-                                  void declineApplication()
-                                }}
-                                disabled={isApiCalling}
-                                style={{
-                                  width: '200px',
-                                }}
-                                className="bg-red-400 text-white rounded-lg px-4 py-2 hover:bg-red-600"
+                              <DialogPrimitive
+                                open={openDialog}
+                                onOpenChange={setOpenDialog}
                               >
-                                Decline Application
-                              </Button>
+                                <DialogTrigger asChild>
+                                  <Button
+                                    style={{
+                                      width: '200px',
+                                    }}
+                                    className="bg-red-400 text-white rounded-lg px-4 py-2 hover:bg-red-600"
+                                    variant="default"
+                                  >
+                                    Decline Application
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContentPrimitive className="sm:max-w-[500px] border-none">
+                                  <DialogHeader>
+                                    <DialogTitlePrimitive>
+                                      Decline Application
+                                    </DialogTitlePrimitive>
+                                    <DialogDescription>
+                                      This action will decline this application.
+                                    </DialogDescription>
+                                  </DialogHeader>
+
+                                  <DialogFooter className="mt-4 justify-between">
+                                    <DialogClose asChild>
+                                      <Button type="button" variant="secondary">
+                                        Close
+                                      </Button>
+                                    </DialogClose>
+                                    <Button
+                                      className="bg-red-400 text-white rounded-lg px-4 py-2 hover:bg-red-600"
+                                      disabled={isApiCalling}
+                                      onClick={() => void declineApplication()}
+                                    >
+                                      Confirm
+                                    </Button>
+                                  </DialogFooter>
+                                </DialogContentPrimitive>
+                              </DialogPrimitive>
                             </div>
                           )}
                           <Button
