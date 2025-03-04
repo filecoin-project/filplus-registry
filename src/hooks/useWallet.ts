@@ -207,7 +207,7 @@ const useWallet = (): WalletState => {
         } else {
           setWalletError(new Error('Unknown error'))
         }
-        return false
+        throw err
       }
     },
     [initNetworkIndex],
