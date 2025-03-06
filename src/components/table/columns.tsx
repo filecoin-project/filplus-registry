@@ -41,7 +41,7 @@ export const generateColumns = (repoConfig?: {
       header: 'Issue Reporter',
       cell: ({ row }) => {
         const value = row.original['Issue Reporter Handle']
-        return value ?? ''
+        return value ?? 'GitHub issue no longer exist'
       },
     },
     {
