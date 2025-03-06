@@ -354,7 +354,7 @@ export default function Home(): JSX.Element {
                         </DialogDescription>
                       </DialogHeader>
 
-                      <DialogFooter className="mt-4">
+                      <DialogFooter className="mt-4 sm:justify-end">
                         <DialogClose asChild>
                           <Button type="button" variant="secondary">
                             Close
