@@ -22,6 +22,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: code-check
     if: ${{ github.ref_name == 'main' && inputs.version != '' }}
+    outputs:
+      commit_sha: ${{ steps.commit-version.outputs.commit_sha }
 
     steps:
       - name: Checkout code
@@ -53,9 +55,11 @@ jobs:
           git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
 
       - name: Commit version change
+        id: commit-version
         run: |
           git commit -am "Update version to ${{ inputs.version }}"
           git push origin main
+          echo "commit_sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
 
   staging-only-publish:
     uses: ./.github/workflows/build-docker-image.yml
@@ -69,6 +73,7 @@ jobs:
     with:
       environment: staging-fidl
       version: ${{ inputs.version }}
+      commit_sha: ${{ github.ref_name == 'main' && inputs.version != '' && needs.bump-version.outputs.commit_sha || '' }}
     secrets: inherit
 
   production-only-publish:
@@ -84,11 +89,13 @@ jobs:
     with:
       environment: production-fidl
       version: ${{ inputs.version }}
+      commit_sha: ${{ needs.bump-version.outputs.commit_sha }}
     secrets: inherit
 
   git-tag:
     runs-on: ubuntu-latest
     needs:
+      - bump-version
       - staging-only-publish
       - production-only-publish
     if: |
@@ -99,6 +106,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.bump-version.outputs.commit_sha }}
 
       - name: Create and push tag
         run: |
