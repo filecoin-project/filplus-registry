@@ -23,7 +23,7 @@ jobs:
     needs: code-check
     if: ${{ github.ref_name == 'main' && inputs.version != '' }}
     outputs:
-      commit_sha: ${{ steps.commit-version.outputs.commit_sha }
+      commit_sha: ${{ steps.commit-version.outputs.commit_sha }}
 
     steps:
       - name: Checkout code
