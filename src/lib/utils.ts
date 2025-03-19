@@ -59,15 +59,9 @@ export const getLastDatacapAllocation = (
   if (application.Lifecycle['Active Request ID'] === null) {
     return undefined
   }
-  const lastAllocation = application['Allocation Requests'].find(
-    (allocation: AllocationRequest) =>
-      allocation.ID === application.Lifecycle['Active Request ID'],
+  const lastAllocation = application['Allocation Requests'].findLast(
+    (allocation: AllocationRequest) => !allocation.Active,
   )
-
-  if (lastAllocation === undefined || lastAllocation.Active) {
-    return undefined
-  }
-
   return lastAllocation
 }
 
