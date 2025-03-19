@@ -204,9 +204,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
       let clientAllowance
 
       const contractAddress = application['Client Contract Address'] ?? address
-
       const response = await getAllowanceForClient(contractAddress)
-
       if (application['Client Contract Address']) {
         clientAllowance = await getAllowanceFromClientContract(
           address,
@@ -869,7 +867,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
     addedSPs: string[],
     removedSPs: string[],
     newAvailableResult: string[],
-    maxDeviation?: string,
+    maxDeviation?: number,
   ): Promise<void> => {
     try {
       setApiCalling(true)
@@ -1127,7 +1125,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
                       clientContractAddress={
                         application['Client Contract Address']
                       }
-                      initDeviation="10"
+                      initDeviationInPercentage="10"
                       isApiCalling={isApiCalling}
                       setApiCalling={setApiCalling}
                     />

@@ -576,13 +576,15 @@ export const postChangeAllowedSPs = async (
     removedSpsCids?: { [key in string]: string[] }
   },
   availableAllowedSpsData: string[],
-  maxDeviationData?: string,
+  maxDeviationData?: number,
 ): Promise<Application | undefined> => {
   try {
     const { data } = await apiClient.post(
       `verifier/application/propose_storage_providers`,
       {
-        max_deviation: maxDeviationData ? `${maxDeviationData}%` : undefined,
+        max_deviation: maxDeviationData
+          ? `${maxDeviationData / 100}%`
+          : undefined, // Contract calculations use a denominator of 10000 (where 10% is represented as 1000).
         allowed_sps: availableAllowedSpsData.map((x) => Number(x)),
         owner,
         repo,

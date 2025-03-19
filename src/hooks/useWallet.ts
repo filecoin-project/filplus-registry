@@ -88,7 +88,7 @@ interface WalletState {
     contractAddress: string,
     allowedSps: string[],
     disallowedSPs: string[],
-    maxDeviation?: string,
+    maxDeviationInPercentage?: number,
   ) => Promise<{
     maxDeviationCid?: string
     allowedSpCids?: {
@@ -101,10 +101,10 @@ interface WalletState {
   getClientConfig: (
     clientAddress: string,
     contractAddress: string,
-  ) => Promise<string | null>
+  ) => Promise<number | null>
   getChangeSpsProposalTxs: (
     clientAddress: string,
-    maxDeviation?: string,
+    maxDeviation?: number,
     allowedSpCids?: {
       [key in string]: string[]
     },
@@ -386,7 +386,7 @@ const useWallet = (): WalletState => {
   const getChangeSpsProposalTxs = useCallback(
     async (
       clientAddress: string,
-      maxDeviation?: string,
+      maxDeviation?: number,
       allowedSpCids?: {
         [key in string]: string[]
       },
@@ -777,7 +777,7 @@ const useWallet = (): WalletState => {
   )
 
   const getClientConfig = useCallback(
-    async (client: string, contractAddress: string): Promise<string | null> => {
+    async (client: string, contractAddress: string): Promise<number | null> => {
       const abi = parseAbi([
         'function clientConfigs(address client) external view returns (uint256)',
       ])
@@ -806,14 +806,14 @@ const useWallet = (): WalletState => {
         data: response.data as `0x${string}`,
       })
 
-      return decodedData.toString()
+      return Number(decodedData)
     },
     [],
   )
 
   const prepareClientMaxDeviation = (
     clientAddressHex: Hex,
-    maxDeviation: string,
+    maxDeviation: number,
   ): { calldata: Buffer; abi: any } => {
     const abi = parseAbi([
       'function setClientMaxDeviationFromFairDistribution(address client, uint256 maxDeviation)',
@@ -908,7 +908,7 @@ const useWallet = (): WalletState => {
       contractAddress: string,
       allowedSps?: string[],
       disallowedSPs?: string[],
-      maxDeviation?: string,
+      maxDeviation?: number,
     ): Promise<{
       maxDeviationCid?: string
       allowedSpCids?: {
