@@ -27,9 +27,9 @@ interface ComponentProps {
     added: string[],
     removed: string[],
     newAvailableResult: string[],
-    maxDeviation?: string,
+    maxDeviation?: number,
   ) => Promise<void>
-  initDeviation: string
+  initDeviationInPercentage: string
   client: string
   clientContractAddress: string
   isApiCalling: boolean
@@ -40,14 +40,15 @@ export const AllowedSPs: React.FC<ComponentProps> = ({
   application,
   client,
   clientContractAddress,
-  initDeviation,
+  initDeviationInPercentage,
   onSubmit,
   isApiCalling,
   setApiCalling,
 }) => {
   const [isDirty, setIsDirty] = useState<boolean>(false)
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false)
-  const [maxDeviation, setMaxDeviation] = useState<string>(initDeviation ?? '')
+  const [maxDeviationInPercentage, setMaxDeviationInPercentage] =
+    useState<string>(initDeviationInPercentage ?? '')
   const [data, setData] = useState<string[]>([''])
   const [initData, setInitData] = useState<string[]>([''])
   const [errors, setErrors] = useState([''])
@@ -150,9 +151,8 @@ export const AllowedSPs: React.FC<ComponentProps> = ({
       const newAvailableResult = afterAdd.filter(
         (item) => !removed.includes(item),
       )
-
-      let maxDeviationResult: string | undefined
-
+      let maxDeviationResult: number | undefined
+      const maxDeviation = Number(maxDeviationInPercentage) * 100 // Contract calculations use a denominator of 10000 (where 10% is represented as 1000).
       if (clientConfig && clientConfig !== maxDeviation) {
         maxDeviationResult = maxDeviation
       }
@@ -229,9 +229,9 @@ export const AllowedSPs: React.FC<ComponentProps> = ({
               endAdornment={<InputAdornment position="end">%</InputAdornment>}
               disabled={true} // make it dynamically in the future
               label="Max Deviation"
-              value={maxDeviation ?? ''}
+              value={maxDeviationInPercentage ?? ''}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                setMaxDeviation(event.target.value)
+                setMaxDeviationInPercentage(event.target.value)
               }}
             />
           </FormControl>

@@ -93,7 +93,7 @@ interface ApplicationActions {
       allowedSps: string[]
       disallowedSPs: string[]
       newAvailableResult: string[]
-      maxDeviation?: string
+      maxDeviation?: number
     },
     unknown
   >
@@ -730,7 +730,7 @@ const useApplicationActions = (
       userName: string
       clientAddress: string
       contractAddress: string
-      maxDeviation?: string
+      maxDeviation?: number
       allowedSps: string[]
       disallowedSPs: string[]
       newAvailableResult: string[]
@@ -795,10 +795,11 @@ const useApplicationActions = (
       const removedProviders = activeRequest?.Signers.find(
         (x) => x['Remove Allowed Storage Providers CID'],
       )?.['Remove Allowed Storage Providers CID']
-
-      const maxDeviation = activeRequest['Max Deviation']
+      const maxDeviationInPercentage = activeRequest['Max Deviation']
         ? activeRequest['Max Deviation'].split('%')[0]
         : undefined
+
+      const maxDeviation = Number(maxDeviationInPercentage) * 100 // Contract calculations use a denominator of 10000 (where 10% is represented as 1000).
 
       const proposalTxs = await getChangeSpsProposalTxs(
         clientAddress,
