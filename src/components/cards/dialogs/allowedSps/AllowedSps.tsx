@@ -45,7 +45,7 @@ export const AllowedSPs: React.FC<ComponentProps> = ({
   isApiCalling,
   setApiCalling,
 }) => {
-  // const [isDirty, setIsDirty] = useState<boolean>(false)
+  const [isDirty, setIsDirty] = useState<boolean>(false)
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false)
   const [maxDeviationInPercentage, setMaxDeviationInPercentage] =
     useState<string>(initDeviationInPercentage ?? '')
@@ -68,23 +68,23 @@ export const AllowedSPs: React.FC<ComponentProps> = ({
     enabled: !!(client && clientContractAddress),
   })
 
-  // const checkIsDirty = (currentData: string[]): void => {
-  //   setIsDirty(false)
+  const checkIsDirty = (currentData: string[]): void => {
+    setIsDirty(false)
 
-  //   const set1 = new Set(availableAllowedSPs ?? [''])
-  //   const set2 = new Set(currentData)
+    const set1 = new Set(availableAllowedSPs ?? [''])
+    const set2 = new Set(currentData)
 
-  //   if (set1.size !== set2.size) {
-  //     setIsDirty(true)
-  //     return
-  //   }
+    if (set1.size !== set2.size) {
+      setIsDirty(true)
+      return
+    }
 
-  //   set1.forEach((item) => {
-  //     if (!set2.has(item)) {
-  //       setIsDirty(true)
-  //     }
-  //   })
-  // }
+    set1.forEach((item) => {
+      if (!set2.has(item)) {
+        setIsDirty(true)
+      }
+    })
+  }
 
   const isValidInput = (input: string): boolean => {
     const regex = /^(f0)?\d+$/
@@ -113,17 +113,17 @@ export const AllowedSPs: React.FC<ComponentProps> = ({
     }, 200)
 
     setData(newData)
-    // checkIsDirty(newData)
+    checkIsDirty(newData)
     setDebounceTimer(timer)
   }
 
-  // const hasErrors = errors.some((error) => error)
+  const hasErrors = errors.some((error) => error)
 
   const handleAddItem = (): void => {
     const newData = [...data, '']
 
     setData(newData)
-    // checkIsDirty(newData)
+    checkIsDirty(newData)
   }
 
   const handleRemoveItem = (index: number): void => {
@@ -132,7 +132,7 @@ export const AllowedSPs: React.FC<ComponentProps> = ({
     updatedErrors.splice(index, 1)
     setErrors(updatedErrors)
     setData(newData)
-    // checkIsDirty(newData)
+    checkIsDirty(newData)
   }
 
   const handleSubmit = async (): Promise<void> => {
@@ -283,7 +283,7 @@ export const AllowedSPs: React.FC<ComponentProps> = ({
           </Button>
 
           <Button
-            disabled={false}
+            disabled={isApiCalling || !isDirty || hasErrors}
             onClick={() => {
               void handleSubmit()
             }}
