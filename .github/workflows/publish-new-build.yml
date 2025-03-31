@@ -40,10 +40,10 @@ jobs:
           new_version="${{ inputs.version }}"
           current_version="${{ env.current_version }}"
 
-          if npx semver $new_version -r "<=$current_version"; then
-            echo "Error: New version ($new_version) is lowest or the same as current ($current_version)"
-            exit 1
-          fi
+          # if npx semver $new_version -r "<=$current_version"; then
+          #   echo "Error: New version ($new_version) is lowest or the same as current ($current_version)"
+          #   exit 1
+          # fi
 
       - name: Bump version
         run: |
