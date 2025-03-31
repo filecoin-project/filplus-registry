@@ -30,6 +30,7 @@ import {
   getAllApplications,
   getApplicationsForRepo,
 } from '@/lib/apiClient'
+import { bytesToiB } from '@/lib/utils'
 import { type Application } from '@/type'
 import { Search } from 'lucide-react'
 import { useSession } from 'next-auth/react'
@@ -106,11 +107,11 @@ export default function Home(): JSX.Element {
       if (notification != null) {
         const messageCID = searchParams.get('messageCID') ?? ''
         const amount = searchParams.get('amount') ?? '-'
-        const client = searchParams.get('client') ?? '-'
+        const client = searchParams.get('client') ?? '0'
 
         toast(
           <ToastContent
-            amount={amount}
+            amount={bytesToiB(Number(amount))}
             client={client}
             messageCID={messageCID}
           />,

@@ -1,4 +1,5 @@
 import {
+  Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
@@ -17,7 +18,8 @@ import MenuItem from '@mui/material/MenuItem'
 import TextField from '@mui/material/TextField'
 import { Button } from '@/components/ui/button'
 import { AllocationUnit, type Allocation, type Application } from '@/type'
-import { type ReactNode } from 'react'
+import { type ReactNode, useState } from 'react'
+import { bytesToiB } from '@/lib/utils'
 
 type AllocationType = 'contract' | 'directly'
 
@@ -36,6 +38,7 @@ interface DatacapAmountModalProps {
   allocation: Allocation | undefined
   application: Application
   clientContractAddress?: string | null
+  remainingDatacap?: number | undefined
   setAllocationConfig: (config: any) => void
   onClose: () => void
   onCancel: () => void
@@ -54,20 +57,46 @@ const DatacapAmountModal = ({
   application,
   title,
   clientContractAddress,
+  remainingDatacap,
 }: DatacapAmountModalProps): ReactNode => {
+  const [isFillRemainingDatacapChecked, setIsFillRemainingDatacapChecked] =
+    useState(false)
+
+  const handleCheckboxChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ): void => {
+    const isChecked = e.target.checked
+    setIsFillRemainingDatacapChecked(isChecked)
+    setAllocationConfig((prev: AllocationConfig) => ({
+      ...prev,
+      amount: remainingDatacap?.toString() ?? '0',
+      unit: 'B' as AllocationUnit,
+      isFillRemainingDatacapChecked: isChecked,
+    }))
+  }
+
   return (
     <Dialog open={allocationConfig.isDialogOpen} onClose={onClose} fullWidth>
       <DialogTitle>{title}</DialogTitle>
-      <DialogContent
-        style={{
-          paddingTop: '8px',
-        }}
-      >
+      <DialogContent>
         {(isApiCalling || isWalletConnecting) && (
           <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
             <Spinner />
           </div>
         )}
+        <div>
+          {remainingDatacap && (
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={isFillRemainingDatacapChecked}
+                  onChange={handleCheckboxChange}
+                />
+              }
+              label={`Allocate the remaining requested DataCap: ${bytesToiB(remainingDatacap)}`}
+            />
+          )}
+        </div>
         <div className="flex gap-3 items-center flex-col">
           {clientContractAddress &&
             clientContractAddress !== null &&
@@ -139,6 +168,7 @@ const DatacapAmountModal = ({
                     }}
                     variant="outlined"
                     required
+                    disabled={isFillRemainingDatacapChecked}
                   />
                 </FormControl>
               </Box>
@@ -156,6 +186,7 @@ const DatacapAmountModal = ({
                         unit: e.target.value as AllocationUnit,
                       }))
                     }}
+                    disabled={isFillRemainingDatacapChecked}
                   >
                     {Object.values(AllocationUnit).map((e) => (
                       <MenuItem key={e} value={e}>

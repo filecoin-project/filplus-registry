@@ -125,10 +125,12 @@ const AppInfoCard: React.FC<ComponentProps> = ({
     amount: string
     unit: AllocationUnit
     isDialogOpen: boolean
+    isFillRemainingDatacapChecked: boolean
   }>({
     amount: '0',
     unit: AllocationUnit.GIB,
     isDialogOpen: false,
+    isFillRemainingDatacapChecked: false,
   })
 
   const [additionalInfoConfig, setAdditionalInfoConfig] = useState<{
@@ -197,6 +199,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
         amount: amount.toString(),
         unit: amountType,
         isDialogOpen: false,
+        isFillRemainingDatacapChecked: false,
       })
 
       const address = application.Lifecycle['On Chain Address']
@@ -244,17 +247,19 @@ const AppInfoCard: React.FC<ComponentProps> = ({
         if (allocationAmount < allowance) {
           setIsProgressBarVisible(true)
           setProgress(0)
-          setAllocationProgressDesc(`${bytesToiB(0)} / ${lastAllocationUnit}`)
+          setAllocationProgressDesc(
+            `${bytesToiB(0)} / ${bytesToiB(allocationAmount)}`,
+          )
           return
         }
 
         const usedDatacap = allocationAmount - allowance
-        const usedDatacapUnit = bytesToiB(usedDatacap)
-
         const progressPercentage = (usedDatacap / allocationAmount) * 100
         setIsProgressBarVisible(true)
         setProgress(progressPercentage)
-        setAllocationProgressDesc(`${usedDatacapUnit} / ${lastAllocationUnit}`)
+        setAllocationProgressDesc(
+          `${bytesToiB(usedDatacap)} / ${bytesToiB(allocationAmount)}`,
+        )
       } else {
         if (response.error === 'Address not found') {
           setIsProgressBarVisible(application.Lifecycle.State === 'Granted')
@@ -471,29 +476,19 @@ const AppInfoCard: React.FC<ComponentProps> = ({
 
         case 'ReadyToSign':
           if (requestId != null && userName != null) {
-            if (application['Allocation Requests'].length > 1) {
-              setAllocationAmountConfig((prev) => {
-                return {
-                  ...prev,
-                  isDialogOpen: true,
-                }
-              })
-            } else {
-              // check the balance here
-
-              if (
-                lastAllocationAmount &&
-                anyToBytes(lastAllocationAmount) > allowance
-              ) {
-                toast.error('Amount is bigger than the allowance')
-                return
-              }
-
-              await mutationProposal.mutateAsync({
-                requestId,
-                userName,
-              })
+            // check the balance here
+            if (
+              lastAllocationAmount &&
+              anyToBytes(lastAllocationAmount) > allowance
+            ) {
+              toast.error('Amount is bigger than the allowance')
+              return
             }
+
+            await mutationProposal.mutateAsync({
+              requestId,
+              userName,
+            })
           }
           break
         case 'StartSignDatacap':
@@ -523,7 +518,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
                   lastDatacapAllocation.Signers[1]['Message CID'],
                 )}`,
                 `amount=${encodeURIComponent(
-                  lastDatacapAllocation['Allocation Amount'],
+                  anyToBytes(lastAllocationAmount),
                 )}`,
                 `notification=true`,
               ].join('&')
@@ -621,12 +616,13 @@ const AppInfoCard: React.FC<ComponentProps> = ({
       ' ',
       allocationAmountConfig.unit.toString(),
     )
-    if (anyToBytes(amountWithUnit) > allowance) {
+
+    const amountInBytes = anyToBytes(amountWithUnit)
+    if (amountInBytes > allowance) {
       toast.error('Amount is bigger than the allowance')
       return
     }
-
-    if (anyToBytes(amountWithUnit) > remaining) {
+    if (amountInBytes > remaining) {
       toast.error('Amount is bigger than remaning')
       return
     }
@@ -634,50 +630,23 @@ const AppInfoCard: React.FC<ComponentProps> = ({
     setApiCalling(true)
     const userName = session.data?.user?.githubUsername
     if (!userName) return
-    const validatedAllocationAmount = validateAndReturnDatacap(
-      amountWithUnit,
-      application.Datacap['Total Requested Amount'],
-    )
 
-    if (!validatedAllocationAmount) {
-      setApiCalling(false)
-      return
-    }
+    const amountToAllocate = `${amountInBytes} B`
 
     try {
-      if (application.Lifecycle.State === 'ReadyToSign') {
-        const requestId = application['Allocation Requests'].find(
-          (alloc) => alloc.Active,
-        )?.ID
-
-        if (!requestId) return
-
-        setAllocationAmountConfig((prev) => ({
-          ...prev,
-          isDialogOpen: false,
-        }))
-
-        await mutationProposal.mutateAsync({
-          requestId,
-          userName,
-          allocationAmount: validatedAllocationAmount,
-        })
-      } else {
-        const clientContractAddress =
-          typeof selectedAllocator === 'object'
-            ? selectedAllocator?.client_contract_address
-            : undefined
-
-        await mutationTrigger.mutateAsync({
-          userName,
-          allocationAmount: validatedAllocationAmount,
-          clientContractAddress:
-            allocationAmountConfig.allocationType === 'contract' &&
-            clientContractAddress
-              ? clientContractAddress
-              : undefined,
-        })
-      }
+      const clientContractAddress =
+        typeof selectedAllocator === 'object'
+          ? selectedAllocator?.client_contract_address
+          : undefined
+      await mutationTrigger.mutateAsync({
+        userName,
+        allocationAmount: amountToAllocate,
+        clientContractAddress:
+          allocationAmountConfig.allocationType === 'contract' &&
+          clientContractAddress
+            ? clientContractAddress
+            : undefined,
+      })
     } catch (error) {
       setAllocationAmountConfig((prev) => ({
         ...prev,
@@ -692,12 +661,14 @@ const AppInfoCard: React.FC<ComponentProps> = ({
     setApiCalling(true)
     const userName = session.data?.user?.githubUsername
     if (!userName) return
-
+    const amountInBytes = anyToBytes(
+      `${refillInfoParams.amount} ${refillInfoParams.unit}`,
+    )
     try {
       await mutationTriggerSSA.mutateAsync({
         userName,
-        amount: refillInfoParams.amount,
-        unit: refillInfoParams.unit,
+        amount: amountInBytes.toString(),
+        unit: 'B' as AllocationUnit,
       })
     } catch (err) {
       handleSSAError(err)
@@ -740,14 +711,11 @@ const AppInfoCard: React.FC<ComponentProps> = ({
       application.Lifecycle.State === 'ReadyToSign' &&
       application['Allocation Requests'].length > 1
     ) {
-      let [amount, unit] = splitString(
+      const [amount, unit] = splitString(
         application['Allocation Requests'].find((e) => e.Active)?.[
           'Allocation Amount'
         ] ?? '',
       )
-      if (unit === 'B') {
-        unit = AllocationUnit.GIB
-      }
 
       setAllocationAmountConfig(() => ({
         allocationType: 'directly',
@@ -800,36 +768,6 @@ const AppInfoCard: React.FC<ComponentProps> = ({
     return index % 2 === 0
       ? 'bg-white' // Fondo blanco para filas pares
       : 'bg-gray-100' // Fondo gris claro para filas impares
-  }
-
-  const validateAndReturnDatacap = (
-    datacap: string,
-    totalDatacap: string,
-  ): string | undefined => {
-    console.log(datacap, 'datacap')
-
-    // check if data ends with "s" or "S"
-    let datacapWithoutS =
-      datacap.endsWith('s') || datacap.endsWith('S')
-        ? datacap.slice(0, -1)
-        : datacap
-
-    // check if its like "TB OR PB and add "i" between them"
-    const letters = datacapWithoutS.match(/[a-zA-Z]/g)
-
-    if (letters && letters.length === 2) {
-      const lastChar = datacapWithoutS.charAt(datacapWithoutS.length - 1)
-      datacapWithoutS = datacapWithoutS.slice(0, -1) + 'i' + lastChar
-    }
-
-    const bytes = anyToBytes(datacapWithoutS)
-    const totalBytes = anyToBytes(totalDatacap)
-
-    if (bytes > totalBytes) {
-      toast.error('Datacap exceeds the total requested amount')
-      return
-    }
-    return datacap
   }
 
   const handleRequestKyc = async (): Promise<void> => {
@@ -1310,6 +1248,8 @@ const AppInfoCard: React.FC<ComponentProps> = ({
                           amount: prev.amount || '1',
                           unit: prev.unit || AllocationUnit.GIB,
                           isDialogOpen: true,
+                          isFillRemainingDatacapChecked:
+                            prev.isFillRemainingDatacapChecked,
                         }))
                       }}
                     >
@@ -1335,6 +1275,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
         title="Datacap Refill Request"
         isWalletConnecting={isWalletConnecting}
         isApiCalling={isApiCalling}
+        remainingDatacap={remaining}
         onClose={() => {
           setRefillInfoParams((prev) => ({
             ...prev,

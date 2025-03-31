@@ -87,7 +87,10 @@ export class LedgerWallet extends BaseWallet {
       if (version.test_mode === true)
         throw new Error('Filecoin app in test mode.')
 
-      if (version.minor < 18 || (version.minor === 18 && version.patch < 2)) {
+      if (
+        (version.major === 0 && version.minor < 18) ||
+        (version.major === 0 && version.minor === 18 && version.patch < 2)
+      ) {
         throw new Error('Please update Filecoin app on Ledger.')
       }
     } catch (e: any) {
