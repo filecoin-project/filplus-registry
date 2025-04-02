@@ -31,7 +31,7 @@
     "@types/react": "18.2.12",
     "@types/react-dom": "18.2.5",
     "@zondax/filecoin-signing-tools": "^0.7.1",
-    "@zondax/ledger-filecoin": "^0.13.0",
+    "@zondax/ledger-filecoin": "^2.0.2",
     "autoprefixer": "10.4.14",
     "axios": "^1.6.8",
     "bufferutil": "^4.0.8",

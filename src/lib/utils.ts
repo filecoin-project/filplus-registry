@@ -135,7 +135,11 @@ export const getParsedMsigPendingTransactionParams = async (
       if (transaction.Method === 3844450837) {
         transactionObject.tx.calldata = decodedTransactionParams
         parsedTransaction.push(transactionObject)
-      } else if (transaction.Method === 4 && transaction.To === 'f06') {
+      } else if (
+        transaction.Method === 4 &&
+        transaction.To ===
+          `${config.isTestnet ? CoinType.TEST : CoinType.MAIN}06`
+      ) {
         const addressBytes = decodedTransactionParams[0]
         const coinType = config.isTestnet ? CoinType.TEST : CoinType.MAIN
         const address = new Address(addressBytes)

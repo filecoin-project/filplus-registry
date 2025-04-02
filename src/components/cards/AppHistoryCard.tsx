@@ -5,6 +5,7 @@ import { type AllocationRequest } from '@/type'
 import { requestTypeColor, allocationActiveColor } from '@/lib/constants'
 import { Separator } from '../ui/separator'
 import { FaChevronDown, FaChevronUp } from 'react-icons/fa'
+import { bytesToiB } from '@/lib/utils'
 
 interface ComponentProps {
   allocation: AllocationRequest
@@ -13,7 +14,6 @@ interface ComponentProps {
 
 const AppHistoryCard: React.FC<ComponentProps> = ({ allocation, actor }) => {
   const [isExpanded, setIsExpanded] = useState(false)
-
   const toggleExpanded = (): void => {
     if (allocation.Signers.length === 0) return
     setIsExpanded(!isExpanded)
@@ -32,7 +32,7 @@ const AppHistoryCard: React.FC<ComponentProps> = ({ allocation, actor }) => {
             <CardTitle className="text-md font-medium">
               Allocation Amount:{' '}
               <span className="bg-gray-200 rounded-md px-2 py-1 text-xs">
-                {allocation['Allocation Amount']}
+                {bytesToiB(allocation.AllocationAmountInBytes ?? 0)}
               </span>
               <span
                 className={`ml-2 px-2 py-1 rounded text-xs ${
@@ -193,6 +193,18 @@ const AppHistoryCard: React.FC<ComponentProps> = ({ allocation, actor }) => {
               </div>
             </>
           )}
+          <Separator className="my-4" />
+
+          <div className="flex flex-col space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <p className="text-muted-foreground">
+                Allocation amount in bytes
+              </p>
+              <p className="text-muted-foreground select-text">
+                {allocation.AllocationAmountInBytes}
+              </p>
+            </div>
+          </div>
         </CardContent>
       )}
     </Card>

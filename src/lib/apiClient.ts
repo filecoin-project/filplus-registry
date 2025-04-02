@@ -7,7 +7,7 @@ import {
 } from '@/type'
 import axios from 'axios'
 import { getAccessToken } from './session'
-import { getCurrentDate } from './utils'
+import { anyToBytes, getCurrentDate } from './utils'
 
 /**
  * Axios client instance with a predefined base URL for making API requests.
@@ -133,7 +133,25 @@ export const getApplicationByParams = async (
         },
       },
     )
-    if (Object.keys(data).length > 0) return data
+
+    const allocationRequests = data.application_file?.['Allocation Requests']
+    if (allocationRequests) {
+      for (let i = 0; i < allocationRequests.length; i++) {
+        allocationRequests[i].AllocationAmountInBytes = anyToBytes(
+          allocationRequests[i]['Allocation Amount'],
+        )
+      }
+    }
+
+    if (Object.keys(data).length > 0) {
+      return {
+        ...data,
+        application_file: {
+          ...data.application_file,
+          'Allocation Requests': allocationRequests,
+        },
+      }
+    }
   } catch (error) {
     console.error(error)
   }

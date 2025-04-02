@@ -1,9 +1,10 @@
 import type { Address } from 'viem'
 
 export enum AllocationUnit {
-  PIB = 'PiB',
-  TIB = 'TiB',
+  B = 'B',
   GIB = 'GiB',
+  TIB = 'TiB',
+  PIB = 'PiB',
 }
 
 export interface RequestAmount {
@@ -82,6 +83,7 @@ export interface AllocationRequest {
   Active: boolean
   'Allocation Amount': string
   Signers: Signer[]
+  AllocationAmountInBytes?: number
 }
 
 export interface Signer {
