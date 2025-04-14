@@ -46,73 +46,54 @@ export default function Home(): JSX.Element {
   const { allocators, selectedAllocator, setSelectedAllocator } = useAllocator()
   const [isShowClosedApplicationChecked, setIsShowClosedApplicationChecked] =
     useState(false)
-  const [closedApplications, setClosedApplications] = useState<
-    Application[] | undefined
-  >(undefined)
-  const [activeApplications, setActiveApplications] = useState<
-    Application[] | undefined
-  >(undefined)
-  const [closedApplicationsForRepo, setClosedApplicationsForRepo] = useState<
-    Application[] | undefined
-  >(undefined)
-  const [activeApplicationsForRepo, setActiveApplicationsForRepo] = useState<
-    Application[] | undefined
-  >(undefined)
   const session = useSession()
 
-  const fetchApplications = async (): Promise<Application[] | undefined> => {
-    if (isShowClosedApplicationChecked) {
-      if (!closedApplications) {
-        const closedApps = await getAllClosedApplications()
-        setClosedApplications(closedApps)
-        return closedApps
-      }
-      return closedApplications
-    } else {
-      if (!activeApplications) {
-        const activeApps = await getAllActiveApplications()
-        setActiveApplications(activeApps)
-        return activeApps
-      }
-      return activeApplications
-    }
-  }
-
-  const fetchApplicationsForRepo = async (
-    repo: string,
-    owner: string,
-  ): Promise<Application[] | undefined> => {
-    if (!isShowClosedApplicationChecked) {
-      if (!activeApplicationsForRepo) {
-        const activeApps = await getApplicationsForRepo(repo, owner)
-        setActiveApplicationsForRepo(activeApps)
-        return activeApps
-      }
-      return activeApplicationsForRepo
-    } else {
-      if (!closedApplicationsForRepo) {
-        const closedApps = await getClosedApplicationsForRepo(repo, owner)
-        setClosedApplicationsForRepo(closedApps)
-        return closedApps
-      }
-      return closedApplicationsForRepo
-    }
-  }
+  const {
+    data: allActiveApps,
+    isLoading: isAllActiveAppsLoading,
+    error: allActiveAppsError,
+    refetch: refetchAllActiveApps,
+  } = useQuery({
+    queryKey: ['allApplications'],
+    queryFn: async () => {
+      return await getAllActiveApplications()
+    },
+    enabled:
+      (!selectedAllocator && session.status !== 'authenticated') ||
+      selectedAllocator === 'all',
+    refetchOnWindowFocus: false,
+    refetchInterval: false,
+    retry: false,
+  })
 
   const {
-    data: repoApplications,
-    isLoading: isRepoLoading,
-    error: repoError,
-    refetch: refetchRepoApplications,
+    data: allClosedApps,
+    isLoading: isAllClosedLoading,
+    error: allClosedAppsError,
+    refetch: refetchAllClosedApps,
   } = useQuery({
-    queryKey: [
-      'repoApplications',
-      selectedAllocator,
-      isShowClosedApplicationChecked,
-    ],
+    queryKey: ['allClosedApplications'],
+    queryFn: async () => {
+      return await getAllClosedApplications()
+    },
+    enabled:
+      (!selectedAllocator && session.status !== 'authenticated') ||
+      selectedAllocator === 'all',
+    refetchOnWindowFocus: false,
+    refetchInterval: false,
+    retry: false,
+  })
+
+  const {
+    data: repoActiveApps,
+    isLoading: isRepoActiveAppsLoading,
+    error: repoActiveAppsError,
+    refetch: refetchRepoActiveApps,
+  } = useQuery({
+    queryKey: ['repoActiveApplications', selectedAllocator],
     queryFn: async () => {
       if (selectedAllocator && typeof selectedAllocator !== 'string') {
-        return await fetchApplicationsForRepo(
+        return await getApplicationsForRepo(
           selectedAllocator.repo,
           selectedAllocator.owner,
         )
@@ -129,18 +110,25 @@ export default function Home(): JSX.Element {
   })
 
   const {
-    data: allApplications,
-    isLoading: isAllLoading,
-    error: allApplicationsError,
-    refetch: refetchAllApplications,
+    data: repoClosedApps,
+    isLoading: isRepoClosedAppsLoading,
+    error: repoClosedAppsError,
+    refetch: refetchRepoClosedApps,
   } = useQuery({
-    queryKey: ['allApplications', isShowClosedApplicationChecked],
+    queryKey: ['repoClosedApplications', selectedAllocator],
     queryFn: async () => {
-      return await fetchApplications()
+      if (selectedAllocator && typeof selectedAllocator !== 'string') {
+        return await getClosedApplicationsForRepo(
+          selectedAllocator.repo,
+          selectedAllocator.owner,
+        )
+      }
+      return []
     },
     enabled:
-      (!selectedAllocator && session.status !== 'authenticated') ||
-      selectedAllocator === 'all',
+      !!selectedAllocator &&
+      typeof selectedAllocator !== 'string' &&
+      session.status === 'authenticated',
     refetchOnWindowFocus: false,
     refetchInterval: false,
     retry: false,
@@ -168,10 +156,20 @@ export default function Home(): JSX.Element {
   const pathName = usePathname()
 
   useEffect(() => {
-    if (repoError instanceof Error) toast.error(`Error: ${repoError.message}`)
-    if (allApplicationsError instanceof Error)
-      toast.error(`Error: ${allApplicationsError.message}`)
-  }, [repoError, allApplicationsError])
+    if (repoActiveAppsError instanceof Error)
+      toast.error(`Error: ${repoActiveAppsError.message}`)
+    if (allActiveAppsError instanceof Error)
+      toast.error(`Error: ${allActiveAppsError.message}`)
+    if (allClosedAppsError instanceof Error)
+      toast.error(`Error: ${allClosedAppsError.message}`)
+    if (repoClosedAppsError instanceof Error)
+      toast.error(`Error: ${repoClosedAppsError.message}`)
+  }, [
+    repoActiveAppsError,
+    allActiveAppsError,
+    repoClosedAppsError,
+    allClosedAppsError,
+  ])
 
   useEffect(() => {
     const handleNotification = async (): Promise<void> => {
@@ -203,18 +201,26 @@ export default function Home(): JSX.Element {
 
   useEffect(() => {
     if (
-      isRepoLoading &&
-      repoApplications == null &&
-      isAllLoading &&
-      allApplications == null
+      isRepoActiveAppsLoading &&
+      repoActiveApps == null &&
+      isAllActiveAppsLoading &&
+      allActiveApps == null
     )
       return
 
     const debounceTimeout = setTimeout(() => {
-      const dataToFilter =
-        (selectedAllocator && typeof selectedAllocator !== 'string'
-          ? repoApplications
-          : allApplications) ?? []
+      let dataToFilter: Application[] = []
+      if (!isShowClosedApplicationChecked) {
+        dataToFilter =
+          (selectedAllocator && typeof selectedAllocator !== 'string'
+            ? repoActiveApps
+            : allActiveApps) ?? []
+      } else {
+        dataToFilter =
+          (selectedAllocator && typeof selectedAllocator !== 'string'
+            ? repoClosedApps
+            : allClosedApps) ?? []
+      }
       const filteredData = dataToFilter.filter(
         (app) => filter === 'all' || app.Lifecycle.State === filter,
       )
@@ -250,11 +256,14 @@ export default function Home(): JSX.Element {
   }, [
     searchTerm,
     filter,
-    repoApplications,
-    allApplications,
-    isRepoLoading,
-    isAllLoading,
+    repoActiveApps,
+    allActiveApps,
+    allClosedApps,
+    repoClosedApps,
+    isRepoActiveAppsLoading,
+    isAllActiveAppsLoading,
     selectedAllocator,
+    isShowClosedApplicationChecked,
   ])
 
   const handleRenewal = async (): Promise<void> => {
@@ -269,8 +278,10 @@ export default function Home(): JSX.Element {
           setIsModalLoading(false)
           setOpenDialog(false)
           setIsLoading(true)
-          await refetchRepoApplications()
-          await refetchAllApplications()
+          await refetchRepoActiveApps()
+          await refetchAllActiveApps()
+          await refetchAllClosedApps()
+          await refetchRepoClosedApps()
           setIsLoading(false)
         }
       }
@@ -287,7 +298,13 @@ export default function Home(): JSX.Element {
     setIsShowClosedApplicationChecked(isChecked)
   }
 
-  if (isRepoLoading || isAllLoading || isLoading)
+  if (
+    isRepoActiveAppsLoading ||
+    isRepoClosedAppsLoading ||
+    isLoading ||
+    isAllActiveAppsLoading ||
+    isAllClosedLoading
+  )
     return (
       <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-20">
         <Spinner />
@@ -395,8 +412,6 @@ export default function Home(): JSX.Element {
                 }
                 onValueChange={(value) => {
                   setIsShowClosedApplicationChecked(false)
-                  setClosedApplicationsForRepo(undefined)
-                  setActiveApplicationsForRepo(undefined)
                   if (value === 'all') {
                     setSelectedAllocator(value)
                     return
