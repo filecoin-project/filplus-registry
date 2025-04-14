@@ -62,8 +62,6 @@ export default function Home(): JSX.Element {
       (!selectedAllocator && session.status !== 'authenticated') ||
       selectedAllocator === 'all',
     refetchOnWindowFocus: false,
-    refetchInterval: false,
-    retry: false,
   })
 
   const {
@@ -80,8 +78,6 @@ export default function Home(): JSX.Element {
       (!selectedAllocator && session.status !== 'authenticated') ||
       selectedAllocator === 'all',
     refetchOnWindowFocus: false,
-    refetchInterval: false,
-    retry: false,
   })
 
   const {
@@ -105,8 +101,6 @@ export default function Home(): JSX.Element {
       typeof selectedAllocator !== 'string' &&
       session.status === 'authenticated',
     refetchOnWindowFocus: false,
-    refetchInterval: false,
-    retry: false,
   })
 
   const {
@@ -130,8 +124,6 @@ export default function Home(): JSX.Element {
       typeof selectedAllocator !== 'string' &&
       session.status === 'authenticated',
     refetchOnWindowFocus: false,
-    refetchInterval: false,
-    retry: false,
   })
 
   useEffect(() => {
