@@ -25,13 +25,7 @@ import { Spinner } from '@/components/ui/spinner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ToastContent } from '@/components/ui/toast-message-cid'
 import { useAllocator } from '@/lib/AllocatorProvider'
-import {
-  cacheRenewal,
-  getAllActiveApplications,
-  getAllClosedApplications,
-  getApplicationsForRepo,
-  getClosedApplicationsForRepo,
-} from '@/lib/apiClient'
+import { cacheRenewal } from '@/lib/apiClient'
 import { bytesToiB } from '@/lib/utils'
 import { type Application } from '@/type'
 import { Checkbox, FormControlLabel } from '@mui/material'
@@ -39,8 +33,13 @@ import { Search } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { type MouseEventHandler, useEffect, useState } from 'react'
-import { useQuery } from 'react-query'
 import { toast } from 'react-toastify'
+import {
+  useAllActiveApplications,
+  useAllClosedApplications,
+  useRepoActiveApplications,
+  useRepoClosedApplications,
+} from '@/hooks/useApplications'
 
 export default function Home(): JSX.Element {
   const { allocators, selectedAllocator, setSelectedAllocator } = useAllocator()
@@ -53,78 +52,44 @@ export default function Home(): JSX.Element {
     isLoading: isAllActiveAppsLoading,
     error: allActiveAppsError,
     refetch: refetchAllActiveApps,
-  } = useQuery({
-    queryKey: ['allApplications'],
-    queryFn: async () => {
-      return await getAllActiveApplications()
-    },
-    enabled:
-      (!selectedAllocator && session.status !== 'authenticated') ||
+  } = useAllActiveApplications(
+    (!selectedAllocator && session.status !== 'authenticated') ||
       selectedAllocator === 'all',
-    refetchOnWindowFocus: false,
-  })
+  )
 
   const {
     data: allClosedApps,
     isLoading: isAllClosedLoading,
     error: allClosedAppsError,
     refetch: refetchAllClosedApps,
-  } = useQuery({
-    queryKey: ['allClosedApplications'],
-    queryFn: async () => {
-      return await getAllClosedApplications()
-    },
-    enabled:
-      (!selectedAllocator && session.status !== 'authenticated') ||
+  } = useAllClosedApplications(
+    (!selectedAllocator && session.status !== 'authenticated') ||
       selectedAllocator === 'all',
-    refetchOnWindowFocus: false,
-  })
+  )
 
   const {
     data: repoActiveApps,
     isLoading: isRepoActiveAppsLoading,
     error: repoActiveAppsError,
     refetch: refetchRepoActiveApps,
-  } = useQuery({
-    queryKey: ['repoActiveApplications', selectedAllocator],
-    queryFn: async () => {
-      if (selectedAllocator && typeof selectedAllocator !== 'string') {
-        return await getApplicationsForRepo(
-          selectedAllocator.repo,
-          selectedAllocator.owner,
-        )
-      }
-      return []
-    },
-    enabled:
-      !!selectedAllocator &&
+  } = useRepoActiveApplications(
+    selectedAllocator,
+    !!selectedAllocator &&
       typeof selectedAllocator !== 'string' &&
       session.status === 'authenticated',
-    refetchOnWindowFocus: false,
-  })
+  )
 
   const {
     data: repoClosedApps,
     isLoading: isRepoClosedAppsLoading,
     error: repoClosedAppsError,
     refetch: refetchRepoClosedApps,
-  } = useQuery({
-    queryKey: ['repoClosedApplications', selectedAllocator],
-    queryFn: async () => {
-      if (selectedAllocator && typeof selectedAllocator !== 'string') {
-        return await getClosedApplicationsForRepo(
-          selectedAllocator.repo,
-          selectedAllocator.owner,
-        )
-      }
-      return []
-    },
-    enabled:
-      !!selectedAllocator &&
+  } = useRepoClosedApplications(
+    selectedAllocator,
+    !!selectedAllocator &&
       typeof selectedAllocator !== 'string' &&
       session.status === 'authenticated',
-    refetchOnWindowFocus: false,
-  })
+  )
 
   useEffect(() => {
     if (!allocators?.length) {
