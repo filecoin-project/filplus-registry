@@ -290,7 +290,9 @@ const AppInfoCard: React.FC<ComponentProps> = ({
     }
 
     const ghUserName = session.data.user.githubUsername
-    const currentAllocator = allocators.find((e) => e.repo === repo)
+    const currentAllocator = allocators.find(
+      (e) => e.owner === owner && e.repo === repo,
+    )
     setSelectedAllocator(currentAllocator)
     if (
       currentAllocator?.verifiers_gh_handles.includes(ghUserName.toLowerCase())
@@ -300,6 +302,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
   }, [
     session.data?.user?.githubUsername,
     allocators,
+    owner,
     repo,
     setSelectedAllocator,
   ])
@@ -482,6 +485,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
               anyToBytes(lastAllocationAmount) > allowance
             ) {
               toast.error('Amount is bigger than the allowance')
+              setApiCalling(false)
               return
             }
 
@@ -500,6 +504,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
               anyToBytes(lastAllocationAmount) > allowance
             ) {
               toast.error('Amount is bigger than the allowance')
+              setApiCalling(false)
               return
             }
 
