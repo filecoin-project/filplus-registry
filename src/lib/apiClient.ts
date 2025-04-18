@@ -44,7 +44,7 @@ export const getApplicationsForRepo = async (
 ): Promise<Application[] | undefined> => {
   try {
     const [activeResponse, mergedResponse] = await Promise.all([
-      apiClient.get('application/active', {
+      apiClient.get('applications/open_pull_request', {
         params: {
           repo,
           owner,
@@ -91,11 +91,57 @@ export const getApplicationsForRepo = async (
  * @returns {Promise<Application[]>}
  * @throws {Error} When the API call fails.
  */
-export const getAllApplications = async (): Promise<
+export const getAllActiveApplications = async (): Promise<
   Application[] | undefined
 > => {
   try {
-    const applications = await apiClient.get('/applications')
+    const applications = await apiClient.get('/applications/active')
+    return applications.data
+  } catch (error: any) {
+    console.error(error)
+
+    const message = error?.message ?? 'Failed to fetch applications'
+    throw new Error(message)
+  }
+}
+
+/**
+ * Get all closed applications of all repos
+ *
+ * @returns {Promise<Application[]>}
+ * @throws {Error} When the API call fails.
+ */
+export const getAllClosedApplications = async (): Promise<
+  Application[] | undefined
+> => {
+  try {
+    const applications = await apiClient.get('/applications/closed')
+    return applications.data
+  } catch (error: any) {
+    console.error(error)
+
+    const message = error?.message ?? 'Failed to fetch applications'
+    throw new Error(message)
+  }
+}
+
+/**
+ * Get all closed applications for specific repo
+ *
+ * @returns {Promise<Application[]>}
+ * @throws {Error} When the API call fails.
+ */
+export const getClosedApplicationsForRepo = async (
+  repo: string,
+  owner: string,
+): Promise<Application[] | undefined> => {
+  try {
+    const applications = await apiClient.get('/applications/closed/allocator', {
+      params: {
+        repo,
+        owner,
+      },
+    })
     return applications.data
   } catch (error: any) {
     console.error(error)

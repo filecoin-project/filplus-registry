@@ -25,57 +25,71 @@ import { Spinner } from '@/components/ui/spinner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ToastContent } from '@/components/ui/toast-message-cid'
 import { useAllocator } from '@/lib/AllocatorProvider'
-import {
-  cacheRenewal,
-  getAllApplications,
-  getApplicationsForRepo,
-} from '@/lib/apiClient'
+import { cacheRenewal } from '@/lib/apiClient'
 import { bytesToiB } from '@/lib/utils'
 import { type Application } from '@/type'
+import { Checkbox, FormControlLabel } from '@mui/material'
 import { Search } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { type MouseEventHandler, useEffect, useState } from 'react'
-import { useQuery } from 'react-query'
 import { toast } from 'react-toastify'
+import {
+  useAllActiveApplications,
+  useAllClosedApplications,
+  useRepoActiveApplications,
+  useRepoClosedApplications,
+} from '@/hooks/useApplications'
 
 export default function Home(): JSX.Element {
   const { allocators, selectedAllocator, setSelectedAllocator } = useAllocator()
+  const [isShowClosedApplicationChecked, setIsShowClosedApplicationChecked] =
+    useState(false)
   const session = useSession()
 
   const {
-    data,
-    isLoading: isDataLoading,
-    error,
-    refetch,
-  } = useQuery({
-    queryKey: ['application', selectedAllocator, session.status],
-    queryFn: async () => {
-      if (
-        selectedAllocator &&
-        typeof selectedAllocator !== 'string' &&
-        session.status === 'authenticated'
-      ) {
-        return await getApplicationsForRepo(
-          selectedAllocator.repo,
-          selectedAllocator.owner,
-        )
-      }
+    data: allActiveApps,
+    isLoading: isAllActiveAppsLoading,
+    error: allActiveAppsError,
+    refetch: refetchAllActiveApps,
+  } = useAllActiveApplications(
+    (!selectedAllocator && session.status !== 'authenticated') ||
+      selectedAllocator === 'all',
+  )
 
-      if (
-        (!selectedAllocator && session.status === 'unauthenticated') ||
-        selectedAllocator === 'all' ||
-        (session.status === 'authenticated' && selectedAllocator === undefined)
-      ) {
-        return await getAllApplications()
-      }
+  const {
+    data: allClosedApps,
+    isLoading: isAllClosedLoading,
+    error: allClosedAppsError,
+    refetch: refetchAllClosedApps,
+  } = useAllClosedApplications(
+    (!selectedAllocator && session.status !== 'authenticated') ||
+      selectedAllocator === 'all',
+  )
 
-      return []
-    },
-    refetchOnWindowFocus: false,
-    refetchInterval: false,
-    retry: false,
-  })
+  const {
+    data: repoActiveApps,
+    isLoading: isRepoActiveAppsLoading,
+    error: repoActiveAppsError,
+    refetch: refetchRepoActiveApps,
+  } = useRepoActiveApplications(
+    selectedAllocator,
+    !!selectedAllocator &&
+      typeof selectedAllocator !== 'string' &&
+      session.status === 'authenticated',
+  )
+
+  const {
+    data: repoClosedApps,
+    isLoading: isRepoClosedAppsLoading,
+    error: repoClosedAppsError,
+    refetch: refetchRepoClosedApps,
+  } = useRepoClosedApplications(
+    selectedAllocator,
+    !!selectedAllocator &&
+      typeof selectedAllocator !== 'string' &&
+      session.status === 'authenticated',
+  )
 
   useEffect(() => {
     if (!allocators?.length) {
@@ -99,8 +113,20 @@ export default function Home(): JSX.Element {
   const pathName = usePathname()
 
   useEffect(() => {
-    if (error instanceof Error) toast.error(`Error: ${error.message}`)
-  }, [error])
+    if (repoActiveAppsError instanceof Error)
+      toast.error(`Error: ${repoActiveAppsError.message}`)
+    if (allActiveAppsError instanceof Error)
+      toast.error(`Error: ${allActiveAppsError.message}`)
+    if (allClosedAppsError instanceof Error)
+      toast.error(`Error: ${allClosedAppsError.message}`)
+    if (repoClosedAppsError instanceof Error)
+      toast.error(`Error: ${repoClosedAppsError.message}`)
+  }, [
+    repoActiveAppsError,
+    allActiveAppsError,
+    repoClosedAppsError,
+    allClosedAppsError,
+  ])
 
   useEffect(() => {
     const handleNotification = async (): Promise<void> => {
@@ -131,13 +157,30 @@ export default function Home(): JSX.Element {
   }, [notification, router, searchParams, pathName])
 
   useEffect(() => {
-    if (isDataLoading || data == null) return
+    if (
+      isRepoActiveAppsLoading &&
+      repoActiveApps == null &&
+      isAllActiveAppsLoading &&
+      allActiveApps == null
+    )
+      return
 
     const debounceTimeout = setTimeout(() => {
-      const filteredData = data?.filter(
+      let dataToFilter: Application[] = []
+      if (!isShowClosedApplicationChecked) {
+        dataToFilter =
+          (selectedAllocator && typeof selectedAllocator !== 'string'
+            ? repoActiveApps
+            : allActiveApps) ?? []
+      } else {
+        dataToFilter =
+          (selectedAllocator && typeof selectedAllocator !== 'string'
+            ? repoClosedApps
+            : allClosedApps) ?? []
+      }
+      const filteredData = dataToFilter.filter(
         (app) => filter === 'all' || app.Lifecycle.State === filter,
       )
-
       const searchResults = searchTerm
         ? filteredData.filter((app) => {
             const clientName = app.Client?.Name?.toLowerCase() || ''
@@ -167,7 +210,18 @@ export default function Home(): JSX.Element {
     return () => {
       clearTimeout(debounceTimeout)
     }
-  }, [searchTerm, filter, data, isDataLoading])
+  }, [
+    searchTerm,
+    filter,
+    repoActiveApps,
+    allActiveApps,
+    allClosedApps,
+    repoClosedApps,
+    isRepoActiveAppsLoading,
+    isAllActiveAppsLoading,
+    selectedAllocator,
+    isShowClosedApplicationChecked,
+  ])
 
   const handleRenewal = async (): Promise<void> => {
     try {
@@ -181,7 +235,10 @@ export default function Home(): JSX.Element {
           setIsModalLoading(false)
           setOpenDialog(false)
           setIsLoading(true)
-          await refetch()
+          await refetchRepoActiveApps()
+          await refetchAllActiveApps()
+          await refetchAllClosedApps()
+          await refetchRepoClosedApps()
           setIsLoading(false)
         }
       }
@@ -191,7 +248,20 @@ export default function Home(): JSX.Element {
     }
   }
 
-  if (isDataLoading || isLoading)
+  const handleCheckboxChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ): void => {
+    const isChecked = e.target.checked
+    setIsShowClosedApplicationChecked(isChecked)
+  }
+
+  if (
+    isRepoActiveAppsLoading ||
+    isRepoClosedAppsLoading ||
+    isLoading ||
+    isAllActiveAppsLoading ||
+    isAllClosedLoading
+  )
     return (
       <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-20">
         <Spinner />
@@ -298,6 +368,7 @@ export default function Home(): JSX.Element {
                     : ''
                 }
                 onValueChange={(value) => {
+                  setIsShowClosedApplicationChecked(false)
                   if (value === 'all') {
                     setSelectedAllocator(value)
                     return
@@ -374,6 +445,18 @@ export default function Home(): JSX.Element {
                 )}
               </div>
             )}
+
+            <div>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={isShowClosedApplicationChecked}
+                    onChange={handleCheckboxChange}
+                  />
+                }
+                label={'Show closed applications'}
+              />
+            </div>
           </div>
 
           <TabsList>
