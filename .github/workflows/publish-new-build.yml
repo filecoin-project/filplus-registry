@@ -164,4 +164,4 @@ jobs:
           registry-type: public
 
       - name: Change ${{ env.ECR_REPOSITORY }} version to ${{ env.IMAGE_VERSION }} on ${{ inputs.environment }} in SSM parameter store
-        run: node ./ci/scripts/filter-images-and-delete.js
+        run: node ./ci/scripts/check-and-change-image.js
