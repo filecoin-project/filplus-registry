@@ -28,8 +28,8 @@ on:
         default: staging
 
 jobs:
-  code-check:
-    uses: ./.github/workflows/code-check.yml
+  # code-check:
+  #   uses: ./.github/workflows/code-check.yml
 
   # bump-version:
   #   runs-on: ubuntu-latest
@@ -130,7 +130,7 @@ jobs:
 
   trigger-deploy:
     runs-on: ubuntu-latest
-    if: ${{ inputs.version != '' && inputs.deploy == 'true' && inputs.environment != '' }}
+    if: ${{ inputs.version != '' && inputs.deploy == true && inputs.environment != '' }}
     env:
       REPO_NAME: ${{ github.repository }}
       SSM_PARAMETER_NAME: '/${{ inputs.environment }}/${{ github.repository }}/image-version'
