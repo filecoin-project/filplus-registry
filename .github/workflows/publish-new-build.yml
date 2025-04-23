@@ -139,6 +139,7 @@ jobs:
       ECR_REPOSITORY: 'filplus-registry'
       SSM_PARAMETER_NAME: '/${{ inputs.environment }}/filplus-registry/image-version'
       IMAGE_VERSION: ${{ inputs.version }}
+      AWS_ACCOUNT_ID: 851725480543
 
     steps:
       - name: Checkout code
@@ -162,5 +163,5 @@ jobs:
           mask-password: 'true'
           registry-type: public
 
-      - name: Change ${{ github.repository }} version to ${{ env.IMAGE_VERSION }} on ${{ inputs.environment }} in SSM parameter store
+      - name: Change ${{ env.ECR_REPOSITORY }} version to ${{ env.IMAGE_VERSION }} on ${{ inputs.environment }} in SSM parameter store
         run: node ./ci/scripts/filter-images-and-delete.js
