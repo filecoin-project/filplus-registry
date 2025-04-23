@@ -27,6 +27,10 @@ on:
           - production
         default: staging
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   # code-check:
   #   uses: ./.github/workflows/code-check.yml
@@ -132,8 +136,8 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ inputs.version != '' && inputs.deploy == true && inputs.environment != '' }}
     env:
-      REPO_NAME: ${{ github.repository }}
-      SSM_PARAMETER_NAME: '/${{ inputs.environment }}/${{ github.repository }}/image-version'
+      ECR_REPOSITORY: 'filplus-registry'
+      SSM_PARAMETER_NAME: '/${{ inputs.environment }}/filplus-registry/image-version'
       IMAGE_VERSION: ${{ inputs.version }}
 
     steps:

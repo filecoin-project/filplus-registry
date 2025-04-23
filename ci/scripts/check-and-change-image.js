@@ -1,12 +1,12 @@
 const { execSync } = require('child_process')
 
-const REPO_NAME = process.env.REPO_NAME
+const ECR_REPOSITORY = process.env.ECR_REPOSITORY
 const IMAGE_VERSION = process.env.IMAGE_VERSION
 const SSM_PARAMETER_NAME = process.env.SSM_PARAMETER_NAME
 
-if (!REPO_NAME || !IMAGE_VERSION || !SSM_PARAMETER_NAME) {
+if (!ECR_REPOSITORY || !IMAGE_VERSION || !SSM_PARAMETER_NAME) {
   console.error(
-    'Missing environment variables: REPO_NAME, IMAGE_VERSION, SSM_PARAMETER_NAME',
+    'Missing environment variables: ECR_REPOSITORY, IMAGE_VERSION, SSM_PARAMETER_NAME',
   )
   process.exit(1)
 }
@@ -25,7 +25,7 @@ function runCommand(command) {
 console.log('Checking image in ECR...')
 
 const imageExist = runCommand(
-  `aws ecr-public describe-images --repository-name ${REPO_NAME} --region us-east-1  --image-ids imageTag=${IMAGE_VERSION}`,
+  `aws ecr-public describe-images --repository-name ${ECR_REPOSITORY} --region us-east-1  --image-ids imageTag=${IMAGE_VERSION}`,
 )
 
 if (!imageExist || !imageExist.imageDetails) {
