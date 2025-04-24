@@ -36,11 +36,8 @@ if (!imageExist || !imageExist.imageDetails) {
 console.log('Image was found in ECR:', imageExist)
 
 console.log('Checking version in SSM...')
-
-let currentVersions = JSON.parse(
-  runCommand(
-    `aws ssm get-parameter --name "${SSM_PARAMETER_NAME}" --query "Parameter.Value" --output json`,
-  ),
+let currentVersions = runCommand(
+  `aws ssm get-parameter --name "${SSM_PARAMETER_NAME}" --query "Parameter.Value" --output json`,
 )
 
 console.log('Current versions:', currentVersions)
