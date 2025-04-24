@@ -25,7 +25,7 @@ function runCommand(command) {
 console.log('Checking image in ECR...')
 
 const imageExist = runCommand(
-  `aws ecr-public describe-images --repository-name ${ECR_REPOSITORY} --region us-east-1  --image-ids imageTag=${IMAGE_VERSION}`,
+  `aws ecr-public describe-images --repository-name ${ECR_REPOSITORY} --region us-east-1`,
 )
 
 if (!imageExist || !imageExist.imageDetails) {
