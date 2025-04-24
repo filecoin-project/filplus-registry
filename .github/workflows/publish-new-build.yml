@@ -138,8 +138,9 @@ jobs:
     if: ${{ inputs.version != '' && inputs.deploy == true && inputs.environment != '' }}
     env:
       ECR_REPOSITORY: 'filplus-registry'
-      SSM_PARAMETER_NAME: '/${{ inputs.environment }}/filplus-registry/image-version'
+      SSM_PARAMETER_NAME: '/${{ inputs.environment }}/deployed-versions'
       IMAGE_VERSION: '${{ inputs.version }}-staging-fidl'
+      ENVIRONMENT: '${{ inputs.environment }}'
 
     steps:
       - name: Checkout code

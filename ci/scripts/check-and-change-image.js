@@ -3,6 +3,7 @@ const { execSync } = require('child_process')
 const ECR_REPOSITORY = process.env.ECR_REPOSITORY
 const IMAGE_VERSION = process.env.IMAGE_VERSION
 const SSM_PARAMETER_NAME = process.env.SSM_PARAMETER_NAME
+const ENVIRONMENT = process.env.ENVIRONMENT
 
 if (!ECR_REPOSITORY || !IMAGE_VERSION || !SSM_PARAMETER_NAME) {
   console.error(
@@ -34,6 +35,36 @@ if (!imageExist || !imageExist.imageDetails) {
 }
 
 console.log('Image was found in ECR:', imageExist)
+
+let currentVersions = `aws ssm get-parameter --name "${SSM_PARAMETER_NAME}" --query "Parameter.Value" --output json`
+
+if (!currentVersions) {
+  const initStagingVersions = {
+    'filplus-registry': '1.2.35-staging-fidl',
+    'filplus-backend': '2.2.14',
+    'filplus-faucet': '1.1.9-staging-fidl',
+    'compliance-data-platform': '0.2.44',
+  }
+
+  const initProductionVersions = {
+    'filplus-registry': '1.2.35-production-fidl',
+    'filplus-backend': '2.2.14',
+    'compliance-data-platform': '0.2.44',
+    'filplus-faucet': '1.1.9-production-fidl',
+    'filplus-provider-benchmark': '1.0.3',
+    'provider-sample-url-finder': '0.2.2',
+    'metaallocator-dapp': '1.9.0',
+    'provider-sample-url-finder-frontend': '0.6.2',
+  }
+
+  currentVersions =
+    ENVIRONMENT === 'staging' ? initStagingVersions : initProductionVersions
+}
+
+console.log('Current versions:', currentVersions)
+
+const newCurrentSSMParams = JSON.stringify(currentVersions)
+console.log('New current SSM params:', newCurrentSSMParams)
 
 try {
   // const putNewVersion = `aws ssm put-parameter --name "${SSM_PARAMETER_NAME}" --value "${IMAGE_VERSION}" --type String --overwrite`
