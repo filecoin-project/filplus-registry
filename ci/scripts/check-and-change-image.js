@@ -56,10 +56,12 @@ if (!appVersion) {
 currentVersions[ECR_REPOSITORY] = IMAGE_VERSION
 const newCurrentSSMParams = JSON.stringify(currentVersions)
 
-console.log('New current SSM params:', newCurrentSSMParams)
+const cliEscaped = `"${newCurrentSSMParams.replace(/"/g, '\\"')}"`
+
+console.log('New current SSM params:', cliEscaped)
 
 try {
-  const putNewVersion = `aws ssm put-parameter --name "${SSM_PARAMETER_NAME}" --value "'${newCurrentSSMParams}'" --type String --overwrite`
+  const putNewVersion = `aws ssm put-parameter --name "${SSM_PARAMETER_NAME}" --value "${cliEscaped}" --type String --overwrite`
 
   execSync(putNewVersion, { stdio: 'inherit' })
   console.log(`Update version COMPLETE!`)
