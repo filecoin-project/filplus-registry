@@ -19,7 +19,6 @@ function runCommand(command) {
   } catch (error) {
     console.error(`Error running command: ${command}`)
     console.error(error.message)
-    process.exit(1)
   }
 }
 
@@ -36,12 +35,15 @@ if (!imageExist || !imageExist.imageDetails) {
 
 console.log('Image was found in ECR:', imageExist)
 
+console.log('Checking image in SSM...')
+
 let currentVersions = runCommand(
   `aws ssm get-parameter --name "${SSM_PARAMETER_NAME}" --query "Parameter.Value" --output json`,
 )
-console.log('Current versions:', currentVersions)
 
 if (!currentVersions) {
+  console.error(`Image ${IMAGE_VERSION} not found in SSM.`)
+
   const initStagingVersions = {
     'filplus-registry': '1.2.35-staging-fidl',
     'filplus-backend': '2.2.14',
@@ -64,7 +66,7 @@ if (!currentVersions) {
     ENVIRONMENT === 'staging' ? initStagingVersions : initProductionVersions
 }
 
-console.log('Current versions1:', currentVersions)
+console.log('Current versions:', currentVersions)
 
 const newCurrentSSMParams = JSON.stringify(currentVersions)
 console.log('New current SSM params:', newCurrentSSMParams)
