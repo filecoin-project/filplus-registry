@@ -41,6 +41,7 @@ let currentVersions = runCommand(
 )
 
 console.log('Current versions:', currentVersions)
+console.log('Current versions1:', JSON.parse(currentVersions))
 
 // if (!currentVersions) {
 //   console.error(`Image ${IMAGE_VERSION} not found in SSM.`)
@@ -67,8 +68,9 @@ console.log('Current versions:', currentVersions)
 //     ENVIRONMENT === 'staging' ? initStagingVersions : initProductionVersions
 // }
 
-console.log('Current versions1:', currentVersions)
+console.log('repo-name:', ECR_REPOSITORY)
 const appVersion = currentVersions[ECR_REPOSITORY]
+console.log('appVersion', appVersion)
 
 if (!appVersion) {
   console.error(`This app is not supported in this environment: ${ENVIRONMENT}`)
@@ -77,6 +79,7 @@ if (!appVersion) {
 
 currentVersions[ECR_REPOSITORY] = IMAGE_VERSION
 const newCurrentSSMParams = JSON.stringify(currentVersions)
+
 console.log('New current SSM params:', newCurrentSSMParams)
 
 try {
