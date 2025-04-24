@@ -14,6 +14,7 @@ export const stateColor = {
   Granted: 'bg-green-400 text-white',
   KYCRequested: 'bg-lime-400 text-white',
   ChangingSP: 'bg-amber-400 text-white',
+  Declined: 'bg-red-400 text-white',
 }
 
 export const allocationActiveColor = {

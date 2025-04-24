@@ -1051,224 +1051,238 @@ const AppInfoCard: React.FC<ComponentProps> = ({
             <div className="flex gap-2 pb-4">
               <AllocatorBalance owner={owner} repo={repo} />
             </div>
-            <div className="flex justify-end gap-2 pb-4">
-              {LDNActorType.Verifier === currentActorType &&
-                walletConnected &&
-                session?.data?.user?.name !== undefined &&
-                application?.Lifecycle?.['On Chain Address'] &&
-                application?.['Client Contract Address'] &&
-                ['ReadyToSign', 'Granted'].includes(
-                  application?.Lifecycle?.State,
-                ) && (
-                  <div className="flex gap-2">
-                    <AllowedSps
-                      application={application}
-                      onSubmit={handleAllowedSPsSubmit}
-                      client={application.Lifecycle['On Chain Address']}
-                      clientContractAddress={
-                        application['Client Contract Address']
-                      }
-                      initDeviationInPercentage="10"
-                      isApiCalling={isApiCalling}
-                      setApiCalling={setApiCalling}
-                    />
-                  </div>
-                )}
+            {application?.Lifecycle?.Active && (
+              <div className="flex justify-end gap-2 pb-4">
+                {LDNActorType.Verifier === currentActorType &&
+                  walletConnected &&
+                  session?.data?.user?.name !== undefined &&
+                  application?.Lifecycle?.['On Chain Address'] &&
+                  application?.['Client Contract Address'] &&
+                  ['ReadyToSign', 'Granted'].includes(
+                    application?.Lifecycle?.State,
+                  ) && (
+                    <div className="flex gap-2">
+                      <AllowedSps
+                        application={application}
+                        onSubmit={handleAllowedSPsSubmit}
+                        client={application.Lifecycle['On Chain Address']}
+                        clientContractAddress={
+                          application['Client Contract Address']
+                        }
+                        initDeviationInPercentage="10"
+                        isApiCalling={isApiCalling}
+                        setApiCalling={setApiCalling}
+                      />
+                    </div>
+                  )}
 
-              {!walletConnected &&
-                currentActorType === LDNActorType.Verifier &&
-                ![
-                  'KYCRequested',
-                  'Submitted',
-                  'ChangesRequested',
-                  'AdditionalInfoRequired',
-                  'AdditionalInfoSubmitted',
-                ].includes(application?.Lifecycle?.State) && (
-                  <Button
-                    onClick={() => void handleConnectLedger()}
-                    disabled={
-                      isWalletConnecting ||
-                      isApiCalling ||
-                      ['Submitted'].includes(application.Lifecycle.State)
-                    }
-                    className="bg-blue-500 text-white rounded-lg px-4 py-2 hover:bg-blue-600"
-                  >
-                    Connect Ledger
-                  </Button>
-                )}
-
-              {LDNActorType.Verifier === currentActorType &&
-                walletConnected &&
-                session?.data?.user?.name !== undefined &&
-                application?.Lifecycle?.['On Chain Address'] &&
-                application?.['Client Contract Address'] &&
-                ['ChangingSP'].includes(application?.Lifecycle?.State) && (
-                  <div className="flex gap-2">
+                {!walletConnected &&
+                  currentActorType === LDNActorType.Verifier &&
+                  ![
+                    'KYCRequested',
+                    'Submitted',
+                    'ChangesRequested',
+                    'AdditionalInfoRequired',
+                    'AdditionalInfoSubmitted',
+                  ].includes(application?.Lifecycle?.State) && (
                     <Button
-                      onClick={() => {
-                        void handleApproveAllowedSPs()
-                      }}
-                      disabled={isApiCalling}
-                      style={{
-                        width: '250px',
-                      }}
-                      className="bg-green-400 text-black rounded-lg px-4 py-2 hover:bg-green-500"
+                      onClick={() => void handleConnectLedger()}
+                      disabled={
+                        isWalletConnecting ||
+                        isApiCalling ||
+                        ['Submitted'].includes(application.Lifecycle.State)
+                      }
+                      className="bg-blue-500 text-white rounded-lg px-4 py-2 hover:bg-blue-600"
                     >
-                      Approve SP Propose
+                      Connect Ledger
                     </Button>
-                  </div>
-                )}
+                  )}
 
-              {LDNActorType.Verifier === currentActorType ? (
-                session?.data?.user?.name !== undefined &&
-                application?.Lifecycle?.State !== 'Granted' ? (
-                  <>
-                    {application?.Lifecycle?.State === 'Submitted' && (
-                      <div className="flex gap-2">
-                        <Button
-                          onClick={() => {
-                            void handleRequestKyc()
-                          }}
-                          disabled={isApiCalling}
-                          style={{
-                            width: '200px',
-                          }}
-                          className="bg-green-400 text-black rounded-lg px-4 py-2 hover:bg-green-500"
-                        >
-                          Request KYC
-                        </Button>
-                      </div>
-                    )}
-                    {application?.Lifecycle?.State === 'ReadyToSign' && (
-                      <div className="flex gap-2">
-                        <Button
-                          onClick={() => {
-                            void handleRemovePendingAllocation()
-                          }}
-                          disabled={isApiCalling}
-                          style={{
-                            width: '250px',
-                          }}
-                          className="bg-red-400 text-black rounded-lg px-4 py-2 hover:bg-red-500"
-                        >
-                          Revert Pending Allocation
-                        </Button>
-                      </div>
-                    )}
-                    {buttonText &&
-                      (walletConnected ||
-                        [
-                          'KYCRequested',
-                          'Submitted',
-                          'AdditionalInfoRequired',
-                          'AdditionalInfoSubmitted',
-                          'ChangesRequested',
-                        ].includes(application?.Lifecycle?.State)) && (
-                        <>
-                          {[
-                            'KYCRequested',
-                            'Submitted',
-                            'AdditionalInfoRequired',
-                            'AdditionalInfoSubmitted',
-                          ].includes(application?.Lifecycle?.State) && (
-                            <div className="flex gap-2">
-                              <Button
-                                onClick={() => {
-                                  setAdditionalInfoConfig({
-                                    isDialogOpen: true,
-                                    message: '',
-                                  })
-                                }}
-                                disabled={isApiCalling}
-                                style={{
-                                  width: '200px',
-                                }}
-                                className="bg-yellow-400 text-black rounded-lg px-4 py-2 hover:bg-yellow-500"
-                              >
-                                Request Additional Info
-                              </Button>
-                              <DialogPrimitive
-                                open={openDialog}
-                                onOpenChange={setOpenDialog}
-                              >
-                                <DialogTrigger asChild>
-                                  <Button
-                                    style={{
-                                      width: '200px',
-                                    }}
-                                    className="bg-red-400 text-white rounded-lg px-4 py-2 hover:bg-red-600"
-                                    variant="default"
-                                  >
-                                    Decline Application
-                                  </Button>
-                                </DialogTrigger>
-                                <DialogContentPrimitive className="sm:max-w-[500px] border-none">
-                                  <DialogHeader>
-                                    <DialogTitlePrimitive>
-                                      Decline Application
-                                    </DialogTitlePrimitive>
-                                    <DialogDescription>
-                                      This action will decline this application.
-                                    </DialogDescription>
-                                  </DialogHeader>
+                {LDNActorType.Verifier === currentActorType &&
+                  walletConnected &&
+                  session?.data?.user?.name !== undefined &&
+                  application?.Lifecycle?.['On Chain Address'] &&
+                  application?.['Client Contract Address'] &&
+                  ['ChangingSP'].includes(application?.Lifecycle?.State) && (
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => {
+                          void handleApproveAllowedSPs()
+                        }}
+                        disabled={isApiCalling}
+                        style={{
+                          width: '250px',
+                        }}
+                        className="bg-green-400 text-black rounded-lg px-4 py-2 hover:bg-green-500"
+                      >
+                        Approve SP Propose
+                      </Button>
+                    </div>
+                  )}
 
-                                  <DialogFooter className="mt-4 justify-between">
-                                    <DialogClose asChild>
-                                      <Button type="button" variant="secondary">
-                                        Close
-                                      </Button>
-                                    </DialogClose>
-                                    <Button
-                                      className="bg-red-400 text-white rounded-lg px-4 py-2 hover:bg-red-600"
-                                      disabled={isApiCalling}
-                                      onClick={() => void declineApplication()}
-                                    >
-                                      Confirm
-                                    </Button>
-                                  </DialogFooter>
-                                </DialogContentPrimitive>
-                              </DialogPrimitive>
-                            </div>
-                          )}
+                {LDNActorType.Verifier === currentActorType &&
+                  (session?.data?.user?.name !== undefined &&
+                  application?.Lifecycle?.State !== 'Granted' ? (
+                    <>
+                      {application?.Lifecycle?.State === 'Submitted' && (
+                        <div className="flex gap-2">
                           <Button
-                            onClick={() => void handleButtonClick()}
+                            onClick={() => {
+                              void handleRequestKyc()
+                            }}
                             disabled={isApiCalling}
                             style={{
                               width: '200px',
                             }}
-                            className="bg-blue-400 text-white rounded-lg px-4 py-2 hover:bg-blue-500"
+                            className="bg-green-400 text-black rounded-lg px-4 py-2 hover:bg-green-500"
                           >
-                            {buttonText}
+                            Request KYC
                           </Button>
-                        </>
+                        </div>
                       )}
-                  </>
-                ) : (
-                  progress > 75 &&
-                  remaining > 0 && (
-                    <Button
-                      disabled={isApiCalling}
-                      onClick={() => {
-                        setRefillInfoParams((prev) => ({
-                          amount: prev.amount || '1',
-                          unit: prev.unit || AllocationUnit.GIB,
-                          isDialogOpen: true,
-                          isFillRemainingDatacapChecked:
-                            prev.isFillRemainingDatacapChecked,
-                        }))
-                      }}
+                      {application?.Lifecycle?.State === 'ReadyToSign' && (
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={() => {
+                              void handleRemovePendingAllocation()
+                            }}
+                            disabled={isApiCalling}
+                            style={{
+                              width: '250px',
+                            }}
+                            className="bg-red-400 text-black rounded-lg px-4 py-2 hover:bg-red-500"
+                          >
+                            Revert Pending Allocation
+                          </Button>
+                        </div>
+                      )}
+                      {buttonText &&
+                        (walletConnected ||
+                          [
+                            'KYCRequested',
+                            'Submitted',
+                            'AdditionalInfoRequired',
+                            'AdditionalInfoSubmitted',
+                            'ChangesRequested',
+                          ].includes(application?.Lifecycle?.State)) && (
+                          <>
+                            {[
+                              'KYCRequested',
+                              'Submitted',
+                              'AdditionalInfoRequired',
+                              'AdditionalInfoSubmitted',
+                            ].includes(application?.Lifecycle?.State) && (
+                              <>
+                                <Button
+                                  onClick={() => {
+                                    setAdditionalInfoConfig({
+                                      isDialogOpen: true,
+                                      message: '',
+                                    })
+                                  }}
+                                  disabled={isApiCalling}
+                                  style={{
+                                    width: '200px',
+                                  }}
+                                  className="bg-yellow-400 text-black rounded-lg px-4 py-2 hover:bg-yellow-500"
+                                >
+                                  Request Additional Info
+                                </Button>
+                              </>
+                            )}
+                            <Button
+                              onClick={() => void handleButtonClick()}
+                              disabled={isApiCalling}
+                              style={{
+                                width: '200px',
+                              }}
+                              className="bg-blue-400 text-white rounded-lg px-4 py-2 hover:bg-blue-500"
+                            >
+                              {buttonText}
+                            </Button>
+                          </>
+                        )}
+                    </>
+                  ) : (
+                    progress > 75 &&
+                    remaining > 0 && (
+                      <Button
+                        disabled={isApiCalling}
+                        onClick={() => {
+                          setRefillInfoParams((prev) => ({
+                            amount: prev.amount || '1',
+                            unit: prev.unit || AllocationUnit.GIB,
+                            isDialogOpen: true,
+                            isFillRemainingDatacapChecked:
+                              prev.isFillRemainingDatacapChecked,
+                          }))
+                        }}
+                      >
+                        Trigger Refill
+                      </Button>
+                    )
+                  ))}
+                {currentActorType === LDNActorType.Verifier &&
+                  [
+                    'KYCRequested',
+                    'Submitted',
+                    'AdditionalInfoRequired',
+                    'AdditionalInfoSubmitted',
+                    'Granted',
+                  ].includes(application?.Lifecycle?.State) && (
+                    <DialogPrimitive
+                      open={openDialog}
+                      onOpenChange={setOpenDialog}
                     >
-                      Trigger Refill
-                    </Button>
-                  )
-                )
-              ) : (
-                <CardFooter className="px-6 flex justify-end items-center w-full font-semibold text-xl italic">
-                  You must be a verifier in order to perform actions on the
-                  application.
-                </CardFooter>
-              )}
-            </div>
+                      <DialogTrigger asChild>
+                        <Button
+                          style={{
+                            width: '200px',
+                          }}
+                          className="bg-red-400 text-white rounded-lg px-4 py-2 hover:bg-red-600"
+                          variant="default"
+                        >
+                          Decline Application
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContentPrimitive className="sm:max-w-[500px] border-none">
+                        <DialogHeader>
+                          <DialogTitlePrimitive>
+                            Decline Application
+                          </DialogTitlePrimitive>
+                          <DialogDescription>
+                            This action will decline this application.
+                          </DialogDescription>
+                        </DialogHeader>
+
+                        <DialogFooter className="mt-4 justify-between">
+                          <DialogClose asChild>
+                            <Button type="button" variant="secondary">
+                              Close
+                            </Button>
+                          </DialogClose>
+                          <Button
+                            className="bg-red-400 text-white rounded-lg px-4 py-2 hover:bg-red-600"
+                            disabled={isApiCalling}
+                            onClick={() => void declineApplication()}
+                          >
+                            Confirm
+                          </Button>
+                        </DialogFooter>
+                      </DialogContentPrimitive>
+                    </DialogPrimitive>
+                  )}
+              </div>
+            )}
+            {LDNActorType.Verifier === currentActorType ||
+              (session?.data?.user?.name === undefined && (
+                <>
+                  <CardFooter className="px-6 flex justify-end items-center w-full font-semibold text-xl italic">
+                    You must be a verifier in order to perform actions on the
+                    application.
+                  </CardFooter>
+                </>
+              ))}
           </CardFooter>
         </div>
       </Card>
