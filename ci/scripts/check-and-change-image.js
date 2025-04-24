@@ -35,38 +35,42 @@ if (!imageExist || !imageExist.imageDetails) {
 
 console.log('Image was found in ECR:', imageExist)
 
-console.log('Checking image in SSM...')
+console.log('Checking version in SSM...')
 
-let currentVersions = runCommand(
-  `aws ssm get-parameter --name "${SSM_PARAMETER_NAME}" --query "Parameter.Value" --output json`,
+let currentVersions = JSON.parse(
+  runCommand(
+    `aws ssm get-parameter --name "${SSM_PARAMETER_NAME}" --query "Parameter.Value" --output json`,
+  ),
 )
 
-if (!currentVersions) {
-  console.error(`Image ${IMAGE_VERSION} not found in SSM.`)
-
-  const initStagingVersions = {
-    'filplus-registry': '1.2.35-staging-fidl',
-    'filplus-backend': '2.2.14',
-    'filplus-faucet': '1.1.9-staging-fidl',
-    'compliance-data-platform': '0.2.44',
-  }
-
-  const initProductionVersions = {
-    'filplus-registry': '1.2.35-production-fidl',
-    'filplus-backend': '2.2.14',
-    'compliance-data-platform': '0.2.44',
-    'filplus-faucet': '1.1.9-production-fidl',
-    'filplus-provider-benchmark': '1.0.3',
-    'provider-sample-url-finder': '0.2.2',
-    'metaallocator-dapp': '1.9.0',
-    'provider-sample-url-finder-frontend': '0.6.2',
-  }
-
-  currentVersions =
-    ENVIRONMENT === 'staging' ? initStagingVersions : initProductionVersions
-}
-
 console.log('Current versions:', currentVersions)
+
+// if (!currentVersions) {
+//   console.error(`Image ${IMAGE_VERSION} not found in SSM.`)
+
+//   const initStagingVersions = {
+//     'filplus-registry': '1.2.35-staging-fidl',
+//     'filplus-backend': '2.2.14',
+//     'filplus-faucet': '1.1.9-staging-fidl',
+//     'compliance-data-platform': '0.2.44',
+//   }
+
+//   const initProductionVersions = {
+//     'filplus-registry': '1.2.35-production-fidl',
+//     'filplus-backend': '2.2.14',
+//     'compliance-data-platform': '0.2.44',
+//     'filplus-faucet': '1.1.9-production-fidl',
+//     'filplus-provider-benchmark': '1.0.3',
+//     'provider-sample-url-finder': '0.2.2',
+//     'metaallocator-dapp': '1.9.0',
+//     'provider-sample-url-finder-frontend': '0.6.2',
+//   }
+
+//   currentVersions =
+//     ENVIRONMENT === 'staging' ? initStagingVersions : initProductionVersions
+// }
+
+console.log('Current versions1:', currentVersions)
 const appVersion = currentVersions[ECR_REPOSITORY]
 
 if (!appVersion) {
