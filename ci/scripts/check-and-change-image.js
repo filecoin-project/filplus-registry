@@ -72,11 +72,12 @@ const newCurrentSSMParams = JSON.stringify(currentVersions)
 console.log('New current SSM params:', newCurrentSSMParams)
 
 try {
-  // const putNewVersion = `aws ssm put-parameter --name "${SSM_PARAMETER_NAME}" --value "${IMAGE_VERSION}" --type String --overwrite`
+  const putNewVersion = `aws ssm put-parameter --name "${SSM_PARAMETER_NAME}" --value "${newCurrentSSMParams}" --type String --overwrite`
 
-  // execSync(putNewVersion, { stdio: 'inherit' })
+  execSync(putNewVersion, { stdio: 'inherit' })
   console.log(`Update version COMPLETE!`)
   console.log(`Trigger the deployment process...`)
 } catch (error) {
   console.error(`Failed to put a new version:`, error.message)
+  process.exit(1)
 }
