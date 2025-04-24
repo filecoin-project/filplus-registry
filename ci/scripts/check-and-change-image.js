@@ -67,7 +67,14 @@ if (!currentVersions) {
 }
 
 console.log('Current versions:', currentVersions)
+const appVersion = currentVersions[ECR_REPOSITORY]
 
+if (!appVersion) {
+  console.error(`This app is not supported in this environment: ${ENVIRONMENT}`)
+  process.exit(1)
+}
+
+currentVersions[ECR_REPOSITORY] = IMAGE_VERSION
 const newCurrentSSMParams = JSON.stringify(currentVersions)
 console.log('New current SSM params:', newCurrentSSMParams)
 
