@@ -36,7 +36,10 @@ if (!imageExist || !imageExist.imageDetails) {
 
 console.log('Image was found in ECR:', imageExist)
 
-let currentVersions = `aws ssm get-parameter --name "${SSM_PARAMETER_NAME}" --query "Parameter.Value" --output json`
+let currentVersions = runCommand(
+  `aws ssm get-parameter --name "${SSM_PARAMETER_NAME}" --query "Parameter.Value" --output json`,
+)
+console.log('Current versions:', currentVersions)
 
 if (!currentVersions) {
   const initStagingVersions = {
@@ -61,7 +64,7 @@ if (!currentVersions) {
     ENVIRONMENT === 'staging' ? initStagingVersions : initProductionVersions
 }
 
-console.log('Current versions:', currentVersions)
+console.log('Current versions1:', currentVersions)
 
 const newCurrentSSMParams = JSON.stringify(currentVersions)
 console.log('New current SSM params:', newCurrentSSMParams)
