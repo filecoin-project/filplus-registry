@@ -139,7 +139,7 @@ jobs:
     env:
       ECR_REPOSITORY: 'filplus-registry'
       SSM_PARAMETER_NAME: '/${{ inputs.environment }}/filplus-registry/image-version'
-      IMAGE_VERSION: ${{ inputs.version }}
+      IMAGE_VERSION: '${{ inputs.version }}-staging-fidl'
 
     steps:
       - name: Checkout code
