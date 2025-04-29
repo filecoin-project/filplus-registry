@@ -34,13 +34,7 @@ if (!imageExist || !imageExist.imageDetails) {
 }
 
 console.log('Image was found in ECR:', imageExist)
-
 console.log('Checking version in SSM...')
-// let currentVersions = JSON.parse(
-//   runCommand(
-//     `aws ssm get-parameter --name "${SSM_PARAMETER_NAME}" --query "Parameter.Value" --output json`,
-//   ),
-// )
 
 let currentVersions = runCommand(
   `aws ssm get-parameter --name "${SSM_PARAMETER_NAME}" --query "Parameter.Value" --output json`,
@@ -48,16 +42,10 @@ let currentVersions = runCommand(
 
 console.log('Current versions:', currentVersions)
 
-// const appVersion = currentVersions[ECR_REPOSITORY]
-
 if (!currentVersions) {
   console.error(`This app is not supported in this environment: ${ENVIRONMENT}`)
   process.exit(1)
 }
-
-// currentVersions[ECR_REPOSITORY] = IMAGE_VERSION
-// const newCurrentSSMParams = JSON.stringify(currentVersions)
-// const cliEscaped = `"${newCurrentSSMParams.replace(/"/g, '\\"')}"`
 
 const newCurrentSSMParam = IMAGE_VERSION
 
