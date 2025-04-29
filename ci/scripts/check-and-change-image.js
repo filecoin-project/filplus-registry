@@ -36,32 +36,35 @@ if (!imageExist || !imageExist.imageDetails) {
 console.log('Image was found in ECR:', imageExist)
 
 console.log('Checking version in SSM...')
-let currentVersions = JSON.parse(
-  runCommand(
-    `aws ssm get-parameter --name "${SSM_PARAMETER_NAME}" --query "Parameter.Value" --output json`,
-  ),
+// let currentVersions = JSON.parse(
+//   runCommand(
+//     `aws ssm get-parameter --name "${SSM_PARAMETER_NAME}" --query "Parameter.Value" --output json`,
+//   ),
+// )
+
+let currentVersions = runCommand(
+  `aws ssm get-parameter --name "${SSM_PARAMETER_NAME}" --query "Parameter.Value" --output text`,
 )
 
 console.log('Current versions:', currentVersions)
-console.log('repo-name:', ECR_REPOSITORY)
 
-const appVersion = currentVersions[ECR_REPOSITORY]
-console.log('appVersion', appVersion)
+// const appVersion = currentVersions[ECR_REPOSITORY]
 
-if (!appVersion) {
+if (!currentVersions) {
   console.error(`This app is not supported in this environment: ${ENVIRONMENT}`)
   process.exit(1)
 }
 
-currentVersions[ECR_REPOSITORY] = IMAGE_VERSION
-const newCurrentSSMParams = JSON.stringify(currentVersions)
+// currentVersions[ECR_REPOSITORY] = IMAGE_VERSION
+// const newCurrentSSMParams = JSON.stringify(currentVersions)
+// const cliEscaped = `"${newCurrentSSMParams.replace(/"/g, '\\"')}"`
 
-const cliEscaped = `"${newCurrentSSMParams.replace(/"/g, '\\"')}"`
+const newCurrentSSMParam = IMAGE_VERSION
 
 console.log('New current SSM params:', cliEscaped)
 
 try {
-  const putNewVersion = `aws ssm put-parameter --name "${SSM_PARAMETER_NAME}" --value "${cliEscaped}" --type String --overwrite`
+  const putNewVersion = `aws ssm put-parameter --name "${SSM_PARAMETER_NAME}" --value "${newCurrentSSMParam}" --type String --overwrite`
 
   execSync(putNewVersion, { stdio: 'inherit' })
   console.log(`Update version COMPLETE!`)
