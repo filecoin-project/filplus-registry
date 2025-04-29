@@ -61,7 +61,7 @@ if (!currentVersions) {
 
 const newCurrentSSMParam = IMAGE_VERSION
 
-console.log('New current SSM params:', cliEscaped)
+console.log('New current SSM params:', newCurrentSSMParam)
 
 try {
   const putNewVersion = `aws ssm put-parameter --name "${SSM_PARAMETER_NAME}" --value "${newCurrentSSMParam}" --type String --overwrite`
