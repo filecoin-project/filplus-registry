@@ -33,7 +33,7 @@
     "@zondax/filecoin-signing-tools": "^0.7.1",
     "@zondax/ledger-filecoin": "^2.0.2",
     "autoprefixer": "10.4.14",
-    "axios": "^1.6.8",
+    "axios": "^1.8.2",
     "bufferutil": "^4.0.8",
     "bytes-iec": "^3.1.1",
     "cbor-x": "^1.6.0",
@@ -43,9 +43,9 @@
     "eslint-config-next": "^12.3.4",
     "filecoin-verifier-tools": "^2.3.1",
     "lucide-react": "^0.260.0",
-    "next": "13.5.6",
-    "next-auth": "^4.22.1",
-    "postcss": "8.4.24",
+    "next": "14.2.26",
+    "next-auth": "^4.24.11",
+    "postcss": "8.5.3",
     "react": "18.2.0",
     "react-cookie-consent": "^9.0.0",
     "react-dom": "18.2.0",
@@ -59,7 +59,7 @@
     "utf-8-validate": "^5.0.10",
     "viem": "^2.21.26",
     "webpack-node-externals": "^3.0.0",
-    "ws": "^8.18.0"
+    "ws": "^8.18.1"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^5.62.0",
