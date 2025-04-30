@@ -1,5 +1,5 @@
-name: Build docker image
-run-name: "Build image for ${{ github.ref_name }} triggered by ${{ github.actor }} for ${{ inputs.environment }}; version: ${{ inputs.version || 'N/A'}}"
+name: Put SSM version for deploy
+run-name: "Put SSM version for ${{ github.ref_name }} triggered by ${{ github.actor }} for ${{ inputs.environment }}; version: ${{ inputs.version || 'N/A'}}"
 
 on:
   workflow_call:
