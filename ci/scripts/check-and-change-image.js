@@ -22,6 +22,17 @@ function runCommand(command) {
   }
 }
 
+let currentVersions = runCommand(
+  `aws ssm get-parameter --name "${SSM_PARAMETER_NAME}" --query "Parameter.Value" --output json`,
+)
+
+console.log('Current versions:', currentVersions)
+
+if (!currentVersions) {
+  console.error(`This app is not supported in this environment: ${ENVIRONMENT}`)
+  process.exit(1)
+}
+
 console.log('Checking image in ECR...')
 
 const imageExist = runCommand(
@@ -36,25 +47,14 @@ if (!imageExist || !imageExist.imageDetails) {
 console.log('Image was found in ECR:', imageExist)
 console.log('Checking version in SSM...')
 
-let currentVersions = runCommand(
-  `aws ssm get-parameter --name "${SSM_PARAMETER_NAME}" --query "Parameter.Value" --output json`,
-)
-
-console.log('Current versions:', currentVersions)
-
-if (!currentVersions) {
-  console.error(`This app is not supported in this environment: ${ENVIRONMENT}`)
-  process.exit(1)
-}
-
 const newCurrentSSMParam = IMAGE_VERSION
 
 console.log('New current SSM params:', newCurrentSSMParam)
 
 try {
-  const putNewVersion = `aws ssm put-parameter --name "${SSM_PARAMETER_NAME}" --value "${newCurrentSSMParam}" --type String --overwrite`
+  // const putNewVersion = `aws ssm put-parameter --name "${SSM_PARAMETER_NAME}" --value "${newCurrentSSMParam}" --type String --overwrite`
 
-  execSync(putNewVersion, { stdio: 'inherit' })
+  // execSync(putNewVersion, { stdio: 'inherit' })
   console.log(`Update version COMPLETE!`)
   console.log(`Trigger the deployment process...`)
 } catch (error) {
