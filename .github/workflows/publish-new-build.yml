@@ -137,7 +137,6 @@ jobs:
     needs:
       - code-check
       - bump-version
-      - git-tag
       - staging-only-publish
     uses: ./.github/workflows/put-ssm-version-deploy.yml
     if: |
