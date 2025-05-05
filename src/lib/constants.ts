@@ -15,6 +15,7 @@ export const stateColor = {
   KYCRequested: 'bg-lime-400 text-white',
   ChangingSP: 'bg-amber-400 text-white',
   Declined: 'bg-red-400 text-white',
+  TotalDatacapReached: 'bg-black text-white',
 }
 
 export const allocationActiveColor = {

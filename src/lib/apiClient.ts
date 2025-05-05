@@ -291,6 +291,20 @@ export const triggerSSA = async (
   )
   return data
 }
+
+export const reopenDeclineApplication = async (
+  id: string,
+  repo: string,
+  owner: string,
+  githubUsername: string,
+): Promise<Application | undefined> => {
+  const { data } = await apiClient.post(
+    `verifier/application/reopen_declined_application`,
+    {},
+    { params: { github_username: githubUsername, id, owner, repo } },
+  )
+  return data
+}
 /**
  * Triggers a KYC request for an application.
  * @param id the application id
