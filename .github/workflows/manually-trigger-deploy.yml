@@ -24,30 +24,31 @@ permissions:
 
 jobs:
   trigger-staging-deploy:
-    uses: ./.github/workflows/put-ssm-version-deploy.yml
-    if: |
-      ${{ inputs.version != '' && inputs.environment == 'staging' }} &&
-      always() &&
-      !contains(needs.*.result, 'failure') &&
-      !contains(needs.*.result, 'cancelled')
-    with:
-      version: ${{ inputs.version }}
-      environment: staging
-      secrets-environment: staging-fidl
-      ecr-repository: filplus-registry
-    secrets: inherit
+    runs-on: ubuntu-latest
+    if: ${{ github.ref_name == 'main' && inputs.version != '' && inputs.environment == 'staging' }}
+    environment: staging-fidl
+    steps:
+      - name: Trigger staging deploy
+        uses: neti-filplus-infra/filplus-deploy-action@main
+        with:
+          version: ${{ inputs.version }}
+          environment: ${{ inputs.environment }}
+          ecr-repository: filplus-registry
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_IMAGE_DEPLOYER }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_IMAGE_DEPLOYER }}
+          aws-region: us-east-1
 
-  # TODO: uncomment this when we want to deploy to production
-  # trigger-production-deploy:
-  #   uses: ./.github/workflows/put-ssm-version-deploy.yml
-  #   if: |
-  #     ${{ inputs.version != '' && inputs.environment == 'production' }} &&
-  #     always() &&
-  #     !contains(needs.*.result, 'failure') &&
-  #     !contains(needs.*.result, 'cancelled')
-  #   with:
-  #     version: ${{ inputs.version }}
-  #     environment: ${{ inputs.environment }}
-  #     secrets-environment: production-fidl
-  #     ecr-repository: filplus-registry
-  #   secrets: inherit
+  trigger-production-deploy:
+    runs-on: ubuntu-latest
+    if: ${{ github.ref_name == 'main' && inputs.version != '' && inputs.environment == 'production' }}
+    environment: production-fidl
+    steps:
+      - name: Trigger production deploy
+        uses: neti-filplus-infra/filplus-deploy-action@main
+        with:
+          version: ${{ inputs.version }}
+          environment: ${{ inputs.environment }}
+          ecr-repository: filplus-registry
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_IMAGE_DEPLOYER }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_IMAGE_DEPLOYER }}
+          aws-region: us-east-1
