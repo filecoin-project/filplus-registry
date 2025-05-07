@@ -568,7 +568,6 @@ const AppInfoCard: React.FC<ComponentProps> = ({
       handleMutationError(error as Error)
     }
     toast.success('Application declined successfully')
-    router.push(`/`)
   }
 
   const handleAdditionalInfoClose = async (
