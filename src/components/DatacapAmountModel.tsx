@@ -21,7 +21,7 @@ import { AllocationUnit, type Allocation, type Application } from '@/type'
 import { type ReactNode, useState } from 'react'
 import { bytesToiB } from '@/lib/utils'
 
-type AllocationType = 'contract' | 'directly'
+type AllocationType = 'directly' | 'contract'
 
 interface AllocationConfig {
   isDialogOpen: boolean
@@ -123,14 +123,14 @@ const DatacapAmountModal = ({
                     }}
                   >
                     <FormControlLabel
-                      value="directly"
-                      control={<Radio />}
-                      label="Directly"
-                    />
-                    <FormControlLabel
                       value={'contract'}
                       control={<Radio />}
                       label={'Contract'}
+                    />
+                    <FormControlLabel
+                      value="directly"
+                      control={<Radio />}
+                      label="Directly"
                     />
                   </RadioGroup>
                 </FormControl>

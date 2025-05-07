@@ -52,6 +52,7 @@ import {
   DialogTitle as DialogTitlePrimitive,
   DialogTrigger,
 } from '@/components/ui/Dialog'
+import Countdown from '../Countdown'
 interface ComponentProps {
   initialApplication: Application
   repo: string
@@ -148,7 +149,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
     isDialogOpen: boolean
   }>({
     amount: '',
-    allocationType: 'directly',
+    allocationType: 'contract',
     unit: AllocationUnit.GIB,
     isDialogOpen: false,
   })
@@ -613,7 +614,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
         isDialogOpen: false,
         amount: prev.amount || '0',
         unit: prev.unit || AllocationUnit.GIB,
-        allocationType: 'directly',
+        allocationType: 'contract',
       }))
       return
     }
@@ -723,7 +724,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
       )
 
       setAllocationAmountConfig(() => ({
-        allocationType: 'directly',
+        allocationType: 'contract',
         amount,
         isDialogOpen: false,
         unit: unit as AllocationUnit,
@@ -1036,7 +1037,6 @@ const AppInfoCard: React.FC<ComponentProps> = ({
             </CardContent>
           </div>
         ) : null}
-
         <CardContent>
           {isProgressBarVisible && (
             <ProgressBar
@@ -1046,6 +1046,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
             />
           )}
         </CardContent>
+        <Countdown />
         <div>
           <CardFooter className="flex flex-row items-center border-t pt-4 pb-2 mt-4 justify-between gap-3">
             <div className="flex gap-2 pb-4">
