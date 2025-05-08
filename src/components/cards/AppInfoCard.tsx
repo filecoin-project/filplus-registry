@@ -1115,7 +1115,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
                 session?.data?.user?.name !== undefined &&
                 application?.Lifecycle?.['On Chain Address'] &&
                 application?.['Client Contract Address'] &&
-                ['ChangingSP'].includes(application?.Lifecycle?.State) && (
+                application?.Lifecycle?.State === 'ChangingSP' && (
                   <div className="flex gap-2">
                     <Button
                       onClick={() => {

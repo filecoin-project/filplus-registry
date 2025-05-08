@@ -65,7 +65,7 @@ export interface Lifecycle {
     | 'Granted'
     | 'TotalDatacapReached'
     | 'Error'
-    | 'ChangingSp'
+    | 'ChangingSP'
     | 'Declined'
     | 'TotalDatacapReached'
 
