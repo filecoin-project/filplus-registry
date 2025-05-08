@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button'
 import { AllocationUnit, type Allocation, type Application } from '@/type'
 import { type ReactNode, useState } from 'react'
 import { bytesToiB } from '@/lib/utils'
+import Countdown from './Countdown'
 
 type AllocationType = 'directly' | 'contract'
 
@@ -78,6 +79,7 @@ const DatacapAmountModal = ({
   return (
     <Dialog open={allocationConfig.isDialogOpen} onClose={onClose} fullWidth>
       <DialogTitle>{title}</DialogTitle>
+      <Countdown />
       <DialogContent>
         {(isApiCalling || isWalletConnecting) && (
           <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">

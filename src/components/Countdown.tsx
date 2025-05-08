@@ -28,9 +28,6 @@ const Countdown: React.FC = () => {
         minutes: Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60))
           .toString()
           .padStart(2, '0'),
-        seconds: Math.floor((difference % (1000 * 60)) / 1000)
-          .toString()
-          .padStart(2, '0'),
       }
     }
 
@@ -38,10 +35,8 @@ const Countdown: React.FC = () => {
   }
 
   const [timeLeft, setTimeLeft] = useState<TimeLeft>(calculateTimeLeft())
-  const [isMounted, setIsMounted] = useState(false)
 
   useEffect(() => {
-    setIsMounted(true)
     const timer = setInterval(() => {
       setTimeLeft(calculateTimeLeft())
     }, 1000)
@@ -51,25 +46,21 @@ const Countdown: React.FC = () => {
     }
   }, [])
 
-  if (!isMounted) {
-    return null
-  }
-
-  if (timeLeft.seconds === undefined) {
+  if (timeLeft.minutes === undefined) {
     return null
   }
 
   return (
-    <div className="px-6 pb-6">
+    <div className="px-6">
       <p
         className="cursor-default"
         title="Using Client smart contract is available only for new applications. Select Contract as allocation type to start using it"
       >
-        Direct client allocation will be deprecated in{' '}
-        <span className="inline-block text-center" style={{ width: '90px' }}>
-          {timeLeft.days}:{timeLeft.hours}:{timeLeft.minutes}:{timeLeft.seconds}
-        </span>
-        . Start using the Client smart contract today.
+        Direct allocation of DataCap will be deprecated in{' '}
+        <span className="whitespace-nowrap">
+          {timeLeft.days}d {timeLeft.hours}h {timeLeft.minutes}m
+        </span>{' '}
+        (June 1). Start using the Client smart contract today.
       </p>
     </div>
   )

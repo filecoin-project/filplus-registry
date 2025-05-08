@@ -52,7 +52,6 @@ import {
   DialogTitle as DialogTitlePrimitive,
   DialogTrigger,
 } from '@/components/ui/Dialog'
-import Countdown from '../Countdown'
 interface ComponentProps {
   initialApplication: Application
   repo: string
@@ -1046,7 +1045,6 @@ const AppInfoCard: React.FC<ComponentProps> = ({
             />
           )}
         </CardContent>
-        <Countdown />
         <div>
           <CardFooter className="flex flex-row items-center border-t pt-4 pb-2 mt-4 justify-between gap-3">
             <div className="flex gap-2 pb-4">
