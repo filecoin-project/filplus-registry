@@ -148,7 +148,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
     isDialogOpen: boolean
   }>({
     amount: '',
-    allocationType: 'directly',
+    allocationType: 'contract',
     unit: AllocationUnit.GIB,
     isDialogOpen: false,
   })
@@ -613,7 +613,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
         isDialogOpen: false,
         amount: prev.amount || '0',
         unit: prev.unit || AllocationUnit.GIB,
-        allocationType: 'directly',
+        allocationType: 'contract',
       }))
       return
     }
@@ -723,7 +723,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
       )
 
       setAllocationAmountConfig(() => ({
-        allocationType: 'directly',
+        allocationType: 'contract',
         amount,
         isDialogOpen: false,
         unit: unit as AllocationUnit,
@@ -1036,7 +1036,6 @@ const AppInfoCard: React.FC<ComponentProps> = ({
             </CardContent>
           </div>
         ) : null}
-
         <CardContent>
           {isProgressBarVisible && (
             <ProgressBar
