@@ -12,6 +12,7 @@ import {
   postRemoveAlloc,
   postRequestKyc,
   postRevertApplicationToReadyToSign,
+  reopenDeclineApplication,
   triggerSSA,
 } from '@/lib/apiClient'
 import {
@@ -78,6 +79,12 @@ interface ApplicationActions {
     unknown
   >
   mutationApproveChanges: UseMutationResult<
+    Application | undefined,
+    unknown,
+    { userName: string },
+    unknown
+  >
+  mutationReopenDeclineApplication: UseMutationResult<
     Application | undefined,
     unknown,
     { userName: string },
@@ -433,6 +440,30 @@ const useApplicationActions = (
     },
   )
 
+  const mutationReopenDeclineApplication = useMutation<
+    Application | undefined,
+    unknown,
+    { userName: string },
+    unknown
+  >(
+    async ({ userName }) => {
+      return await reopenDeclineApplication(
+        initialApplication.ID,
+        repo,
+        owner,
+        userName,
+      )
+    },
+    {
+      onSuccess: (data) => {
+        setApiCalling(false)
+        if (data != null) updateCache(data)
+      },
+      onError: () => {
+        setApiCalling(false)
+      },
+    },
+  )
   /**
    * Mutation function to handle the proposal of an application.
    * It makes an API call to propose the application and updates the cache on success.
@@ -915,6 +946,7 @@ const useApplicationActions = (
     mutationDecline,
     mutationTrigger,
     mutationApproveChanges,
+    mutationReopenDeclineApplication,
     mutationProposal,
     mutationApproval,
     walletError,

@@ -85,7 +85,11 @@ const AllocatorBalance: React.FC<ComponentProps> = ({ owner, repo }) => {
 
   if (balance === null) return
 
-  return <div>Allocator&apos;s DataCap balance: {bytesToiB(balance)}</div>
+  return (
+    <div className="whitespace-nowrap">
+      Allocator&apos;s DataCap balance: {bytesToiB(balance)}
+    </div>
+  )
 }
 
 export default AllocatorBalance

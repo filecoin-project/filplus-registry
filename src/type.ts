@@ -65,7 +65,10 @@ export interface Lifecycle {
     | 'Granted'
     | 'TotalDatacapReached'
     | 'Error'
-    | 'ChangingSp'
+    | 'ChangingSP'
+    | 'Declined'
+    | 'TotalDatacapReached'
+
   'Validated At': string
   'Validated By': string
   Active: boolean
