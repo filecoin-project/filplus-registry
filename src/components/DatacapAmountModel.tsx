@@ -110,9 +110,11 @@ const DatacapAmountModal = ({
             ].includes(application?.Lifecycle?.State) && (
               <div className="flex justify-items-center justify-between content-center items-center	w-full">
                 <FormControl>
-                  <FormLabel id="demo-controlled-radio-buttons-group">
-                    Allocation type
-                  </FormLabel>
+                  <div className="flex justify-between items-center">
+                    <FormLabel id="demo-controlled-radio-buttons-group">
+                      Allocation type
+                    </FormLabel>
+                  </div>
                   <RadioGroup
                     aria-labelledby="demo-controlled-radio-buttons-group"
                     value={allocationConfig.allocationType}
@@ -124,11 +126,31 @@ const DatacapAmountModal = ({
                       })
                     }}
                   >
-                    <FormControlLabel
-                      value={'contract'}
-                      control={<Radio />}
-                      label={'Contract'}
-                    />
+                    <div className="flex items-center justify-between">
+                      <FormControlLabel
+                        value={'contract'}
+                        control={<Radio />}
+                        label={'Contract'}
+                      />
+                      <div className="flex gap-4">
+                        <a
+                          href="https://www.fidl.tech/news/improvements-to-datacap-management"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-500 hover:underline"
+                        >
+                          About
+                        </a>
+                        <a
+                          href="https://github.com/fidlabs/contract-metaallocator/blob/main/HowToUseClientSmartContract.md"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-500 hover:underline"
+                        >
+                          How To Use
+                        </a>
+                      </div>
+                    </div>
                     <FormControlLabel
                       value="directly"
                       control={<Radio />}

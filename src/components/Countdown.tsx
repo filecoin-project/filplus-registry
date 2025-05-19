@@ -54,13 +54,13 @@ const Countdown: React.FC = () => {
     <div className="px-6">
       <p
         className="cursor-default"
-        title="Using Client smart contract is available only for new applications. Select Contract as allocation type to start using it"
+        title="Using Client Smart Contract is available only for new applications. Select Contract as allocation type to start using it"
       >
         Direct allocation of DataCap will be deprecated in{' '}
         <span className="whitespace-nowrap">
           {timeLeft.days}d {timeLeft.hours}h {timeLeft.minutes}m
         </span>{' '}
-        (June 1). Start using the Client smart contract today.
+        (June 1). Start using the Client Smart Contract today.
       </p>
     </div>
   )
