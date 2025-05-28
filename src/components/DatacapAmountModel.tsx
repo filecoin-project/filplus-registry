@@ -29,6 +29,7 @@ interface AllocationConfig {
   amount: string
   unit: AllocationUnit
   allocationType?: AllocationType
+  earlyRefillComment?: string
 }
 
 interface DatacapAmountModalProps {
@@ -40,6 +41,7 @@ interface DatacapAmountModalProps {
   application: Application
   clientContractAddress?: string | null
   remainingDatacap?: number | undefined
+  usedDatatapInPercentage: number
   setAllocationConfig: (config: any) => void
   onClose: () => void
   onCancel: () => void
@@ -59,6 +61,7 @@ const DatacapAmountModal = ({
   title,
   clientContractAddress,
   remainingDatacap,
+  usedDatatapInPercentage,
 }: DatacapAmountModalProps): ReactNode => {
   const [isFillRemainingDatacapChecked, setIsFillRemainingDatacapChecked] =
     useState(false)
@@ -86,8 +89,8 @@ const DatacapAmountModal = ({
             <Spinner />
           </div>
         )}
-        <div>
-          {remainingDatacap && (
+        {remainingDatacap && remainingDatacap > 0 ? (
+          <div>
             <FormControlLabel
               control={
                 <Checkbox
@@ -97,8 +100,8 @@ const DatacapAmountModal = ({
               }
               label={`Allocate the remaining requested DataCap: ${bytesToiB(remainingDatacap)}`}
             />
-          )}
-        </div>
+          </div>
+        ) : null}
         <div className="flex gap-3 items-center flex-col">
           {clientContractAddress &&
             clientContractAddress !== null &&
@@ -222,6 +225,25 @@ const DatacapAmountModal = ({
               </Box>
             </div>
           </div>
+          {usedDatatapInPercentage < 75 &&
+          remainingDatacap &&
+          remainingDatacap > 0 ? (
+            <div className="w-full">
+              <TextField
+                label="Reason for triggering a new allocation despite 75% of the previous one not being utilized."
+                multiline
+                rows={4}
+                variant="outlined"
+                fullWidth
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  setAllocationConfig((prev: AllocationConfig) => ({
+                    ...prev,
+                    earlyRefillComment: e.target.value.trim(),
+                  }))
+                }}
+              />
+            </div>
+          ) : null}
         </div>
       </DialogContent>
       <DialogActions
@@ -233,7 +255,14 @@ const DatacapAmountModal = ({
           Cancel
         </Button>
         <Button
-          disabled={isApiCalling || !allocationConfig.amount}
+          disabled={
+            isApiCalling ||
+            !allocationConfig.amount ||
+            allocationConfig.amount === '0' ||
+            (allocationConfig.earlyRefillComment !== undefined &&
+              allocationConfig.earlyRefillComment.length < 10 &&
+              usedDatatapInPercentage < 75)
+          }
           onClick={onConfirm}
         >
           Submit

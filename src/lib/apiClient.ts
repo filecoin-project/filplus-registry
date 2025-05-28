@@ -280,12 +280,14 @@ export const triggerSSA = async (
   repo: string,
   owner: string,
   actor: string,
+  earlyRefillComment?: string,
 ): Promise<Application | undefined> => {
   const { data } = await apiClient.post(
     `verifier/application/trigger_ssa`,
     {
       amount,
       amount_type: unit,
+      early_refill_comment: earlyRefillComment,
     },
     { params: { repo, owner, id, github_username: actor } },
   )
