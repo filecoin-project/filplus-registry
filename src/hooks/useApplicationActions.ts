@@ -41,7 +41,12 @@ interface ApplicationActions {
   mutationTriggerSSA: UseMutationResult<
     Application | undefined,
     unknown,
-    { userName: string; amount: string; unit: AllocationUnit },
+    {
+      userName: string
+      amount: string
+      unit: AllocationUnit
+      earlyRefillComment?: string
+    },
     unknown
   >
   mutationRequestInfo: UseMutationResult<
@@ -382,9 +387,14 @@ const useApplicationActions = (
   const mutationTriggerSSA = useMutation<
     Application | undefined,
     Error,
-    { userName: string; amount: string; unit: AllocationUnit }
+    {
+      userName: string
+      amount: string
+      unit: AllocationUnit
+      earlyRefillComment?: string
+    }
   >(
-    async ({ userName, amount, unit }) => {
+    async ({ userName, amount, unit, earlyRefillComment }) => {
       return await triggerSSA(
         amount,
         unit,
@@ -392,6 +402,7 @@ const useApplicationActions = (
         repo,
         owner,
         userName,
+        earlyRefillComment,
       )
     },
     {

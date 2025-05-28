@@ -127,6 +127,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
     unit: AllocationUnit
     isDialogOpen: boolean
     isFillRemainingDatacapChecked: boolean
+    earlyRefillComment?: string
   }>({
     amount: '0',
     unit: AllocationUnit.GIB,
@@ -685,6 +686,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
         userName,
         amount: amountInBytes.toString(),
         unit: 'B' as AllocationUnit,
+        earlyRefillComment: refillInfoParams.earlyRefillComment,
       })
     } catch (err) {
       handleSSAError(err)
@@ -1216,12 +1218,12 @@ const AppInfoCard: React.FC<ComponentProps> = ({
                       )}
                   </>
                 ) : (
-                  progress > 75 &&
                   remaining > 0 && (
                     <Button
                       disabled={isApiCalling}
                       onClick={() => {
                         setRefillInfoParams((prev) => ({
+                          ...prev,
                           amount: prev.amount || '1',
                           unit: prev.unit || AllocationUnit.GIB,
                           isDialogOpen: true,
@@ -1316,6 +1318,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
         isWalletConnecting={isWalletConnecting}
         isApiCalling={isApiCalling}
         remainingDatacap={remaining}
+        usedDatatapInPercentage={progress}
         onClose={() => {
           setRefillInfoParams((prev) => ({
             ...prev,
@@ -1408,6 +1411,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
             ? selectedAllocator?.client_contract_address
             : null
         }
+        usedDatatapInPercentage={progress}
       />
     </>
   )

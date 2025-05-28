@@ -18,7 +18,7 @@ import MenuItem from '@mui/material/MenuItem'
 import TextField from '@mui/material/TextField'
 import { Button } from '@/components/ui/button'
 import { AllocationUnit, type Allocation, type Application } from '@/type'
-import { type ReactNode, useState } from 'react'
+import { type ReactNode, useState, useCallback } from 'react'
 import { bytesToiB } from '@/lib/utils'
 import Countdown from './Countdown'
 
@@ -29,6 +29,7 @@ interface AllocationConfig {
   amount: string
   unit: AllocationUnit
   allocationType?: AllocationType
+  earlyRefillComment?: string
 }
 
 interface DatacapAmountModalProps {
@@ -40,6 +41,7 @@ interface DatacapAmountModalProps {
   application: Application
   clientContractAddress?: string | null
   remainingDatacap?: number | undefined
+  usedDatatapInPercentage: number
   setAllocationConfig: (config: any) => void
   onClose: () => void
   onCancel: () => void
@@ -59,6 +61,7 @@ const DatacapAmountModal = ({
   title,
   clientContractAddress,
   remainingDatacap,
+  usedDatatapInPercentage,
 }: DatacapAmountModalProps): ReactNode => {
   const [isFillRemainingDatacapChecked, setIsFillRemainingDatacapChecked] =
     useState(false)
@@ -76,6 +79,24 @@ const DatacapAmountModal = ({
     }))
   }
 
+  const handleEarlyRefillCommentChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setAllocationConfig((prev: AllocationConfig) => ({
+        ...prev,
+        earlyRefillComment: e.target.value.trim(),
+      }))
+    },
+    [setAllocationConfig],
+  )
+  const isAllocationAmountValid =
+    !allocationConfig.amount || allocationConfig.amount === '0'
+  const isEarlyRefillCommentValid =
+    allocationConfig.earlyRefillComment !== undefined &&
+    allocationConfig.earlyRefillComment.length < 10 &&
+    usedDatatapInPercentage < 75
+  const isSubmitDisabled =
+    isApiCalling || isAllocationAmountValid || isEarlyRefillCommentValid
+
   return (
     <Dialog open={allocationConfig.isDialogOpen} onClose={onClose} fullWidth>
       <DialogTitle>{title}</DialogTitle>
@@ -86,8 +107,8 @@ const DatacapAmountModal = ({
             <Spinner />
           </div>
         )}
-        <div>
-          {remainingDatacap && (
+        {remainingDatacap && remainingDatacap > 0 ? (
+          <div>
             <FormControlLabel
               control={
                 <Checkbox
@@ -97,8 +118,8 @@ const DatacapAmountModal = ({
               }
               label={`Allocate the remaining requested DataCap: ${bytesToiB(remainingDatacap)}`}
             />
-          )}
-        </div>
+          </div>
+        ) : null}
         <div className="flex gap-3 items-center flex-col">
           {clientContractAddress &&
             clientContractAddress !== null &&
@@ -222,6 +243,18 @@ const DatacapAmountModal = ({
               </Box>
             </div>
           </div>
+          {usedDatatapInPercentage < 75 && remainingDatacap ? (
+            <div className="w-full">
+              <TextField
+                label="Reason for triggering a new allocation despite 75% of the previous one not being utilized."
+                multiline
+                rows={4}
+                variant="outlined"
+                fullWidth
+                onChange={handleEarlyRefillCommentChange}
+              />
+            </div>
+          ) : null}
         </div>
       </DialogContent>
       <DialogActions
@@ -232,10 +265,7 @@ const DatacapAmountModal = ({
         <Button disabled={isApiCalling} onClick={onCancel}>
           Cancel
         </Button>
-        <Button
-          disabled={isApiCalling || !allocationConfig.amount}
-          onClick={onConfirm}
-        >
+        <Button disabled={isSubmitDisabled} onClick={onConfirm}>
           Submit
         </Button>
       </DialogActions>
