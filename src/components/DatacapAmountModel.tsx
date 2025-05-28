@@ -18,7 +18,7 @@ import MenuItem from '@mui/material/MenuItem'
 import TextField from '@mui/material/TextField'
 import { Button } from '@/components/ui/button'
 import { AllocationUnit, type Allocation, type Application } from '@/type'
-import { type ReactNode, useState } from 'react'
+import { type ReactNode, useState, useCallback } from 'react'
 import { bytesToiB } from '@/lib/utils'
 import Countdown from './Countdown'
 
@@ -78,6 +78,24 @@ const DatacapAmountModal = ({
       isFillRemainingDatacapChecked: isChecked,
     }))
   }
+
+  const handleEarlyRefillCommentChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setAllocationConfig((prev: AllocationConfig) => ({
+        ...prev,
+        earlyRefillComment: e.target.value.trim(),
+      }))
+    },
+    [setAllocationConfig],
+  )
+  const isAllocationAmountValid =
+    !allocationConfig.amount || allocationConfig.amount === '0'
+  const isEarlyRefillCommentValid =
+    allocationConfig.earlyRefillComment !== undefined &&
+    allocationConfig.earlyRefillComment.length < 10 &&
+    usedDatatapInPercentage < 75
+  const isSubmitDisabled =
+    isApiCalling || isAllocationAmountValid || isEarlyRefillCommentValid
 
   return (
     <Dialog open={allocationConfig.isDialogOpen} onClose={onClose} fullWidth>
@@ -225,9 +243,7 @@ const DatacapAmountModal = ({
               </Box>
             </div>
           </div>
-          {usedDatatapInPercentage < 75 &&
-          remainingDatacap &&
-          remainingDatacap > 0 ? (
+          {usedDatatapInPercentage < 75 && remainingDatacap ? (
             <div className="w-full">
               <TextField
                 label="Reason for triggering a new allocation despite 75% of the previous one not being utilized."
@@ -235,12 +251,7 @@ const DatacapAmountModal = ({
                 rows={4}
                 variant="outlined"
                 fullWidth
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                  setAllocationConfig((prev: AllocationConfig) => ({
-                    ...prev,
-                    earlyRefillComment: e.target.value.trim(),
-                  }))
-                }}
+                onChange={handleEarlyRefillCommentChange}
               />
             </div>
           ) : null}
@@ -254,17 +265,7 @@ const DatacapAmountModal = ({
         <Button disabled={isApiCalling} onClick={onCancel}>
           Cancel
         </Button>
-        <Button
-          disabled={
-            isApiCalling ||
-            !allocationConfig.amount ||
-            allocationConfig.amount === '0' ||
-            (allocationConfig.earlyRefillComment !== undefined &&
-              allocationConfig.earlyRefillComment.length < 10 &&
-              usedDatatapInPercentage < 75)
-          }
-          onClick={onConfirm}
-        >
+        <Button disabled={isSubmitDisabled} onClick={onConfirm}>
           Submit
         </Button>
       </DialogActions>
