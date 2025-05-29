@@ -90,17 +90,16 @@ const DatacapAmountModal = ({
   )
   const isAllocationAmountInvalid =
     !allocationConfig.amount || allocationConfig.amount === '0'
-  const isEarlyRefillCommentNotNeeded =
-    allocationConfig.earlyRefillComment === undefined &&
-    usedDatatapInPercentage >= 75
-  const isEarlyRefillCommentInvalid =
-    allocationConfig.earlyRefillComment !== undefined &&
-    allocationConfig?.earlyRefillComment?.length < 10 &&
-    usedDatatapInPercentage < 75
+  const isEarlyRefillCommentNeeded =
+    usedDatatapInPercentage < 75 && application?.Lifecycle?.State === 'Granted'
+  const isEarlyRefillCommentValid =
+    allocationConfig.earlyRefillComment &&
+    allocationConfig?.earlyRefillComment?.length >= 10
   const isSubmitDisabled =
     isApiCalling ||
     isAllocationAmountInvalid ||
-    (isEarlyRefillCommentInvalid && !isEarlyRefillCommentNotNeeded)
+    (!isEarlyRefillCommentValid && isEarlyRefillCommentNeeded)
+
   return (
     <Dialog open={allocationConfig.isDialogOpen} onClose={onClose} fullWidth>
       <DialogTitle>{title}</DialogTitle>

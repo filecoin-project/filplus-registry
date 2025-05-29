@@ -538,7 +538,7 @@ const useApplicationActions = (
         allocatorType,
         contractAddress:
           typeof selectedAllocator !== 'string'
-            ? selectedAllocator?.address ?? ''
+            ? selectedAllocator?.ma_address ?? selectedAllocator?.address ?? ''
             : '',
         clientAddress: addressToGrantDataCap,
         proposalAllocationAmount,
