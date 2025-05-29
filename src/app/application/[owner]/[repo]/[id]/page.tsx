@@ -76,7 +76,7 @@ const ApplicationDetailPage: React.FC<ComponentProps> = ({
         void getAllowanceClassic(selectedAllocator.multisig_address)
       } else {
         void getAllowanceSmartContract(
-          selectedAllocator.address,
+          selectedAllocator.ma_address ?? selectedAllocator.address,
           selectedAllocator.multisig_address,
         )
       }
