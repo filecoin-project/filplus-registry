@@ -74,7 +74,7 @@ const AllocatorBalance: React.FC<ComponentProps> = ({ owner, repo }) => {
         .split(', ')
         .includes('smart_contract_allocator')
       void fetchBalance(
-        allocator.address,
+        allocator.ma_address ?? allocator.address,
         allocator.multisig_address,
         isMetaallocatorContract,
       )

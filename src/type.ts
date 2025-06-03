@@ -211,6 +211,7 @@ export interface Allocator {
   tooling: string | null
   verifiers_gh_handles: string | string[]
   client_contract_address: string | null
+  ma_address: string | null
 }
 
 export enum AllocatorTypeEnum {
