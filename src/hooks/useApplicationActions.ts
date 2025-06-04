@@ -80,6 +80,7 @@ interface ApplicationActions {
       allocationAmount: string
       userName: string
       clientContractAddress?: string
+      reasonForNotUsingClientSmartContract?: string
     },
     unknown
   >
@@ -344,10 +345,16 @@ const useApplicationActions = (
       userName: string
       allocationAmount: string
       clientContractAddress?: string
+      reasonForNotUsingClientSmartContract?: string
     },
     unknown
   >(
-    async ({ userName, allocationAmount, clientContractAddress }) => {
+    async ({
+      userName,
+      allocationAmount,
+      clientContractAddress,
+      reasonForNotUsingClientSmartContract,
+    }) => {
       return await postApplicationTrigger(
         initialApplication.ID,
         userName,
@@ -355,6 +362,7 @@ const useApplicationActions = (
         owner,
         allocationAmount,
         clientContractAddress,
+        reasonForNotUsingClientSmartContract,
       )
     },
     {

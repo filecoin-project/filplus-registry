@@ -148,6 +148,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
     allocationType: AllocationType
     unit: AllocationUnit
     isDialogOpen: boolean
+    reasonForNotUsingClientSmartContract?: string
   }>({
     amount: '',
     allocationType: 'contract',
@@ -626,6 +627,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
         amount: prev.amount || '0',
         unit: prev.unit || AllocationUnit.GIB,
         allocationType: 'contract',
+        reasonForNotUsingClientSmartContract: undefined,
       }))
       return
     }
@@ -663,6 +665,8 @@ const AppInfoCard: React.FC<ComponentProps> = ({
           clientContractAddress
             ? clientContractAddress
             : undefined,
+        reasonForNotUsingClientSmartContract:
+          allocationAmountConfig.reasonForNotUsingClientSmartContract,
       })
     } catch (error) {
       setAllocationAmountConfig((prev) => ({

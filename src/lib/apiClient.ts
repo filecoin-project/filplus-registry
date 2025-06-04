@@ -381,6 +381,7 @@ export const postApplicationTrigger = async (
   owner: string,
   allocationAmount: string,
   clientContractAddress?: string,
+  reasonForNotUsingClientSmartContract?: string,
 ): Promise<Application | undefined> => {
   try {
     const { data } = await apiClient.post(
@@ -388,6 +389,8 @@ export const postApplicationTrigger = async (
       {
         allocation_amount: allocationAmount,
         client_contract_address: clientContractAddress,
+        reason_for_not_using_client_smart_contract:
+          reasonForNotUsingClientSmartContract,
       },
       {
         params: {
