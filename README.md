@@ -21,7 +21,7 @@ The Fil+ Registry is accessible at [https://filplus-registry.netlify.app/](https
 
 ## Contribution
 
-As an open-source project, we welcome and encourage the community to contribute to the Filplus SSA Bot. Your insights and improvements are valuable to us. Here's how you can contribute:
+As an open-source project, we welcome and encourage the community to contribute to the Filplus SSA Bot. Your insights and improvements are valuable to us.Here's how you can contribute:
 
 - **Fork the Repository**: Start by forking the repository to your GitHub account.
 - **Clone the Forked Repository**: Clone it to your local machine for development purposes.
