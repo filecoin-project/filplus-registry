@@ -6,6 +6,7 @@ import { requestTypeColor, allocationActiveColor } from '@/lib/constants'
 import { Separator } from '../ui/separator'
 import { FaChevronDown, FaChevronUp } from 'react-icons/fa'
 import { bytesToiB } from '@/lib/utils'
+import { config } from '@/config'
 
 interface ComponentProps {
   allocation: AllocationRequest
@@ -133,12 +134,25 @@ const AppHistoryCard: React.FC<ComponentProps> = ({ allocation, actor }) => {
                   <div className="text-muted-foreground">Address</div>
                   <div>
                     <a
-                      href={`https://filfox.info/en/address/${allocation.Signers[0]['Signing Address']}`}
+                      href={`${config.filfoxUrl}/address/${allocation.Signers[0]['Signing Address']}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-blue-500 hover:text-blue-700"
                     >
                       {allocation.Signers[0]['Signing Address']}
+                    </a>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <div className="text-muted-foreground">Message CID</div>
+                  <div>
+                    <a
+                      href={`${config.filfoxUrl}/message/${allocation.Signers[0]['Message CID']}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-500 hover:text-blue-700"
+                    >
+                      {allocation.Signers[0]['Message CID']}
                     </a>
                   </div>
                 </div>
@@ -181,12 +195,25 @@ const AppHistoryCard: React.FC<ComponentProps> = ({ allocation, actor }) => {
                   <div className="text-muted-foreground">Address</div>
                   <div>
                     <a
-                      href={`https://filfox.info/en/address/${allocation.Signers[1]['Signing Address']}`}
+                      href={`${config.filfoxUrl}/address/${allocation.Signers[1]['Signing Address']}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-blue-500 hover:text-blue-700"
                     >
                       {allocation.Signers[1]['Signing Address']}
+                    </a>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <div className="text-muted-foreground">Message CID</div>
+                  <div>
+                    <a
+                      href={`${config.filfoxUrl}/message/${allocation.Signers[1]['Message CID']}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-500 hover:text-blue-700"
+                    >
+                      {allocation.Signers[1]['Message CID']}
                     </a>
                   </div>
                 </div>
