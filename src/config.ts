@@ -26,6 +26,8 @@ const localConfig = {
     process.env.NEXT_PUBLIC_GLIF_URL ?? 'https://api.node.glif.io/rpc/v1',
   isTestnet: process.env.NEXT_PUBLIC_IS_TESTNET ?? 'true',
   gaTrackingId: process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_TRACKING_ID ?? '',
+  filfoxUrl:
+    process.env.NEXT_PUBLIC_FILFOX_URL ?? 'https://calibration.filfox.info/en',
 }
 
 const prodConfig = {
@@ -53,6 +55,7 @@ const prodConfig = {
   glifNodeUrl: process.env.NEXT_PUBLIC_GLIF_URL ?? '',
   isTestnet: process.env.NEXT_PUBLIC_IS_TESTNET ?? 'false',
   gaTrackingId: process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_TRACKING_ID ?? '',
+  filfoxUrl: process.env.NEXT_PUBLIC_FILFOX_URL ?? 'https://filfox.info/en',
 }
 
 export const config =
