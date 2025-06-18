@@ -88,14 +88,15 @@ export const getEvmAddressFromFilecoinAddress = async (
       success: true,
     }
   } catch (error: unknown) {
+    if (error instanceof Error && error.message.includes('actor not found')) {
+      throw new Error(`The client wallet is not initialized on the chain.
+      Please send some FIL to this address or ask the client to do so in order to initialize.
+      After the first transfer, granting DataCap will be possible approximately 8 hours later.`)
+    }
     const errMessage = `Error accessing GLIF API Filecoin.FilecoinAddressToEthAddress: ${
       (error as Error).message
     }`
-    return {
-      data: getAddress(''),
-      error: errMessage,
-      success: false,
-    }
+    throw new Error(errMessage)
   }
 }
 
