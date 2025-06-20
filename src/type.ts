@@ -91,6 +91,7 @@ export interface AllocationRequest {
 
 export interface Signer {
   'Message CID': string
+  'Increase allowance CID': string | undefined
   'Signing Address': string
   'Created At': string
   'Github Username': string
