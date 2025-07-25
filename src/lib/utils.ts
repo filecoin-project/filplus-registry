@@ -65,6 +65,19 @@ export const getLastDatacapAllocation = (
   return lastAllocation
 }
 
+export const getLastPositiveDatacapAllocation = (
+  application: Application,
+): AllocationRequest | undefined => {
+  if (application.Lifecycle['Active Request ID'] === null) {
+    return undefined
+  }
+  const lastAllocation = application['Allocation Requests'].findLast(
+    (allocation: AllocationRequest) =>
+      !allocation.Active && anyToBytes(allocation['Allocation Amount']) > 0,
+  )
+  return lastAllocation
+}
+
 export const shortenUrl = (
   url: string,
   first: number,

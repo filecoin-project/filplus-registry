@@ -13,12 +13,18 @@ import useWallet from '@/hooks/useWallet'
 import { useAllocator } from '@/lib/AllocatorProvider'
 import { stateColor, stateMapping } from '@/lib/constants'
 import { getAllowanceForClient } from '@/lib/glifApi'
-import { anyToBytes, bytesToiB, getLastDatacapAllocation } from '@/lib/utils'
+import {
+  anyToBytes,
+  bytesToiB,
+  getLastDatacapAllocation,
+  getLastPositiveDatacapAllocation,
+} from '@/lib/utils'
 import {
   LDNActorType,
   AllocationUnit,
   type Allocation,
   type Application,
+  type DecreaseAllowanceConfig,
 } from '@/type'
 import {
   Dialog,
@@ -41,6 +47,7 @@ import { useQuery } from 'react-query'
 import { toast } from 'react-toastify'
 import AllocatorBalance from '../AllocatorBalance'
 import AllowedSps from './dialogs/allowedSps'
+import DecreaseAllowance from './dialogs/decreaseAllowance'
 import DatacapAmountModal from '../DatacapAmountModel'
 import {
   Dialog as DialogPrimitive,
@@ -103,8 +110,9 @@ const AppInfoCard: React.FC<ComponentProps> = ({
     mutationRemovePendingAllocation,
     mutationChangeAllowedSPs,
     mutationChangeAllowedSPsApproval,
+    mutationDecreaseAllowanceProposal,
+    mutationDecreaseAllowanceApproval,
   } = useApplicationActions(initialApplication, repo, owner)
-
   const { getAllowanceFromClientContract } = useWallet()
   const [buttonText, setButtonText] = useState('')
   const [modalMessage, setModalMessage] = useState<ReactNode | null>(null)
@@ -116,7 +124,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
   const [currentActorType, setCurrentActorType] = useState<LDNActorType | ''>(
     '',
   )
-
+  const [clientDataCap, setClientDataCap] = useState<number | null>(null)
   const [openDialog, setOpenDialog] = useState(false)
   const [isProgressBarVisible, setIsProgressBarVisible] = useState(false)
   const [isSelectAccountModalOpen, setIsSelectAccountModalOpen] =
@@ -224,11 +232,12 @@ const AppInfoCard: React.FC<ComponentProps> = ({
             ? response.data
             : clientAllowance.toString()
           : response.data
-
-        const allowance = parseFloat(
-          allowanceResult.length ? allowanceResult : '0',
+        setClientDataCap(
+          parseFloat(allowanceResult.length ? allowanceResult : '0'),
         )
-        const lastAllocation = getLastDatacapAllocation(application)
+
+        if (clientDataCap === null) return
+        const lastAllocation = getLastPositiveDatacapAllocation(application)
         if (lastAllocation === undefined) return
 
         const lastAllocationUnit = lastAllocation['Allocation Amount'] ?? '0'
@@ -247,7 +256,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
           return
         }
 
-        if (allocationAmount < allowance) {
+        if (allocationAmount < clientDataCap) {
           setIsProgressBarVisible(true)
           setProgress(0)
           setAllocationProgressDesc(
@@ -256,7 +265,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
           return
         }
 
-        const usedDatacap = allocationAmount - allowance
+        const usedDatacap = allocationAmount - clientDataCap
         const progressPercentage = (usedDatacap / allocationAmount) * 100
         setIsProgressBarVisible(true)
         setProgress(progressPercentage)
@@ -279,6 +288,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
     application,
     isApplicationUpdatedLessThanOneMinuteAgo,
     getAllowanceFromClientContract,
+    clientDataCap,
   ])
 
   useEffect(() => {
@@ -858,6 +868,35 @@ const AppInfoCard: React.FC<ComponentProps> = ({
     }
   }
 
+  const handleDecreaseAllowanceSubmit = async (
+    decreaseAllowanceConfig: DecreaseAllowanceConfig,
+  ): Promise<void> => {
+    try {
+      setApiCalling(true)
+
+      const userName = session.data?.user?.githubUsername
+
+      if (application.Lifecycle.State === 'Granted' && userName) {
+        const amountInBytes = anyToBytes(
+          `${decreaseAllowanceConfig.amount} ${decreaseAllowanceConfig.unit}`,
+        )
+        await mutationDecreaseAllowanceProposal.mutateAsync({
+          userName,
+          amountOfDatacapToDecreaseInBytes: `${amountInBytes} B`,
+          reasonForDecreasingAllowance:
+            decreaseAllowanceConfig.reasonForDecreasing,
+        })
+      } else {
+        throw new Error('Application is incorrect state. Expected Granted.')
+      }
+    } catch (error) {
+      console.log(error)
+      handleMutationError(error as Error)
+    } finally {
+      setApiCalling(false)
+    }
+  }
+
   const handleApproveAllowedSPs = async (): Promise<void> => {
     try {
       setApiCalling(true)
@@ -900,6 +939,45 @@ const AppInfoCard: React.FC<ComponentProps> = ({
     }
   }
 
+  const handleApproveDecreaseAllowance = async (): Promise<void> => {
+    try {
+      setApiCalling(true)
+
+      const activeRequest = application['Allocation Requests'].find(
+        (requests) => requests.Active,
+      )
+
+      const userName = session.data?.user?.githubUsername
+      if (activeRequest?.ID != null && userName != null) {
+        const res = await mutationDecreaseAllowanceApproval.mutateAsync({
+          userName,
+        })
+
+        if (res) {
+          const lastDatacapAllocation = getLastDatacapAllocation(res)
+          if (lastDatacapAllocation === undefined) {
+            throw new Error('No datacap allocation found')
+          }
+          const queryParams = [
+            `client=${encodeURIComponent(res?.Client.Name)}`,
+            `messageCID=${encodeURIComponent(
+              lastDatacapAllocation.Signers[1]['Message CID'],
+            )}`,
+            `amount=${encodeURIComponent(
+              lastDatacapAllocation['Allocation Amount'],
+            )}`,
+            `notification=true`,
+          ].join('&')
+
+          router.push(`/?${queryParams}`)
+        }
+      }
+    } catch (error) {
+      handleMutationError(error as Error)
+    } finally {
+      setApiCalling(false)
+    }
+  }
   return (
     <>
       <AccountSelectionDialog
@@ -1090,7 +1168,23 @@ const AppInfoCard: React.FC<ComponentProps> = ({
                     />
                   </div>
                 )}
-
+              {LDNActorType.Verifier === currentActorType &&
+                walletConnected &&
+                session?.data?.user?.name !== undefined &&
+                application?.Lifecycle?.['On Chain Address'] &&
+                application?.['Client Contract Address'] &&
+                application?.Lifecycle?.State === 'Granted' &&
+                clientDataCap !== null &&
+                clientDataCap > 0 && (
+                  <div className="flex gap-2">
+                    <DecreaseAllowance
+                      onSubmit={handleDecreaseAllowanceSubmit}
+                      currentClientDatacap={clientDataCap}
+                      isApiCalling={isApiCalling}
+                      setApiCalling={setApiCalling}
+                    />
+                  </div>
+                )}
               {!walletConnected &&
                 currentActorType === LDNActorType.Verifier &&
                 ![
@@ -1133,6 +1227,26 @@ const AppInfoCard: React.FC<ComponentProps> = ({
                       className="bg-green-400 text-black rounded-lg px-4 py-2 hover:bg-green-500"
                     >
                       Approve SP Propose
+                    </Button>
+                  </div>
+                )}
+
+              {LDNActorType.Verifier === currentActorType &&
+                walletConnected &&
+                session?.data?.user?.name !== undefined &&
+                application?.Lifecycle?.State === 'DecreasingDataCap' && (
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => {
+                        void handleApproveDecreaseAllowance()
+                      }}
+                      disabled={isApiCalling}
+                      style={{
+                        minWidth: '200px',
+                      }}
+                      className="bg-gray-400 text-black rounded-lg px-4 py-2 hover:bg-gray-500"
+                    >
+                      Approve Decrease DataCap
                     </Button>
                   </div>
                 )}

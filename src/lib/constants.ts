@@ -16,6 +16,7 @@ export const stateColor = {
   ChangingSP: 'bg-amber-400 text-white',
   Declined: 'bg-red-400 text-white',
   TotalDatacapReached: 'bg-black text-white',
+  DecreasingDataCap: 'bg-gray-400 text-white',
 }
 
 export const allocationActiveColor = {
@@ -31,4 +32,5 @@ export const stateMapping = {
   Granted: 'Granted',
   KYCRequested: 'KYC requested',
   ChangingSP: 'Changing SP',
+  DecreasingDataCap: 'Decreasing DataCap',
 }

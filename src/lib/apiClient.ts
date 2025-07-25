@@ -737,3 +737,75 @@ export const postChangeAllowedSPsApproval = async (
     throw error
   }
 }
+
+export const postDecreaseAllowanceProposal = async (
+  clientAddress: string,
+  userName: string,
+  owner: string,
+  repo: string,
+  decreaseAllowanceDeviationCid: string,
+  signingAddress: string,
+  amountOfDatacapToDecreaseInBytes: string,
+  reasonForDecreasingAllowance: string,
+): Promise<Application | undefined> => {
+  try {
+    const { data } = await apiClient.post(
+      `verifier/application/propose_decrease_allowance`,
+      {
+        amount_to_decrease: amountOfDatacapToDecreaseInBytes,
+        signer: {
+          signing_address: signingAddress,
+          decrease_allowance_cid: decreaseAllowanceDeviationCid,
+        },
+        reason_for_decrease: reasonForDecreasingAllowance,
+      },
+      {
+        params: {
+          repo,
+          owner,
+          id: clientAddress,
+          github_username: userName,
+        },
+      },
+    )
+    return data
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export const postDecreaseAllowanceApproval = async (
+  clientAddress: string,
+  requestId: string,
+  userName: string,
+  owner: string,
+  repo: string,
+  signingAddress: string,
+  decreaseAllowanceDeviationCid: string,
+): Promise<Application | undefined> => {
+  try {
+    const { data } = await apiClient.post(
+      `verifier/application/approve_decrease_allowance`,
+      {
+        request_id: requestId,
+        signer: {
+          signing_address: signingAddress,
+          decrease_allowance_cid: decreaseAllowanceDeviationCid,
+        },
+      },
+      {
+        params: {
+          repo,
+          owner,
+          id: clientAddress,
+          github_username: userName,
+        },
+      },
+    )
+    return data
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
