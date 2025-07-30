@@ -65,6 +65,16 @@ interface WalletState {
     clientAddress: string
     proposalAllocationAmount: string
   }) => Promise<string>
+  sendClientDecreaseAllowanceProposal: (props: {
+    clientContractAddress: string
+    clientAddress: string
+    amountOfDatacapToDecreaseInBytes: string
+  }) => Promise<string>
+  getDecreaseAllowanceProposalTx: (
+    clientAddress: string,
+    amountOfDatacapToDecreaseInBytes: string,
+    clientContractAddress: string,
+  ) => Promise<ParsedTransaction | null>
   sendApproval: (transaction: any) => Promise<string>
   sign: (message: string) => Promise<string>
   initializeWallet: (multisigAddress?: string) => Promise<string[]>
@@ -600,6 +610,115 @@ const useWallet = (): WalletState => {
     [wallet, multisigAddress, activeAccountIndex],
   )
 
+  const sendClientDecreaseAllowanceProposal = useCallback(
+    async (props: {
+      clientContractAddress: string
+      clientAddress: string
+      amountOfDatacapToDecreaseInBytes: string
+    }) => {
+      const {
+        clientAddress,
+        clientContractAddress,
+        amountOfDatacapToDecreaseInBytes,
+      } = props
+
+      if (wallet == null) throw new Error('No wallet initialized.')
+
+      setMessage('Sending transaction to decrease allowance...')
+
+      const abi = parseAbi([
+        'function decreaseAllowance(address client, uint256 amount)',
+      ])
+
+      const bytesDatacap = Math.floor(
+        anyToBytes(amountOfDatacapToDecreaseInBytes),
+      )
+      if (bytesDatacap === 0) throw new Error('Cannot decrease DataCap by 0.')
+      const evmClientAddress = (
+        await getEvmAddressFromFilecoinAddress(clientAddress)
+      ).data
+      const calldataHex: Hex = encodeFunctionData({
+        abi,
+        args: [evmClientAddress, BigInt(bytesDatacap)],
+      })
+
+      const calldata = Buffer.from(calldataHex.substring(2), 'hex')
+
+      const decreaseTransactionCID = await wallet.api.multisigEvmInvoke(
+        multisigAddress,
+        clientContractAddress,
+        calldata,
+        activeAccountIndex,
+      )
+
+      setMessage(
+        `The 'decrease allowance' transaction sent correctly CID: ${decreaseTransactionCID as string}`,
+      )
+
+      return decreaseTransactionCID
+    },
+    [wallet, multisigAddress, activeAccountIndex],
+  )
+
+  const getDecreaseAllowanceProposalTx = useCallback(
+    async (
+      clientAddress: string,
+      amountOfDatacapToDecrease: string,
+      clientContractAddress: string,
+    ): Promise<ParsedTransaction | null> => {
+      if (wallet == null) throw new Error('No wallet initialized.')
+      if (multisigAddress == null) throw new Error('Multisig address not set.')
+
+      const decreasedAmountInBytes = Math.floor(
+        anyToBytes(amountOfDatacapToDecrease),
+      )
+      const pendingTxs: ParsedTransaction[] =
+        await getParsedMsigPendingTransactionParams(multisigAddress)
+
+      const decreaseAllowanceAbi = parseAbi([
+        'function decreaseAllowance(address client, uint256 amount)',
+      ])
+
+      let pendingDecreaseAllowanceTransaction: ParsedTransaction | null = null
+
+      for (const transaction of pendingTxs) {
+        if (clientContractAddress && !pendingDecreaseAllowanceTransaction) {
+          if (typeof transaction.tx.calldata === 'undefined') {
+            continue
+          }
+          const paramsHex = transaction.tx.calldata.toString('hex')
+          const dataHex: Hex = `0x${paramsHex}`
+          try {
+            const decreaseDecodedData = decodeFunctionData({
+              abi: decreaseAllowanceAbi,
+              data: dataHex,
+            })
+
+            const [decreaseClientAddress, decreaseAmount] =
+              decreaseDecodedData.args
+
+            const evmClientAddress = (
+              await getEvmAddressFromFilecoinAddress(clientAddress)
+            ).data
+
+            if (
+              decreaseClientAddress.toLocaleLowerCase() === evmClientAddress &&
+              decreaseAmount === BigInt(decreasedAmountInBytes)
+            ) {
+              pendingDecreaseAllowanceTransaction = transaction
+              break
+            }
+          } catch (err) {
+            console.error(err)
+          }
+        }
+      }
+
+      return pendingDecreaseAllowanceTransaction
+    },
+    [wallet, multisigAddress],
+  )
+
   const getAllocatorAllowanceFromContract = useCallback(
     async (
       contractAddress: string,
@@ -1082,6 +1201,8 @@ const useWallet = (): WalletState => {
     getChangeSpsProposalTxs,
     sendClientIncreaseAllowance,
     getAllowanceFromClientContract,
+    sendClientDecreaseAllowanceProposal,
+    getDecreaseAllowanceProposalTx,
   }
 }
 

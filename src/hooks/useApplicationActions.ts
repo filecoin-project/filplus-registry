@@ -9,6 +9,8 @@ import {
   postApproveChanges,
   postChangeAllowedSPs,
   postChangeAllowedSPsApproval,
+  postDecreaseAllowanceApproval,
+  postDecreaseAllowanceProposal,
   postRemoveAlloc,
   postRequestKyc,
   postRevertApplicationToReadyToSign,
@@ -128,6 +130,20 @@ interface ApplicationActions {
     { requestId: string; userName: string; allocationAmount?: string },
     unknown
   >
+  mutationDecreaseAllowanceProposal: UseMutationResult<
+    Application | undefined,
+    unknown,
+    {
+      userName: string
+      amountOfDatacapToDecreaseInBytes: string
+      reasonForDecreasingAllowance: string
+    }
+  >
+  mutationDecreaseAllowanceApproval: UseMutationResult<
+    Application | undefined,
+    unknown,
+    { userName: string }
+  >
   walletError: Error | null
   initializeWallet: (multisigAddress?: string) => Promise<string[]>
   setActiveAccountIndex: (index: number) => void
@@ -172,6 +188,8 @@ const useApplicationActions = (
     getChangeSpsProposalTxs,
     setMessage,
     sendClientIncreaseAllowance,
+    sendClientDecreaseAllowanceProposal,
+    getDecreaseAllowanceProposalTx,
   } = useWallet()
   const { selectedAllocator } = useAllocator()
 
@@ -628,6 +646,180 @@ const useApplicationActions = (
     },
   )
 
+  const mutationDecreaseAllowanceProposal = useMutation<
+    Application | undefined,
+    unknown,
+    {
+      userName: string
+      amountOfDatacapToDecreaseInBytes: string
+      reasonForDecreasingAllowance: string
+    }
+  >(
+    async ({
+      userName,
+      amountOfDatacapToDecreaseInBytes,
+      reasonForDecreasingAllowance,
+    }) => {
+      setMessage(`Searching the pending transactions...`)
+
+      if (!amountOfDatacapToDecreaseInBytes) {
+        throw new Error('Amount of datacap to decrease is required')
+      }
+
+      const clientContractAddress =
+        initialApplication?.['Client Contract Address']
+
+      if (clientContractAddress === null) {
+        throw new Error('Client contract address is empty.')
+      }
+
+      const clientAddress = getClientAddress()
+      const proposalTx = await getDecreaseAllowanceProposalTx(
+        clientAddress,
+        amountOfDatacapToDecreaseInBytes,
+        clientContractAddress,
+      )
+
+      if (proposalTx) {
+        throw new Error(
+          'Decrease allowance is already proposed, please contact support on https://github.com/fidlabs/allocator-tooling/issues.',
+        )
+      }
+
+      const decreaseAllowanceCID = await sendClientDecreaseAllowanceProposal({
+        clientContractAddress,
+        clientAddress,
+        amountOfDatacapToDecreaseInBytes,
+      })
+
+      if (decreaseAllowanceCID == null) {
+        throw new Error(
+          'Error sending proposal. Please try again or contact support.',
+        )
+      }
+
+      setMessage(
+        `Checking the 'decrease allowance' transaction, it may take a few minutes, please wait... Do not close this window.`,
+      )
+
+      const response = await getStateWaitMsg(decreaseAllowanceCID)
+
+      if (
+        typeof response.data === 'object' &&
+        response.data.ReturnDec.Applied &&
+        response.data.ReturnDec.Code !== 0
+      ) {
+        throw new Error(
+          `Error sending transaction. Please try again or contact support. Error code: ${response.data.ReturnDec.Code}`,
+        )
+      }
+      return await postDecreaseAllowanceProposal(
+        initialApplication.ID,
+        userName,
+        owner,
+        repo,
+        decreaseAllowanceCID,
+        activeAddress,
+        amountOfDatacapToDecreaseInBytes,
+        reasonForDecreasingAllowance,
+      )
+    },
+    {
+      onSuccess: (data) => {
+        setApiCalling(false)
+        if (data != null) updateCache(data)
+      },
+      onError: () => {
+        setApiCalling(false)
+      },
+    },
+  )
+
+  const mutationDecreaseAllowanceApproval = useMutation<
+    Application | undefined,
+    unknown,
+    {
+      userName: string
+    }
+  >(
+    async ({ userName }) => {
+      setMessage(`Searching the pending transactions...`)
+
+      const clientContractAddress =
+        initialApplication?.['Client Contract Address']
+      if (clientContractAddress === null) {
+        throw new Error('Client contract address is empty.')
+      }
+      const activeRequest = initialApplication['Allocation Requests'].find(
+        (alloc) => alloc.Active,
+      )
+      if (!activeRequest) {
+        throw new Error('No active allocation found')
+      }
+      const datacapToDecrease = String(
+        activeRequest?.AllocationAmountInBytes,
+      ).replace('-', '')
+
+      if (datacapToDecrease == null)
+        throw new Error('No active allocation found')
+      const datacap = activeRequest?.['Allocation Amount']
+
+      if (datacap == null) throw new Error('No active allocation found')
+      const clientAddress = getClientAddress()
+      const proposalTx = await getDecreaseAllowanceProposalTx(
+        clientAddress,
+        datacapToDecrease,
+        clientContractAddress,
+      )
+      if (!proposalTx) {
+        throw new Error(
+          'Failed to find decrease allowance transaction. You may need to wait some time if the proposal was just sent.',
+        )
+      }
+      const decreaseAllowanceCID = await sendApproval(proposalTx)
+
+      if (decreaseAllowanceCID == null) {
+        throw new Error(
+          'Error sending proposal. Please try again or contact support.',
+        )
+      }
+
+      setMessage(
+        `Checking the 'decrease allowance' transaction, it may take a few minutes, please wait... Do not close this window.`,
+      )
+
+      const response = await getStateWaitMsg(decreaseAllowanceCID)
+
+      if (
+        typeof response.data === 'object' &&
+        response.data.ReturnDec.Applied &&
+        response.data.ReturnDec.Code !== 0
+      ) {
+        throw new Error(
+          `Error sending transaction. Please try again or contact support. Error code: ${response.data.ReturnDec.Code}`,
+        )
+      }
+      return await postDecreaseAllowanceApproval(
+        initialApplication.ID,
+        activeRequest.ID,
+        userName,
+        owner,
+        repo,
+        decreaseAllowanceCID,
+        activeAddress,
+      )
+    },
+    {
+      onSuccess: (data) => {
+        setApiCalling(false)
+        if (data != null) updateCache(data)
+      },
+      onError: () => {
+        setApiCalling(false)
+      },
+    },
+  )
+
   /**
    * Mutation function to handle the approval of an application.
    * It makes an API call to approve the application and updates the cache on success.
@@ -978,6 +1170,8 @@ const useApplicationActions = (
     mutationRemovePendingAllocation,
     mutationChangeAllowedSPs,
     mutationChangeAllowedSPsApproval,
+    mutationDecreaseAllowanceProposal,
+    mutationDecreaseAllowanceApproval,
   }
 }
 

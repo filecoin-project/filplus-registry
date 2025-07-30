@@ -68,6 +68,7 @@ export interface Lifecycle {
     | 'ChangingSP'
     | 'Declined'
     | 'TotalDatacapReached'
+    | 'DecreasingDataCap'
 
   'Validated At': string
   'Validated By': string
@@ -258,4 +259,10 @@ export interface ParsedTransaction {
     address?: string
     cap?: bigint
   }
+}
+
+export interface DecreaseAllowanceConfig {
+  amount: string
+  unit: AllocationUnit
+  reasonForDecreasing: string
 }
