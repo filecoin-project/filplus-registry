@@ -152,6 +152,35 @@ export const getClosedApplicationsForRepo = async (
 }
 
 /**
+ * Get all applications using the same Client contract address.
+ *
+ * @returns {Promise<Application[]>}
+ * @throws {Error} When the API call fails.
+ */
+export const getApplicationsByClientContractAddress = async (
+  clientContractAddress: string,
+): Promise<Application[]> => {
+  try {
+    const applications = await apiClient.get(
+      '/applications/by_contract_address',
+      {
+        params: {
+          client_contract_address: clientContractAddress,
+        },
+      },
+    )
+    return applications.data
+  } catch (error: any) {
+    console.error(error)
+
+    const message =
+      error?.message ??
+      'Failed to fetch applications by Client contract address'
+    throw new Error(message)
+  }
+}
+
+/**
  * Retrieves an application based on its ID.
  *
  * @param id - The ID of the application to retrieve.
@@ -456,10 +485,11 @@ export const postApplicationProposal = async (
   repo: string,
   address: string,
   signatures: {
-    messageCID: string
+    messageCID?: string
     increaseAllowanceCID?: string
   },
   allocationAmount?: string,
+  amountOfDatacapSentToContract?: string,
 ): Promise<Application | undefined> => {
   try {
     const { data } = await apiClient.post(
@@ -469,6 +499,7 @@ export const postApplicationProposal = async (
         new_allocation_amount: allocationAmount,
         owner,
         repo,
+        amount_of_datacap_sent_to_contract: amountOfDatacapSentToContract,
         signer: {
           signing_address: address,
           // Datetime in format YYYY-MM-DDTHH:MM:SSZ
@@ -510,7 +541,7 @@ export const postApplicationApproval = async (
   repo: string,
   address: string,
   signatures: {
-    verifyClientCid: string
+    verifyClientCid?: string
     increaseAllowanceCid?: string
   },
 ): Promise<Application | undefined> => {

@@ -11,7 +11,9 @@ import { decode } from 'cbor-x'
 import { bytesToBigInt } from 'viem'
 import { Address, CoinType, encode } from '@glif/filecoin-address'
 import { config } from '@/config'
-import { getMsigPendingTransaction } from './glifApi'
+import { getAllowanceForClient, getMsigPendingTransaction } from './glifApi'
+import { getApplicationsByClientContractAddress } from './apiClient'
+
 export function cn(...inputs: ClassValue[]): string {
   return twMerge(clsx(inputs))
 }
@@ -176,4 +178,84 @@ export const getParsedMsigPendingTransactionParams = async (
 
     return { error: { message: errMessage } }
   }
+}
+
+export const getUnallocatedDataCapFromContract = async (
+  contractAddress: string,
+  getAllowanceFromClientContract: (
+    clientAddress: string,
+    contractAddress: string,
+  ) => Promise<bigint>,
+): Promise<number> => {
+  const getAllowanceForClientContract =
+    await getAllowanceForClient(contractAddress)
+  let totalClientContractDataCap
+  if (getAllowanceForClientContract.success) {
+    totalClientContractDataCap = Number(getAllowanceForClientContract.data)
+  } else {
+    throw new Error(
+      `Failed to get allowance for contract: ${contractAddress}. Error: ${getAllowanceForClientContract.error}`,
+    )
+  }
+  const applicationsWithTheSameClientContract =
+    await getApplicationsByClientContractAddress(contractAddress)
+  if (applicationsWithTheSameClientContract.length === 0) {
+    return 0
+  }
+  const allowances = await Promise.all(
+    applicationsWithTheSameClientContract.map(async (app) => {
+      try {
+        return Number(
+          await getAllowanceFromClientContract(app.ID, contractAddress),
+        )
+      } catch (error: unknown) {
+        console.error(
+          `Failed to get allowance for application ${app.ID}: ${(error as Error).message}`,
+        )
+        return 0
+      }
+    }),
+  )
+  const totalAllocatedDataCapToClients = allowances.reduce(
+    (sum, val) => sum + val,
+    0,
+  )
+  return totalClientContractDataCap - totalAllocatedDataCapToClients
+}
+
+export const getDataCapToSendToContract = async (
+  proposalAllocationAmount: string,
+  clientContractAddress: string | null,
+  getAllowanceFromClientContract: (
+    clientAddress: string,
+    contractAddress: string,
+  ) => Promise<bigint>,
+  evmClientAddress?: string,
+): Promise<{
+  skipSendingDataCapToContract: boolean
+  amountOfDataCapSentToContract?: string
+}> => {
+  if (clientContractAddress && evmClientAddress) {
+    const unallocatedDatacapOnContract =
+      await getUnallocatedDataCapFromContract(
+        clientContractAddress,
+        getAllowanceFromClientContract,
+      )
+    if (unallocatedDatacapOnContract > 0) {
+      const datacapToSendToContract =
+        anyToBytes(proposalAllocationAmount) - unallocatedDatacapOnContract
+      if (datacapToSendToContract > 0) {
+        return {
+          skipSendingDataCapToContract: false,
+          amountOfDataCapSentToContract: bytesToiB(
+            datacapToSendToContract,
+            'B' as AllocationUnit,
+          ),
+        }
+      } else {
+        return { skipSendingDataCapToContract: true }
+      }
+    }
+  }
+  return { skipSendingDataCapToContract: false }
 }
