@@ -537,7 +537,11 @@ const AppInfoCard: React.FC<ComponentProps> = ({
               const queryParams = [
                 `client=${encodeURIComponent(res?.Client.Name)}`,
                 `messageCID=${encodeURIComponent(
-                  lastDatacapAllocation.Signers[1]['Message CID'],
+                  lastDatacapAllocation.Signers[1]['Message CID'] ??
+                    lastDatacapAllocation.Signers[1][
+                      'Increase allowance CID'
+                    ] ??
+                    '',
                 )}`,
                 `amount=${encodeURIComponent(
                   anyToBytes(lastAllocationAmount),
@@ -908,29 +912,10 @@ const AppInfoCard: React.FC<ComponentProps> = ({
       const userName = session.data?.user?.githubUsername
 
       if (activeRequest?.ID != null && userName != null) {
-        const res = await mutationChangeAllowedSPsApproval.mutateAsync({
+        await mutationChangeAllowedSPsApproval.mutateAsync({
           activeRequest,
           userName,
         })
-
-        if (res) {
-          const lastDatacapAllocation = getLastDatacapAllocation(res)
-          if (lastDatacapAllocation === undefined) {
-            throw new Error('No datacap allocation found')
-          }
-          const queryParams = [
-            `client=${encodeURIComponent(res?.Client.Name)}`,
-            `messageCID=${encodeURIComponent(
-              lastDatacapAllocation.Signers[1]['Message CID'],
-            )}`,
-            `amount=${encodeURIComponent(
-              lastDatacapAllocation['Allocation Amount'],
-            )}`,
-            `notification=true`,
-          ].join('&')
-
-          router.push(`/?${queryParams}`)
-        }
       }
     } catch (error) {
       handleMutationError(error as Error)
@@ -949,28 +934,11 @@ const AppInfoCard: React.FC<ComponentProps> = ({
 
       const userName = session.data?.user?.githubUsername
       if (activeRequest?.ID != null && userName != null) {
-        const res = await mutationDecreaseAllowanceApproval.mutateAsync({
+        await mutationDecreaseAllowanceApproval.mutateAsync({
           userName,
         })
-
-        if (res) {
-          const lastDatacapAllocation = getLastDatacapAllocation(res)
-          if (lastDatacapAllocation === undefined) {
-            throw new Error('No datacap allocation found')
-          }
-          const queryParams = [
-            `client=${encodeURIComponent(res?.Client.Name)}`,
-            `messageCID=${encodeURIComponent(
-              lastDatacapAllocation.Signers[1]['Message CID'],
-            )}`,
-            `amount=${encodeURIComponent(
-              lastDatacapAllocation['Allocation Amount'],
-            )}`,
-            `notification=true`,
-          ].join('&')
-
-          router.push(`/?${queryParams}`)
-        }
+      } else {
+        throw new Error('Active allocation request not found.')
       }
     } catch (error) {
       handleMutationError(error as Error)
