@@ -186,12 +186,12 @@ export const getUnallocatedDataCapFromContract = async (
     clientAddress: string,
     contractAddress: string,
   ) => Promise<bigint>,
-): Promise<number> => {
+): Promise<bigint> => {
   const getAllowanceForClientContract =
     await getAllowanceForClient(contractAddress)
   let totalClientContractDataCap
   if (getAllowanceForClientContract.success) {
-    totalClientContractDataCap = Number(getAllowanceForClientContract.data)
+    totalClientContractDataCap = BigInt(getAllowanceForClientContract.data)
   } else {
     throw new Error(
       `Failed to get allowance for contract: ${contractAddress}. Error: ${getAllowanceForClientContract.error}`,
@@ -200,25 +200,23 @@ export const getUnallocatedDataCapFromContract = async (
   const applicationsWithTheSameClientContract =
     await getApplicationsByClientContractAddress(contractAddress)
   if (applicationsWithTheSameClientContract.length === 0) {
-    return 0
+    return BigInt(0)
   }
   const allowances = await Promise.all(
     applicationsWithTheSameClientContract.map(async (app) => {
       try {
-        return Number(
-          await getAllowanceFromClientContract(app.ID, contractAddress),
-        )
+        return await getAllowanceFromClientContract(app.ID, contractAddress)
       } catch (error: unknown) {
         console.error(
           `Failed to get allowance for application ${app.ID}: ${(error as Error).message}`,
         )
-        return 0
+        return BigInt(0)
       }
     }),
   )
   const totalAllocatedDataCapToClients = allowances.reduce(
     (sum, val) => sum + val,
-    0,
+    BigInt(0),
   )
   return totalClientContractDataCap - totalAllocatedDataCapToClients
 }
@@ -243,7 +241,8 @@ export const getDataCapToSendToContract = async (
       )
     if (unallocatedDatacapOnContract > 0) {
       const datacapToSendToContract =
-        anyToBytes(proposalAllocationAmount) - unallocatedDatacapOnContract
+        anyToBytes(proposalAllocationAmount) -
+        Number(unallocatedDatacapOnContract)
       if (datacapToSendToContract > 0) {
         return {
           skipSendingDataCapToContract: false,

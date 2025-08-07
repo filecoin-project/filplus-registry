@@ -170,13 +170,11 @@ export const getApplicationsByClientContractAddress = async (
       },
     )
     return applications.data
-  } catch (error: any) {
+  } catch (error) {
     console.error(error)
-
-    const message =
-      error?.message ??
-      'Failed to fetch applications by Client contract address'
-    throw new Error(message)
+    throw new Error(
+      `Failed to fetch applications by Client contract address. Error ${(error as Error)?.message ?? ''}`,
+    )
   }
 }
 

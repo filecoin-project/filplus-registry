@@ -358,12 +358,10 @@ const useWallet = (): WalletState => {
                 clientContractAddress ?? clientAddress,
               )
               const addressHex: Hex = `0x${Buffer.from(address.bytes).toString('hex')}`
-              let bytesAmountOfDataCapSentToContract
-              if (amountOfDataCapSentToContract) {
-                bytesAmountOfDataCapSentToContract = Math.floor(
-                  anyToBytes(amountOfDataCapSentToContract),
-                )
-              }
+              const bytesAmountOfDataCapSentToContract =
+                amountOfDataCapSentToContract
+                  ? Math.floor(anyToBytes(amountOfDataCapSentToContract))
+                  : undefined
 
               if (
                 clientAddressData === addressHex &&
