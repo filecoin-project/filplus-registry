@@ -34,6 +34,7 @@ import {
   useQueryClient,
   type UseMutationResult,
 } from 'react-query'
+import { getDataCapToSendToContract } from '@/lib/utils'
 
 interface ApplicationActions {
   application: Application
@@ -190,6 +191,7 @@ const useApplicationActions = (
     sendClientIncreaseAllowance,
     sendClientDecreaseAllowanceProposal,
     getDecreaseAllowanceProposalTx,
+    getAllowanceFromClientContract,
   } = useWallet()
   const { selectedAllocator } = useAllocator()
 
@@ -547,49 +549,63 @@ const useApplicationActions = (
         throw new Error('No active allocation found')
       }
 
+      let amountOfDataCapSentToContract
+      if (clientContractAddress && evmClientAddress) {
+        amountOfDataCapSentToContract = await getDataCapToSendToContract(
+          proposalAllocationAmount,
+          clientContractAddress,
+          getAllowanceFromClientContract,
+        )
+      }
       const proposalTx = await getProposalTx(
         clientAddress,
         proposalAllocationAmount,
         allocatorType,
         clientContractAddress,
+        amountOfDataCapSentToContract,
       )
+      let messageCID
+      if (amountOfDataCapSentToContract !== null) {
+        if (proposalTx?.pendingVerifyClientTransaction) {
+          throw new Error('This datacap allocation is already proposed')
+        }
 
-      if (proposalTx?.pendingVerifyClientTransaction) {
-        throw new Error('This datacap allocation is already proposed')
-      }
+        const addressToGrantDataCap = clientContractAddress ?? clientAddress
 
-      const addressToGrantDataCap = clientContractAddress ?? clientAddress
+        messageCID = await sendProposal({
+          allocatorType,
+          contractAddress:
+            typeof selectedAllocator !== 'string'
+              ? selectedAllocator?.ma_address ??
+                selectedAllocator?.address ??
+                ''
+              : '',
+          clientAddress: addressToGrantDataCap,
+          proposalAllocationAmount:
+            amountOfDataCapSentToContract ?? proposalAllocationAmount,
+        })
 
-      const messageCID = await sendProposal({
-        allocatorType,
-        contractAddress:
-          typeof selectedAllocator !== 'string'
-            ? selectedAllocator?.ma_address ?? selectedAllocator?.address ?? ''
-            : '',
-        clientAddress: addressToGrantDataCap,
-        proposalAllocationAmount,
-      })
+        if (messageCID == null) {
+          throw new Error(
+            'Error sending proposal. Please try again or contact support.',
+          )
+        }
 
-      if (messageCID == null) {
-        throw new Error(
-          'Error sending proposal. Please try again or contact support.',
+        setMessage(
+          `Checking the 'verify client' transaction, it may take a few minutes, please wait... Do not close this window.`,
         )
-      }
 
-      setMessage(
-        `Checking the 'verify client' transaction, it may take a few minutes, please wait... Do not close this window.`,
-      )
+        const response = await getStateWaitMsg(messageCID)
 
-      const response = await getStateWaitMsg(messageCID)
-
-      if (
-        typeof response.data === 'object' &&
-        response.data.ReturnDec.Applied &&
-        response.data.ReturnDec.Code !== 0
-      ) {
-        throw new Error(
-          `Error sending transaction. Please try again or contact support. Error code: ${response.data.ReturnDec.Code}`,
-        )
+        if (
+          typeof response.data === 'object' &&
+          response.data.ReturnDec.Applied &&
+          response.data.ReturnDec.Code !== 0
+        ) {
+          throw new Error(
+            `Error sending transaction. Please try again or contact support. Error code: ${response.data.ReturnDec.Code}`,
+          )
+        }
       }
 
       let increaseAllowanceCID
@@ -623,7 +639,6 @@ const useApplicationActions = (
           )
         }
       }
-
       return await postApplicationProposal(
         initialApplication.ID,
         requestId,
@@ -633,6 +648,7 @@ const useApplicationActions = (
         activeAddress,
         { messageCID, increaseAllowanceCID },
         allocationAmount,
+        amountOfDataCapSentToContract ?? undefined,
       )
     },
     {
@@ -851,61 +867,59 @@ const useApplicationActions = (
       const datacap = activeRequest?.['Allocation Amount']
 
       if (datacap == null) throw new Error('No active allocation found')
-
+      const signatures: {
+        verifyClientCid?: string
+        increaseAllowanceCid?: string
+      } = {}
+      let messageCID
       const proposalTx = await getProposalTx(
         clientAddress,
         datacap,
         allocatorType,
         clientAddressAddress,
+        activeRequest?.['Amount of Datacap Sent to Contract'],
       )
+      if (activeRequest?.Signers[0]['Message CID']) {
+        if (!proposalTx?.pendingVerifyClientTransaction) {
+          throw new Error(
+            'This datacap allocation is not proposed yet. You may need to wait some time if the proposal was just sent.',
+          )
+        }
 
-      if (!proposalTx?.pendingVerifyClientTransaction) {
-        throw new Error(
-          'This datacap allocation is not proposed yet. You may need to wait some time if the proposal was just sent.',
+        messageCID = await sendApproval(
+          proposalTx?.pendingVerifyClientTransaction,
         )
-      }
 
-      const signatures: {
-        verifyClientCid: string
-        increaseAllowanceCid?: string
-      } = {
-        verifyClientCid: '',
-      }
+        if (messageCID == null) {
+          throw new Error(
+            'Error sending proposal. Please try again or contact support.',
+          )
+        }
 
-      const messageCID = await sendApproval(
-        proposalTx?.pendingVerifyClientTransaction,
-      )
-
-      if (messageCID == null) {
-        throw new Error(
-          'Error sending proposal. Please try again or contact support.',
+        setMessage(
+          `Checking the 'verify client' transaction, it may take a few minutes, please wait... Do not close this window.`,
         )
+
+        const response = await getStateWaitMsg(messageCID)
+
+        if (
+          typeof response.data === 'object' &&
+          response.data.ReturnDec.Applied &&
+          response.data.ReturnDec.Code !== 0
+        ) {
+          await postRevertApplicationToReadyToSign(
+            userName,
+            initialApplication.ID,
+            owner,
+            repo,
+          )
+          // After changing the error message, please check the handleClose() function and adapt the changes
+          throw new Error(
+            `Datacap allocation transaction failed on chain. Application reverted to ReadyToSign. Please try again. Error code: ${response.data.ReturnDec.Code}`,
+          )
+        }
+        signatures.verifyClientCid = messageCID
       }
-
-      setMessage(
-        `Checking the 'verify client' transaction, it may take a few minutes, please wait... Do not close this window.`,
-      )
-
-      const response = await getStateWaitMsg(messageCID)
-
-      if (
-        typeof response.data === 'object' &&
-        response.data.ReturnDec.Applied &&
-        response.data.ReturnDec.Code !== 0
-      ) {
-        await postRevertApplicationToReadyToSign(
-          userName,
-          initialApplication.ID,
-          owner,
-          repo,
-        )
-        // After changing the error message, please check the handleClose() function and adapt the changes
-        throw new Error(
-          `Datacap allocation transaction failed on chain. Application reverted to ReadyToSign. Please try again. Error code: ${response.data.ReturnDec.Code}`,
-        )
-      }
-
-      signatures.verifyClientCid = messageCID
 
       if (
         !proposalTx?.pendingIncreaseAllowanceTransaction &&

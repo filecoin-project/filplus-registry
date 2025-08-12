@@ -88,10 +88,11 @@ export interface AllocationRequest {
   'Allocation Amount': string
   Signers: Signer[]
   AllocationAmountInBytes?: number
+  'Amount of Datacap Sent to Contract'?: string
 }
 
 export interface Signer {
-  'Message CID': string
+  'Message CID': string | undefined
   'Increase allowance CID': string | undefined
   'Signing Address': string
   'Created At': string

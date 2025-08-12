@@ -55,6 +55,7 @@ interface WalletState {
     datacap: string,
     allocatorType: AllocatorTypeEnum,
     clientContractAddress?: string | null,
+    amountOfDataCapSentToContract?: string | null,
   ) => Promise<{
     pendingVerifyClientTransaction: any
     pendingIncreaseAllowanceTransaction: any
@@ -265,9 +266,10 @@ const useWallet = (): WalletState => {
   const getProposalTx = useCallback(
     async (
       clientAddress: string,
-      datacap: string,
+      allocationAmount: string,
       allocatorType: AllocatorTypeEnum,
       clientContractAddress?: string | null,
+      amountOfDataCapSentToContract?: string | null,
     ): Promise<{
       pendingVerifyClientTransaction: any
       pendingIncreaseAllowanceTransaction: any
@@ -275,7 +277,8 @@ const useWallet = (): WalletState => {
       if (wallet == null) throw new Error('No wallet initialized.')
       if (multisigAddress == null) throw new Error('Multisig address not set.')
 
-      const bytesDatacap = Math.floor(anyToBytes(datacap))
+      const bytesAllocationAmount = Math.floor(anyToBytes(allocationAmount))
+
       const pendingTxs: ParsedTransaction[] =
         await getParsedMsigPendingTransactionParams(multisigAddress)
 
@@ -312,7 +315,7 @@ const useWallet = (): WalletState => {
 
             if (
               increaseClientAddress.toLocaleLowerCase() === evmClientAddress &&
-              increaseAmount === BigInt(bytesDatacap)
+              increaseAmount === BigInt(bytesAllocationAmount)
             ) {
               pendingIncreaseAllowanceTransaction = transaction
               continue
@@ -333,7 +336,7 @@ const useWallet = (): WalletState => {
             const addressToGrantDataCap = clientContractAddress ?? clientAddress
             if (
               transaction.tx.address === addressToGrantDataCap &&
-              transaction.tx.cap === BigInt(bytesDatacap)
+              transaction.tx.cap === BigInt(bytesAllocationAmount)
             ) {
               pendingVerifyClientTransaction = transaction
               continue
@@ -355,10 +358,17 @@ const useWallet = (): WalletState => {
                 clientContractAddress ?? clientAddress,
               )
               const addressHex: Hex = `0x${Buffer.from(address.bytes).toString('hex')}`
+              const bytesAmountOfDataCapSentToContract =
+                amountOfDataCapSentToContract
+                  ? Math.floor(anyToBytes(amountOfDataCapSentToContract))
+                  : undefined
 
               if (
                 clientAddressData === addressHex &&
-                amount === BigInt(bytesDatacap)
+                amount ===
+                  BigInt(
+                    bytesAmountOfDataCapSentToContract ?? bytesAllocationAmount,
+                  )
               ) {
                 pendingVerifyClientTransaction = transaction
                 continue
