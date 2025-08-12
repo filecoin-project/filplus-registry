@@ -55,7 +55,7 @@ interface WalletState {
     datacap: string,
     allocatorType: AllocatorTypeEnum,
     clientContractAddress?: string | null,
-    amountOfDataCapSentToContract?: string,
+    amountOfDataCapSentToContract?: string | null,
   ) => Promise<{
     pendingVerifyClientTransaction: any
     pendingIncreaseAllowanceTransaction: any
@@ -269,7 +269,7 @@ const useWallet = (): WalletState => {
       allocationAmount: string,
       allocatorType: AllocatorTypeEnum,
       clientContractAddress?: string | null,
-      amountOfDataCapSentToContract?: string,
+      amountOfDataCapSentToContract?: string | null,
     ): Promise<{
       pendingVerifyClientTransaction: any
       pendingIncreaseAllowanceTransaction: any

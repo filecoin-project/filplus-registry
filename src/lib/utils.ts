@@ -202,18 +202,16 @@ export const getUnallocatedDataCapFromContract = async (
   if (applicationsWithTheSameClientContract.length === 0) {
     return BigInt(0)
   }
-  const allowances = await Promise.all(
-    applicationsWithTheSameClientContract.map(async (app) => {
-      try {
-        return await getAllowanceFromClientContract(app.ID, contractAddress)
-      } catch (error: unknown) {
-        console.error(
-          `Failed to get allowance for application ${app.ID}: ${(error as Error).message}`,
-        )
-        return BigInt(0)
-      }
-    }),
+  const results = await Promise.allSettled(
+    applicationsWithTheSameClientContract.map(
+      async (app) =>
+        await getAllowanceFromClientContract(app.ID, contractAddress),
+    ),
   )
+  const allowances = results
+    .filter((result) => result.status === 'fulfilled')
+    .map((result) => (result as PromiseFulfilledResult<bigint>).value)
+
   const totalAllocatedDataCapToClients = allowances.reduce(
     (sum, val) => sum + val,
     BigInt(0),
@@ -223,38 +221,25 @@ export const getUnallocatedDataCapFromContract = async (
 
 export const getDataCapToSendToContract = async (
   proposalAllocationAmount: string,
-  clientContractAddress: string | null,
+  clientContractAddress: string,
   getAllowanceFromClientContract: (
     clientAddress: string,
     contractAddress: string,
   ) => Promise<bigint>,
-  evmClientAddress?: string,
-): Promise<{
-  skipSendingDataCapToContract: boolean
-  amountOfDataCapSentToContract?: string
-}> => {
-  if (clientContractAddress && evmClientAddress) {
-    const unallocatedDatacapOnContract =
-      await getUnallocatedDataCapFromContract(
-        clientContractAddress,
-        getAllowanceFromClientContract,
-      )
-    if (unallocatedDatacapOnContract > 0) {
-      const datacapToSendToContract =
-        anyToBytes(proposalAllocationAmount) -
-        Number(unallocatedDatacapOnContract)
-      if (datacapToSendToContract > 0) {
-        return {
-          skipSendingDataCapToContract: false,
-          amountOfDataCapSentToContract: bytesToiB(
-            datacapToSendToContract,
-            'B' as AllocationUnit,
-          ),
-        }
-      } else {
-        return { skipSendingDataCapToContract: true }
-      }
+): Promise<string | null> => {
+  const unallocatedDatacapOnContract = await getUnallocatedDataCapFromContract(
+    clientContractAddress,
+    getAllowanceFromClientContract,
+  )
+  if (unallocatedDatacapOnContract > 0) {
+    const datacapToSendToContract =
+      anyToBytes(proposalAllocationAmount) -
+      Number(unallocatedDatacapOnContract)
+    if (datacapToSendToContract > 0) {
+      return bytesToiB(datacapToSendToContract, 'B' as AllocationUnit)
+    } else {
+      return null
     }
   }
-  return { skipSendingDataCapToContract: false }
+  return proposalAllocationAmount
 }

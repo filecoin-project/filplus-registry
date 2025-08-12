@@ -548,14 +548,15 @@ const useApplicationActions = (
       if (!proposalAllocationAmount) {
         throw new Error('No active allocation found')
       }
-      const { skipSendingDataCapToContract, amountOfDataCapSentToContract } =
-        await getDataCapToSendToContract(
+
+      let amountOfDataCapSentToContract
+      if (clientContractAddress && evmClientAddress) {
+        amountOfDataCapSentToContract = await getDataCapToSendToContract(
           proposalAllocationAmount,
           clientContractAddress,
           getAllowanceFromClientContract,
-          evmClientAddress,
         )
-      let messageCID
+      }
       const proposalTx = await getProposalTx(
         clientAddress,
         proposalAllocationAmount,
@@ -563,7 +564,8 @@ const useApplicationActions = (
         clientContractAddress,
         amountOfDataCapSentToContract,
       )
-      if (!skipSendingDataCapToContract) {
+      let messageCID
+      if (amountOfDataCapSentToContract !== null) {
         if (proposalTx?.pendingVerifyClientTransaction) {
           throw new Error('This datacap allocation is already proposed')
         }
@@ -646,7 +648,7 @@ const useApplicationActions = (
         activeAddress,
         { messageCID, increaseAllowanceCID },
         allocationAmount,
-        amountOfDataCapSentToContract,
+        amountOfDataCapSentToContract ?? undefined,
       )
     },
     {

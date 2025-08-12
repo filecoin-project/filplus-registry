@@ -38,7 +38,7 @@ const AppHistory: React.FC<ComponentProps> = ({
         Application History
       </h2>
       <div className="mt-2 mb-4 font-medium">
-        Total Allocation Amount - {totalAllocationFormatted} /{' '}
+        Total Allocation Amount: {totalAllocationFormatted} /{' '}
         {totalRequestedAmount}
       </div>
       <div className="grid gap-4 w-full select-none">
