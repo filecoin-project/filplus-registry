@@ -227,11 +227,11 @@ const AppInfoCard: React.FC<ComponentProps> = ({
       }
 
       if (response.success) {
-        const allowanceResult = clientAllowance
-          ? Number(clientAllowance) > parseFloat(response.data)
-            ? response.data
-            : clientAllowance.toString()
-          : response.data
+        const allowanceResult =
+          application['Client Contract Address'] &&
+          clientAllowance !== undefined
+            ? clientAllowance.toString()
+            : response.data
         setClientDataCap(
           parseFloat(allowanceResult.length ? allowanceResult : '0'),
         )
