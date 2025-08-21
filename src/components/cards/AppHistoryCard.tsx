@@ -143,20 +143,23 @@ const AppHistoryCard: React.FC<ComponentProps> = ({ allocation, actor }) => {
                     </a>
                   </div>
                 </div>
-                <div className="flex items-center justify-between text-sm">
-                  <div className="text-muted-foreground">Message CID</div>
-                  <div>
-                    <a
-                      href={`${config.filfoxUrl}/message/${allocation.Signers[0]['Message CID']}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-500 hover:text-blue-700"
-                    >
-                      {allocation.Signers[0]['Message CID']}
-                    </a>
+                {allocation.Signers[0]['Message CID'] && (
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="text-muted-foreground">Message CID</div>
+                    <div>
+                      <a
+                        href={`${config.filfoxUrl}/message/${allocation.Signers[0]['Message CID']}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-500 hover:text-blue-700"
+                      >
+                        {allocation.Signers[0]['Message CID']}
+                      </a>
+                    </div>
                   </div>
-                </div>
-                {allocation.Signers[0]['Increase allowance CID'] ? (
+                )}
+
+                {allocation.Signers[0]['Increase allowance CID'] && (
                   <div className="flex items-center justify-between text-sm">
                     <div className="text-muted-foreground">
                       Increase allowance CID
@@ -172,7 +175,7 @@ const AppHistoryCard: React.FC<ComponentProps> = ({ allocation, actor }) => {
                       </a>
                     </div>
                   </div>
-                ) : null}
+                )}
               </div>
             </>
           )}
@@ -221,20 +224,23 @@ const AppHistoryCard: React.FC<ComponentProps> = ({ allocation, actor }) => {
                     </a>
                   </div>
                 </div>
-                <div className="flex items-center justify-between text-sm">
-                  <div className="text-muted-foreground">Message CID</div>
-                  <div>
-                    <a
-                      href={`${config.filfoxUrl}/message/${allocation.Signers[1]['Message CID']}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-500 hover:text-blue-700"
-                    >
-                      {allocation.Signers[1]['Message CID']}
-                    </a>
+                {allocation.Signers[1]['Message CID'] && (
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="text-muted-foreground">Message CID</div>
+                    <div>
+                      <a
+                        href={`${config.filfoxUrl}/message/${allocation.Signers[1]['Message CID']}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-500 hover:text-blue-700"
+                      >
+                        {allocation.Signers[1]['Message CID']}
+                      </a>
+                    </div>
                   </div>
-                </div>
-                {allocation.Signers[1]['Increase allowance CID'] ? (
+                )}
+
+                {allocation.Signers[1]['Increase allowance CID'] && (
                   <div className="flex items-center justify-between text-sm">
                     <div className="text-muted-foreground">
                       Increase allowance CID
@@ -250,7 +256,7 @@ const AppHistoryCard: React.FC<ComponentProps> = ({ allocation, actor }) => {
                       </a>
                     </div>
                   </div>
-                ) : null}
+                )}
               </div>
             </>
           )}

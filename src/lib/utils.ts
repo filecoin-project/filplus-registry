@@ -11,7 +11,9 @@ import { decode } from 'cbor-x'
 import { bytesToBigInt } from 'viem'
 import { Address, CoinType, encode } from '@glif/filecoin-address'
 import { config } from '@/config'
-import { getMsigPendingTransaction } from './glifApi'
+import { getAllowanceForClient, getMsigPendingTransaction } from './glifApi'
+import { getApplicationsByClientContractAddress } from './apiClient'
+
 export function cn(...inputs: ClassValue[]): string {
   return twMerge(clsx(inputs))
 }
@@ -176,4 +178,68 @@ export const getParsedMsigPendingTransactionParams = async (
 
     return { error: { message: errMessage } }
   }
+}
+
+export const getUnallocatedDataCapFromContract = async (
+  contractAddress: string,
+  getAllowanceFromClientContract: (
+    clientAddress: string,
+    contractAddress: string,
+  ) => Promise<bigint>,
+): Promise<bigint> => {
+  const getAllowanceForClientContract =
+    await getAllowanceForClient(contractAddress)
+  let totalClientContractDataCap
+  if (getAllowanceForClientContract.success) {
+    totalClientContractDataCap = BigInt(getAllowanceForClientContract.data)
+  } else {
+    throw new Error(
+      `Failed to get allowance for contract: ${contractAddress}. Error: ${getAllowanceForClientContract.error}`,
+    )
+  }
+  const applicationsWithTheSameClientContract =
+    await getApplicationsByClientContractAddress(contractAddress)
+  if (applicationsWithTheSameClientContract.length === 0) {
+    return BigInt(0)
+  }
+  const results = await Promise.allSettled(
+    applicationsWithTheSameClientContract.map(
+      async (app) =>
+        await getAllowanceFromClientContract(app.ID, contractAddress),
+    ),
+  )
+  const allowances = results
+    .filter((result) => result.status === 'fulfilled')
+    .map((result) => (result as PromiseFulfilledResult<bigint>).value)
+
+  const totalAllocatedDataCapToClients = allowances.reduce(
+    (sum, val) => sum + val,
+    BigInt(0),
+  )
+  return totalClientContractDataCap - totalAllocatedDataCapToClients
+}
+
+export const getDataCapToSendToContract = async (
+  proposalAllocationAmount: string,
+  clientContractAddress: string,
+  getAllowanceFromClientContract: (
+    clientAddress: string,
+    contractAddress: string,
+  ) => Promise<bigint>,
+): Promise<string | null> => {
+  const unallocatedDatacapOnContract = await getUnallocatedDataCapFromContract(
+    clientContractAddress,
+    getAllowanceFromClientContract,
+  )
+  if (unallocatedDatacapOnContract > 0) {
+    const datacapToSendToContract =
+      anyToBytes(proposalAllocationAmount) -
+      Number(unallocatedDatacapOnContract)
+    if (datacapToSendToContract > 0) {
+      return bytesToiB(datacapToSendToContract, 'B' as AllocationUnit)
+    } else {
+      return null
+    }
+  }
+  return proposalAllocationAmount
 }

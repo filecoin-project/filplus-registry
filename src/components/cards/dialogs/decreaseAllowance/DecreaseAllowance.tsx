@@ -30,7 +30,7 @@ interface ComponentProps {
 
 const initialDecreaseAllowanceConfig: DecreaseAllowanceConfig = {
   amount: '0',
-  unit: 'B' as AllocationUnit,
+  unit: 'GiB' as AllocationUnit,
   reasonForDecreasing: '',
 }
 export const DecreaseAllowance: React.FC<ComponentProps> = ({
