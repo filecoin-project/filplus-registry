@@ -196,18 +196,15 @@ export const getApplicationByParams = async (
   | undefined
 > => {
   try {
-    const { data } = await apiClient.get(
-      `/application/with-allocation-amount`,
-      {
-        params: {
-          id,
-          owner,
-          repo,
-        },
+    const { data } = await apiClient.get(`/application`, {
+      params: {
+        id,
+        owner,
+        repo,
       },
-    )
+    })
 
-    const allocationRequests = data.application_file?.['Allocation Requests']
+    const allocationRequests = data?.['Allocation Requests']
     if (allocationRequests) {
       for (let i = 0; i < allocationRequests.length; i++) {
         allocationRequests[i].AllocationAmountInBytes = anyToBytes(
@@ -220,7 +217,7 @@ export const getApplicationByParams = async (
       return {
         ...data,
         application_file: {
-          ...data.application_file,
+          ...data,
           'Allocation Requests': allocationRequests,
         },
       }
