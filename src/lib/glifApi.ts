@@ -2,6 +2,7 @@ import type {
   ApiAllowanceResponse,
   ApiEthCallResponse,
   ApiFilecoinAddressToEthAddressResponse,
+  ApiEthAddressToFilecoinAddressResponse,
   ApiStateWaitMsgResponse,
   MsigPendingTransactions,
 } from '@/type'
@@ -94,6 +95,31 @@ export const getEvmAddressFromFilecoinAddress = async (
       After the first transfer, granting DataCap will be possible approximately 8 hours later.`)
     }
     const errMessage = `Error accessing GLIF API Filecoin.FilecoinAddressToEthAddress: ${
+      (error as Error).message
+    }`
+    throw new Error(errMessage)
+  }
+}
+
+/**
+ * Get the filecoin address for a client from the API.
+ *
+ * @param {string} address - The address to get the filecoin address for.
+ * @returns {Promise<ApiEthAddressToFilecoinAddressResponse>} ApiEthAddressToFilecoinAddressResponse - The response from the API.
+ */
+export const getFilecoinAddressFromEvmAddress = async (
+  address: string,
+): Promise<ApiEthAddressToFilecoinAddressResponse> => {
+  try {
+    const result = await filecoinClient.ethAddressToFilecoinAddress(address)
+
+    return {
+      data: result ?? '',
+      error: '',
+      success: true,
+    }
+  } catch (error: unknown) {
+    const errMessage = `Error accessing GLIF API Filecoin.EthAddressToFilecoinAddress: ${
       (error as Error).message
     }`
     throw new Error(errMessage)

@@ -12,7 +12,10 @@ import useApplicationActions from '@/hooks/useApplicationActions'
 import useWallet from '@/hooks/useWallet'
 import { useAllocator } from '@/lib/AllocatorProvider'
 import { stateColor, stateMapping } from '@/lib/constants'
-import { getAllowanceForClient } from '@/lib/glifApi'
+import {
+  getAllowanceForClient,
+  getFilecoinAddressFromEvmAddress,
+} from '@/lib/glifApi'
 import {
   anyToBytes,
   bytesToiB,
@@ -113,7 +116,10 @@ const AppInfoCard: React.FC<ComponentProps> = ({
     mutationDecreaseAllowanceProposal,
     mutationDecreaseAllowanceApproval,
   } = useApplicationActions(initialApplication, repo, owner)
-  const { getAllowanceFromClientContract } = useWallet()
+  const {
+    getAllowanceFromClientContract,
+    getClientContractAddressFromOnRampContract,
+  } = useWallet()
   const [buttonText, setButtonText] = useState('')
   const [modalMessage, setModalMessage] = useState<ReactNode | null>(null)
   const [error, setError] = useState<boolean>(false)
@@ -216,13 +222,26 @@ const AppInfoCard: React.FC<ComponentProps> = ({
       const address = application.Lifecycle['On Chain Address']
 
       let clientAllowance
-
       const contractAddress = application['Client Contract Address'] ?? address
       const response = await getAllowanceForClient(contractAddress)
       if (application['Client Contract Address']) {
+        let onRampClientContractAddress
+        const evmOnRampClientContractAddress =
+          await getClientContractAddressFromOnRampContract(
+            application['Client Contract Address'],
+          )
+        if (evmOnRampClientContractAddress) {
+          const filecoinOnRampClientContractAddressResult =
+            await getFilecoinAddressFromEvmAddress(
+              evmOnRampClientContractAddress,
+            )
+          onRampClientContractAddress =
+            filecoinOnRampClientContractAddressResult.data
+        }
+
         clientAllowance = await getAllowanceFromClientContract(
           address,
-          application['Client Contract Address'],
+          onRampClientContractAddress ?? application['Client Contract Address'],
         )
       }
 
@@ -289,6 +308,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
     isApplicationUpdatedLessThanOneMinuteAgo,
     getAllowanceFromClientContract,
     clientDataCap,
+    getClientContractAddressFromOnRampContract,
   ])
 
   useEffect(() => {
