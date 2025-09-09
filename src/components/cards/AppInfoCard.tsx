@@ -120,6 +120,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
     getAllowanceFromClientContract,
     getClientContractAddressFromOnRampContract,
   } = useWallet()
+
   const [buttonText, setButtonText] = useState('')
   const [modalMessage, setModalMessage] = useState<ReactNode | null>(null)
   const [error, setError] = useState<boolean>(false)
