@@ -1,18 +1,25 @@
 import { useAllocator } from '@/lib/AllocatorProvider'
 import { getAllowanceForVerifier } from '@/lib/glifApi'
-import { bytesToiB } from '@/lib/utils'
+import { bytesToiB, getUnallocatedDataCapFromContract } from '@/lib/utils'
 import { useEffect, useMemo, useState } from 'react'
 import useWallet from '@/hooks/useWallet'
 
 interface ComponentProps {
   repo: string
   owner: string
+  clientContractAddress: string | null
 }
 
-const AllocatorBalance: React.FC<ComponentProps> = ({ owner, repo }) => {
+const AllocatorBalance: React.FC<ComponentProps> = ({
+  owner,
+  repo,
+  clientContractAddress,
+}) => {
   const { allocators } = useAllocator()
-  const { getAllocatorAllowanceFromContract } = useWallet()
+  const { getAllocatorAllowanceFromContract, getAllowanceFromClientContract } =
+    useWallet()
   const [balance, setBalance] = useState<number | null>(null)
+  const [unallocatedDataCap, setUnallocatedDataCap] = useState<number>(0)
   const [loading, setLoading] = useState<boolean>(false)
   const allocator = useMemo(
     () => allocators.find((a) => a.owner === owner && a.repo === repo),
@@ -54,6 +61,19 @@ const AllocatorBalance: React.FC<ComponentProps> = ({ owner, repo }) => {
     }
   }
 
+  const getUnallocatedDataCap = async (): Promise<void> => {
+    if (!clientContractAddress) {
+      return
+    }
+    const unallocatedDataCap = await getUnallocatedDataCapFromContract(
+      clientContractAddress,
+      getAllowanceFromClientContract,
+    )
+    if (Number(unallocatedDataCap) !== 0) {
+      setUnallocatedDataCap(Number(unallocatedDataCap))
+    }
+  }
+
   const fetchBalance = async (
     address: string,
     multisigAddress: string,
@@ -65,6 +85,7 @@ const AllocatorBalance: React.FC<ComponentProps> = ({ owner, repo }) => {
     } else {
       await getAllowanceSmartContract(address, multisigAddress)
     }
+    await getUnallocatedDataCap()
     setLoading(false)
   }
 
@@ -83,11 +104,18 @@ const AllocatorBalance: React.FC<ComponentProps> = ({ owner, repo }) => {
 
   if (loading) return <div>Loading Allocator&apos;s DataCap balance...</div>
 
-  if (balance === null) return
-
   return (
-    <div className="whitespace-nowrap">
-      Allocator&apos;s DataCap balance: {bytesToiB(balance)}
+    <div className="flex flex-col gap-1">
+      {balance !== null && (
+        <div className="whitespace-nowrap">
+          Allocator&apos;s DataCap balance: {bytesToiB(balance)}
+        </div>
+      )}
+      {unallocatedDataCap !== 0 && (
+        <div className="whitespace-nowrap">
+          Unallocated DataCap on Contract: {bytesToiB(unallocatedDataCap)}
+        </div>
+      )}
     </div>
   )
 }
