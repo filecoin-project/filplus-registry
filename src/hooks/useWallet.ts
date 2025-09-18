@@ -882,9 +882,6 @@ const useWallet = (): WalletState => {
     async (client: string, contractAddress: string): Promise<string[]> => {
       let evmContractAddress =
         await getClientContractAddressFromOnRampContract(contractAddress)
-      const abi = parseAbi([
-        'function clientSPs(address client) external view returns (uint256[] memory providers)',
-      ])
 
       let evmClientAddress
       if (evmContractAddress) {
@@ -897,7 +894,9 @@ const useWallet = (): WalletState => {
         ])
         evmContractAddress = evmContractAddressResult.data
       }
-
+      const abi = parseAbi([
+        'function clientSPs(address client) external view returns (uint256[] memory providers)',
+      ])
       const calldataHex: Hex = encodeFunctionData({
         abi,
         args: [evmClientAddress.data],
@@ -960,22 +959,31 @@ const useWallet = (): WalletState => {
 
   const getClientConfig = useCallback(
     async (client: string, contractAddress: string): Promise<number | null> => {
+      let evmContractAddress =
+        await getClientContractAddressFromOnRampContract(contractAddress)
+
+      let evmClientAddress
+      if (evmContractAddress) {
+        evmClientAddress = await getEvmAddressFromFilecoinAddress(client)
+      } else {
+        let evmContractAddressResult
+        ;[evmClientAddress, evmContractAddressResult] = await Promise.all([
+          getEvmAddressFromFilecoinAddress(client),
+          getEvmAddressFromFilecoinAddress(contractAddress),
+        ])
+        evmContractAddress = evmContractAddressResult.data
+      }
+
       const abi = parseAbi([
         'function clientConfigs(address client) external view returns (uint256)',
       ])
-
-      const [evmClientAddress, evmContractAddress] = await Promise.all([
-        getEvmAddressFromFilecoinAddress(client),
-        getEvmAddressFromFilecoinAddress(contractAddress),
-      ])
-
       const calldataHex: Hex = encodeFunctionData({
         abi,
         args: [evmClientAddress.data],
       })
 
       const response = await makeStaticEthCall(
-        evmContractAddress.data,
+        evmContractAddress as Address,
         calldataHex,
       )
 
@@ -990,7 +998,7 @@ const useWallet = (): WalletState => {
 
       return Number(decodedData)
     },
-    [],
+    [getClientContractAddressFromOnRampContract],
   )
 
   const prepareClientMaxDeviation = (
