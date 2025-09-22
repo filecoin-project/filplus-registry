@@ -1111,7 +1111,11 @@ const AppInfoCard: React.FC<ComponentProps> = ({
         <div>
           <CardFooter className="flex flex-row items-center border-t pt-4 pb-2 mt-4 justify-between gap-3">
             <div className="flex gap-2 pb-4">
-              <AllocatorBalance owner={owner} repo={repo} />
+              <AllocatorBalance
+                owner={owner}
+                repo={repo}
+                clientContractAddress={application['Client Contract Address']}
+              />
             </div>
             <div className="flex justify-end gap-2 pb-4">
               {LDNActorType.Verifier === currentActorType &&
