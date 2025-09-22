@@ -15,6 +15,7 @@ import {
 import { newFromString } from '@glif/filecoin-address'
 import { useCallback, useState } from 'react'
 import {
+  type Address,
   decodeFunctionData,
   decodeFunctionResult,
   encodeFunctionData,
@@ -56,6 +57,7 @@ interface WalletState {
     allocatorType: AllocatorTypeEnum,
     clientContractAddress?: string | null,
     amountOfDataCapSentToContract?: string | null,
+    onRampClientContractAddress?: string | null,
   ) => Promise<{
     pendingVerifyClientTransaction: any
     pendingIncreaseAllowanceTransaction: any
@@ -128,6 +130,9 @@ interface WalletState {
     args: string[]
     decodedPacked?: string[]
   }> | null>
+  getClientContractAddressFromOnRampContract: (
+    clientAddress: string,
+  ) => Promise<string | null>
 }
 
 /**
@@ -270,6 +275,7 @@ const useWallet = (): WalletState => {
       allocatorType: AllocatorTypeEnum,
       clientContractAddress?: string | null,
       amountOfDataCapSentToContract?: string | null,
+      onRampClientContractAddress?: string | null,
     ): Promise<{
       pendingVerifyClientTransaction: any
       pendingIncreaseAllowanceTransaction: any
@@ -292,12 +298,15 @@ const useWallet = (): WalletState => {
 
       let pendingVerifyClientTransaction: ParsedTransaction | null = null
       let pendingIncreaseAllowanceTransaction: ParsedTransaction | null = null
-
+      const bytesAmountOfDataCapSentToContract = amountOfDataCapSentToContract
+        ? Math.floor(anyToBytes(amountOfDataCapSentToContract))
+        : undefined
       for (const transaction of pendingTxs) {
-        if (clientContractAddress && !pendingIncreaseAllowanceTransaction) {
-          if (typeof transaction.tx.calldata === 'undefined') {
-            continue
-          }
+        if (
+          clientContractAddress &&
+          !pendingIncreaseAllowanceTransaction &&
+          typeof transaction.tx.calldata !== 'undefined'
+        ) {
           const paramsHex = transaction.tx.calldata.toString('hex')
           const dataHex: Hex = `0x${paramsHex}`
           try {
@@ -333,10 +342,16 @@ const useWallet = (): WalletState => {
             ) {
               continue
             }
-            const addressToGrantDataCap = clientContractAddress ?? clientAddress
+            const addressToGrantDataCap =
+              onRampClientContractAddress ??
+              clientContractAddress ??
+              clientAddress
             if (
               transaction.tx.address === addressToGrantDataCap &&
-              transaction.tx.cap === BigInt(bytesAllocationAmount)
+              transaction.tx.cap ===
+                BigInt(
+                  bytesAmountOfDataCapSentToContract ?? bytesAllocationAmount,
+                )
             ) {
               pendingVerifyClientTransaction = transaction
               continue
@@ -355,13 +370,11 @@ const useWallet = (): WalletState => {
 
               const [clientAddressData, amount] = decodedData.args
               const address = newFromString(
-                clientContractAddress ?? clientAddress,
+                onRampClientContractAddress ??
+                  clientContractAddress ??
+                  clientAddress,
               )
               const addressHex: Hex = `0x${Buffer.from(address.bytes).toString('hex')}`
-              const bytesAmountOfDataCapSentToContract =
-                amountOfDataCapSentToContract
-                  ? Math.floor(anyToBytes(amountOfDataCapSentToContract))
-                  : undefined
 
               if (
                 clientAddressData === addressHex &&
@@ -834,24 +847,63 @@ const useWallet = (): WalletState => {
     [wallet, multisigAddress, activeAccountIndex],
   )
 
+  const getClientContractAddressFromOnRampContract = useCallback(
+    async (contractAddress: string): Promise<string | null> => {
+      const abi = parseAbi([
+        'function CLIENT_CONTRACT() external view returns (address)',
+      ])
+
+      const evmContractAddress =
+        await getEvmAddressFromFilecoinAddress(contractAddress)
+      const calldataHex: Hex = encodeFunctionData({
+        abi,
+      })
+
+      const response = await makeStaticEthCall(
+        evmContractAddress.data,
+        calldataHex,
+      )
+
+      if (response.error) {
+        return null
+      }
+
+      const clientContractAddress = decodeFunctionResult({
+        abi,
+        data: response.data as `0x${string}`,
+      })
+
+      return clientContractAddress
+    },
+    [],
+  )
+
   const getClientSPs = useCallback(
     async (client: string, contractAddress: string): Promise<string[]> => {
+      let evmContractAddress =
+        await getClientContractAddressFromOnRampContract(contractAddress)
+
+      let evmClientAddress
+      if (evmContractAddress) {
+        evmClientAddress = await getEvmAddressFromFilecoinAddress(client)
+      } else {
+        let evmContractAddressResult
+        ;[evmClientAddress, evmContractAddressResult] = await Promise.all([
+          getEvmAddressFromFilecoinAddress(client),
+          getEvmAddressFromFilecoinAddress(contractAddress),
+        ])
+        evmContractAddress = evmContractAddressResult.data
+      }
       const abi = parseAbi([
         'function clientSPs(address client) external view returns (uint256[] memory providers)',
       ])
-
-      const [evmClientAddress, evmContractAddress] = await Promise.all([
-        getEvmAddressFromFilecoinAddress(client),
-        getEvmAddressFromFilecoinAddress(contractAddress),
-      ])
-
       const calldataHex: Hex = encodeFunctionData({
         abi,
         args: [evmClientAddress.data],
       })
 
       const response = await makeStaticEthCall(
-        evmContractAddress.data,
+        evmContractAddress as Address,
         calldataHex,
       )
 
@@ -867,7 +919,7 @@ const useWallet = (): WalletState => {
       const result: string[] = decodedData.map((x) => x.toString())
       return result
     },
-    [],
+    [getClientContractAddressFromOnRampContract],
   )
 
   const getAllowanceFromClientContract = useCallback(
@@ -907,22 +959,31 @@ const useWallet = (): WalletState => {
 
   const getClientConfig = useCallback(
     async (client: string, contractAddress: string): Promise<number | null> => {
+      let evmContractAddress =
+        await getClientContractAddressFromOnRampContract(contractAddress)
+
+      let evmClientAddress
+      if (evmContractAddress) {
+        evmClientAddress = await getEvmAddressFromFilecoinAddress(client)
+      } else {
+        let evmContractAddressResult
+        ;[evmClientAddress, evmContractAddressResult] = await Promise.all([
+          getEvmAddressFromFilecoinAddress(client),
+          getEvmAddressFromFilecoinAddress(contractAddress),
+        ])
+        evmContractAddress = evmContractAddressResult.data
+      }
+
       const abi = parseAbi([
         'function clientConfigs(address client) external view returns (uint256)',
       ])
-
-      const [evmClientAddress, evmContractAddress] = await Promise.all([
-        getEvmAddressFromFilecoinAddress(client),
-        getEvmAddressFromFilecoinAddress(contractAddress),
-      ])
-
       const calldataHex: Hex = encodeFunctionData({
         abi,
         args: [evmClientAddress.data],
       })
 
       const response = await makeStaticEthCall(
-        evmContractAddress.data,
+        evmContractAddress as Address,
         calldataHex,
       )
 
@@ -937,7 +998,7 @@ const useWallet = (): WalletState => {
 
       return Number(decodedData)
     },
-    [],
+    [getClientContractAddressFromOnRampContract],
   )
 
   const prepareClientMaxDeviation = (
@@ -1213,6 +1274,7 @@ const useWallet = (): WalletState => {
     getAllowanceFromClientContract,
     sendClientDecreaseAllowanceProposal,
     getDecreaseAllowanceProposalTx,
+    getClientContractAddressFromOnRampContract,
   }
 }
 

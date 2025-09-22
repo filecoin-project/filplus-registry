@@ -186,9 +186,11 @@ export const getUnallocatedDataCapFromContract = async (
     clientAddress: string,
     contractAddress: string,
   ) => Promise<bigint>,
+  onRampClientContractAddress?: string | null,
 ): Promise<bigint> => {
-  const getAllowanceForClientContract =
-    await getAllowanceForClient(contractAddress)
+  const getAllowanceForClientContract = await getAllowanceForClient(
+    onRampClientContractAddress ?? contractAddress,
+  )
   let totalClientContractDataCap
   if (getAllowanceForClientContract.success) {
     totalClientContractDataCap = BigInt(getAllowanceForClientContract.data)
@@ -202,10 +204,14 @@ export const getUnallocatedDataCapFromContract = async (
   if (applicationsWithTheSameClientContract.length === 0) {
     return BigInt(0)
   }
+
   const results = await Promise.allSettled(
     applicationsWithTheSameClientContract.map(
       async (app) =>
-        await getAllowanceFromClientContract(app.ID, contractAddress),
+        await getAllowanceFromClientContract(
+          app.ID,
+          onRampClientContractAddress ?? contractAddress,
+        ),
     ),
   )
   const allowances = results
@@ -226,10 +232,12 @@ export const getDataCapToSendToContract = async (
     clientAddress: string,
     contractAddress: string,
   ) => Promise<bigint>,
+  onRampClientContractAddress?: string,
 ): Promise<string | null> => {
   const unallocatedDatacapOnContract = await getUnallocatedDataCapFromContract(
     clientContractAddress,
     getAllowanceFromClientContract,
+    onRampClientContractAddress,
   )
   if (unallocatedDatacapOnContract > 0) {
     const datacapToSendToContract =

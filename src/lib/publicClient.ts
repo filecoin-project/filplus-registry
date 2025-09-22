@@ -50,6 +50,11 @@ type FilecoinRpcSchema = [
     ReturnType: string | null
   },
   {
+    Method: 'Filecoin.EthAddressToFilecoinAddress'
+    Parameters: [string]
+    ReturnType: string | null
+  },
+  {
     Method: 'Filecoin.EthCall'
     Parameters: [
       {
@@ -84,6 +89,7 @@ export interface IFilecoinClient {
   verifierStatus: (address: string) => Promise<string | null>
   verifiedClientStatus: (address: string) => Promise<string | null>
   filecoinAddressToEthAddress: (address: string) => Promise<string | null>
+  ethAddressToFilecoinAddress: (address: string) => Promise<string | null>
   waitMsg: (
     cid: string,
     confidence: number,
@@ -135,6 +141,17 @@ export class FilecoinClient implements IFilecoinClient {
     })
 
     return status
+  }
+
+  public async ethAddressToFilecoinAddress(
+    address: string,
+  ): Promise<string | null> {
+    const filecoinAddress = await this.client.request({
+      method: 'Filecoin.EthAddressToFilecoinAddress',
+      params: [address],
+    })
+
+    return filecoinAddress
   }
 
   public async staticCall(

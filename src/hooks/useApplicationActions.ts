@@ -19,6 +19,7 @@ import {
 } from '@/lib/apiClient'
 import {
   getEvmAddressFromFilecoinAddress,
+  getFilecoinAddressFromEvmAddress,
   getStateWaitMsg,
 } from '@/lib/glifApi'
 import { config } from '@/config'
@@ -192,6 +193,7 @@ const useApplicationActions = (
     sendClientDecreaseAllowanceProposal,
     getDecreaseAllowanceProposalTx,
     getAllowanceFromClientContract,
+    getClientContractAddressFromOnRampContract,
   } = useWallet()
   const { selectedAllocator } = useAllocator()
 
@@ -550,19 +552,36 @@ const useApplicationActions = (
       }
 
       let amountOfDataCapSentToContract
+      let onRampClientContractAddress
       if (clientContractAddress && evmClientAddress) {
+        const evmOnRampClientContractAddress =
+          await getClientContractAddressFromOnRampContract(
+            clientContractAddress,
+          )
+        if (evmOnRampClientContractAddress) {
+          const filecoinOnRampClientContractAddressResult =
+            await getFilecoinAddressFromEvmAddress(
+              evmOnRampClientContractAddress,
+            )
+          onRampClientContractAddress =
+            filecoinOnRampClientContractAddressResult.data
+        }
+
         amountOfDataCapSentToContract = await getDataCapToSendToContract(
           proposalAllocationAmount,
           clientContractAddress,
           getAllowanceFromClientContract,
+          onRampClientContractAddress,
         )
       }
+
       const proposalTx = await getProposalTx(
         clientAddress,
         proposalAllocationAmount,
         allocatorType,
         clientContractAddress,
         amountOfDataCapSentToContract,
+        onRampClientContractAddress,
       )
       let messageCID
       if (amountOfDataCapSentToContract !== null) {
@@ -570,7 +589,8 @@ const useApplicationActions = (
           throw new Error('This datacap allocation is already proposed')
         }
 
-        const addressToGrantDataCap = clientContractAddress ?? clientAddress
+        const addressToGrantDataCap =
+          onRampClientContractAddress ?? clientContractAddress ?? clientAddress
 
         messageCID = await sendProposal({
           allocatorType,
@@ -855,9 +875,22 @@ const useApplicationActions = (
 
       const clientAddress = getClientAddress()
 
-      let clientAddressAddress
+      let clientContractAddress
+      let onRampClientContractAddress
       if (initialApplication['Client Contract Address']) {
-        clientAddressAddress = initialApplication['Client Contract Address']
+        clientContractAddress = initialApplication['Client Contract Address']
+        const evmOnRampClientContractAddress =
+          await getClientContractAddressFromOnRampContract(
+            clientContractAddress,
+          )
+        if (evmOnRampClientContractAddress) {
+          const filecoinOnRampClientContractAddressResult =
+            await getFilecoinAddressFromEvmAddress(
+              evmOnRampClientContractAddress,
+            )
+          onRampClientContractAddress =
+            filecoinOnRampClientContractAddressResult.data
+        }
       }
 
       const activeRequest = initialApplication['Allocation Requests'].find(
@@ -872,12 +905,14 @@ const useApplicationActions = (
         increaseAllowanceCid?: string
       } = {}
       let messageCID
+
       const proposalTx = await getProposalTx(
         clientAddress,
         datacap,
         allocatorType,
-        clientAddressAddress,
+        clientContractAddress,
         activeRequest?.['Amount of Datacap Sent to Contract'],
+        onRampClientContractAddress,
       )
       if (activeRequest?.Signers[0]['Message CID']) {
         if (!proposalTx?.pendingVerifyClientTransaction) {
@@ -923,12 +958,12 @@ const useApplicationActions = (
 
       if (
         !proposalTx?.pendingIncreaseAllowanceTransaction &&
-        clientAddressAddress
+        clientContractAddress
       ) {
         throw new Error(
           'This increase allowance is not proposed yet. You may need to wait some time if the proposal was just sent.',
         )
-      } else if (clientAddressAddress) {
+      } else if (clientContractAddress) {
         const increaseMessageCID = await sendApproval(
           proposalTx?.pendingIncreaseAllowanceTransaction,
         )

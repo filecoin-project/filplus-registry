@@ -151,6 +151,12 @@ export interface ApiFilecoinAddressToEthAddressResponse {
   data: Address
 }
 
+export interface ApiEthAddressToFilecoinAddressResponse {
+  error: string
+  success: boolean
+  data: string
+}
+
 export interface ApiEthCallResponse {
   error: string
   success: boolean
