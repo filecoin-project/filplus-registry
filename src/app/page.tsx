@@ -268,50 +268,23 @@ export default function Home(): JSX.Element {
       </div>
     )
 
-  const sortedResults = searchResults?.sort((a, b) => {
-    const ownerA = a.owner?.toLowerCase()
-    const ownerB = b.owner?.toLowerCase()
-
-    if (ownerA < ownerB) {
-      return -1
-    }
-    if (ownerA > ownerB) {
-      return 1
-    }
-    return 0
+  const groupedAllocators: Record<string, Application[]> = {}
+  searchResults.forEach((app) => {
+    const key = `${app.owner}_${app.repo}`
+    if (!groupedAllocators[key]) groupedAllocators[key] = []
+    groupedAllocators[key].push(app)
   })
-
-  sortedResults.forEach((item, index) => {
-    if (index === 0 || item.repo !== sortedResults[index - 1].repo) {
-      const repoIssues = sortedResults.filter(
-        (issue) => issue.repo === item.repo,
-      )
-      repoIssues.sort(
-        (a, b) => parseInt(b['Issue Number']) - parseInt(a['Issue Number']),
-      )
-      repoIssues.forEach((issue, i) => {
-        sortedResults[index + i] = issue
+  const sortedApplications: Application[] = []
+  Object.values(groupedAllocators).forEach((apps) => {
+    apps.sort(
+      (a, b) => parseInt(b['Issue Number']) - parseInt(a['Issue Number']),
+    )
+    apps.forEach((app, idx) => {
+      sortedApplications.push({
+        ...app,
+        fullSpan: idx === 0,
       })
-    }
-  })
-
-  let prevRepo: string | null = null
-
-  const mappedData = sortedResults.map((item, index) => {
-    const newItem = { ...item }
-
-    if (prevRepo !== null && newItem.repo !== prevRepo) {
-      newItem.fullSpan = true
-    } else {
-      newItem.fullSpan = false
-    }
-
-    if (index === 0) {
-      newItem.fullSpan = true
-    }
-
-    prevRepo = newItem.repo
-    return newItem
+    })
   })
 
   return (
@@ -475,7 +448,7 @@ export default function Home(): JSX.Element {
                   }
                 : undefined,
             )}
-            data={mappedData}
+            data={sortedApplications}
           />
         </TabsContent>
         <TabsContent value="grid">
