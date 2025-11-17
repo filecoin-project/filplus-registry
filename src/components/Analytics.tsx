@@ -10,7 +10,7 @@ const Analytics: React.FC = () => {
         async
         src={`https://plausible.io/js/${config.plausibleTrackingId}.js`}
       ></Script>
-      <Script>
+      <Script id="plausible-scrip">
         {`
          window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};
   plausible.init()
