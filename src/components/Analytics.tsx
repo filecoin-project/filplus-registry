@@ -5,16 +5,16 @@ import { config } from '@/config'
 const Analytics: React.FC = () => {
   return (
     <>
+      {/* Privacy-friendly analytics by Plausible */}
       <Script
         async
-        src={`https://www.googletagmanager.com/gtag/js?id=${config.gaTrackingId}`}
+        src={`https://plausible.io/js/${config.plausibleTrackingId}.js`}
       ></Script>
-      <Script id="ga-script">
-        {`window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-
-      gtag('config', '${config.gaTrackingId}');`}
+      <Script>
+        {`
+         window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};
+  plausible.init()
+      `}
       </Script>
     </>
   )
