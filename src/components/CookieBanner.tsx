@@ -93,7 +93,7 @@ export const CookieBanner = ({ children }: PropsWithChildren) => {
           }}
         >
           We use cookies to improve your experience and analyze traffic with
-          Google Analytics. By clicking &quot;Accept&quot; you consent to our
+          Plausible Analytics. By clicking &quot;Accept&quot; you consent to our
           use of cookies.
         </CookieConsent>
       )}
