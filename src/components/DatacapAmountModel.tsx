@@ -43,6 +43,7 @@ interface DatacapAmountModalProps {
   clientContractAddress?: string | null
   remainingDatacap?: number | undefined
   usedDatatapInPercentage: number
+  isOnRampContract?: boolean
   setAllocationConfig: (config: any) => void
   onClose: () => void
   onCancel: () => void
@@ -63,6 +64,7 @@ const DatacapAmountModal = ({
   clientContractAddress,
   remainingDatacap,
   usedDatatapInPercentage,
+  isOnRampContract,
 }: DatacapAmountModalProps): ReactNode => {
   const [isFillRemainingDatacapChecked, setIsFillRemainingDatacapChecked] =
     useState(false)
@@ -202,11 +204,13 @@ const DatacapAmountModal = ({
                           </a>
                         </div>
                       </div>
-                      <FormControlLabel
-                        value="directly"
-                        control={<Radio />}
-                        label="Directly"
-                      />
+                      {!isOnRampContract && (
+                        <FormControlLabel
+                          value="directly"
+                          control={<Radio />}
+                          label="Directly"
+                        />
+                      )}
                     </RadioGroup>
                   </FormControl>
                 </div>

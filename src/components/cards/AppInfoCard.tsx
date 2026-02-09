@@ -186,6 +186,29 @@ const AppInfoCard: React.FC<ComponentProps> = ({
     ),
   })
 
+  const { data: onRampContractAddress } = useQuery({
+    queryKey: [
+      'onRampContract',
+      typeof selectedAllocator === 'object'
+        ? selectedAllocator?.client_contract_address
+        : null,
+    ],
+    queryFn: async () => {
+      if (
+        typeof selectedAllocator !== 'object' ||
+        !selectedAllocator?.client_contract_address
+      ) {
+        return null
+      }
+      return await getClientContractAddressFromOnRampContract(
+        selectedAllocator.client_contract_address,
+      )
+    },
+    enabled:
+      typeof selectedAllocator === 'object' &&
+      !!selectedAllocator?.client_contract_address,
+  })
+
   const router = useRouter()
 
   const allocationRequests = application?.['Allocation Requests'] ?? []
@@ -1523,6 +1546,7 @@ const AppInfoCard: React.FC<ComponentProps> = ({
             : null
         }
         usedDatatapInPercentage={progress}
+        isOnRampContract={!!onRampContractAddress}
       />
     </>
   )
