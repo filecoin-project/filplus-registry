@@ -34,6 +34,7 @@ const handler = NextAuth({
     GithubProvider({
       clientId: process.env.GITHUB_ID,
       clientSecret: process.env.GITHUB_SECRET,
+      issuer: 'https://github.com/login/oauth',
       profile(profile: GithubProfile) {
         return {
           id: profile.id.toString(),
